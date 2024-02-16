@@ -52,7 +52,7 @@ class PersonalCarStep(MLCStep):
         self.from_internal = from_internal
         self.valid_end_nodes = from_internal.keys()
 
-        self.valid_starting_nodes = None 
+        self.valid_starting_nodes = None
 
         def nullify_car_hidden_values_cost(
             bags: IntermediateBags,

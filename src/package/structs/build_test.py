@@ -214,5 +214,3 @@ def test_create_times_by_stop_by_trip(
     }
 
     assert times_by_stop_by_trip == expected_times_by_stop_by_trip
-
-

@@ -94,4 +94,4 @@ TRACER_MAP_KEY = "tracer_map"
 S = TypeVar("S")  # additional information about stop
 T = TypeVar("T")  # additional information about trip
 
-DEFAULT_N_PROCESSES = multiprocessing.cpu_count() - 2
+DEFAULT_N_PROCESSES = multiprocessing.cpu_count() // 4
