@@ -9,7 +9,6 @@ from package.mcr.steps.interface import Step, StepBuilder
 from package.osm import graph
 from package.raptor.bag import Bag
 from package.mcr.bag import (
-    IntermediateBags,
     convert_mc_raptor_bags_to_intermediate_bags,
 )
 from package.raptor.mcraptor_single import McRaptorSingle
@@ -146,11 +145,10 @@ class PublicTransportStepBuilder(StepBuilder):
 
         stops_df = graph.add_nearest_node_to_stops(self.stops_df, nxgraph)
 
-        stops_df["stop_id"] = stops_df["stop_id"].astype(int)
-        stop_to_osm_node_map: dict[int, int] = stops_df.set_index("stop_id")[
+        stop_to_osm_node_map: dict[str, int] = stops_df.set_index("stop_id")[
             "nearest_node"
         ].to_dict()
-        osm_node_to_stop_map: dict[int, int] = {
+        osm_node_to_stop_map: dict[int, str] = {
             v: k for k, v in stop_to_osm_node_map.items()
         }
         self.kwargs = {

@@ -47,7 +47,7 @@ def raptor(
     )
 
     footpaths_dict = storage.read_any_dict(footpaths)
-    if not "footpaths" in footpaths_dict:
+    if "footpaths" not in footpaths_dict:
         raise typer.BadParameter(f"Footpaths file {footpaths} has unexpected format.")
     footpaths_dict = footpaths_dict["footpaths"]
 
@@ -96,7 +96,7 @@ def validate_flags(
         raise typer.BadParameter(f"Structs file {structs} does not exist.")
 
     if max_transfers < 0:
-        raise typer.BadParameter(f"Max transfers must be non-negative.")
+        raise typer.BadParameter("Max transfers must be non-negative.")
 
     if default_transfer_time < 0:
-        raise typer.BadParameter(f"Default transfer time must be non-negative.")
+        raise typer.BadParameter("Default transfer time must be non-negative.")

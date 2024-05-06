@@ -189,7 +189,7 @@ def create_times_by_stop_by_trip(
 
 def validate_structs_dict(structs: dict):
     for key in STRUCTS_KEYS:
-        if not key in structs:
+        if key not in structs:
             raise Exception(f"Structs dict missing key {key}")
 
 

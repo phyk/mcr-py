@@ -4,9 +4,6 @@ from package import storage
 from package.mcr.bag import IntermediateBags
 from mcr_py import GraphCache
 from package.logger import Timer
-from package.mcr.bag import (
-    IntermediateBags,
-)
 from package.mcr.data import (
     AVG_CAR_SPEED,
     DRIVING_PREFIX,

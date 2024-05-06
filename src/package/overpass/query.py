@@ -18,7 +18,7 @@ api = overpy.Overpass()
 def build(attr: list[tuple], bounding_box: tuple[float, float, float, float]) -> str:
     bounding_box = (bounding_box[1], bounding_box[0], bounding_box[3], bounding_box[2])
     query = textwrap.dedent(
-        f"""
+        """
         [out:json];
         """
     )

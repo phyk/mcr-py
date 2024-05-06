@@ -18,8 +18,7 @@ from rich import print
 from osmnx.distance import cKDTree
 
 
-from package.logger import rlog
-from package import console, key, storage
+from package import console, key
 
 OSM_DIR_PATH = storage.get_tmp_path(key.TMP_OSM_DIR_NAME)
 
@@ -29,11 +28,11 @@ def list_available(selector: str):
     if selector != "":
         root_name += f" for {selector}"
     console.print_tree_from_any(get_available(selector), root_name=root_name)
-    print(f"[i] Use one of the names listed above as value for `--city-id`.[/i]")
+    print("[i] Use one of the names listed above as value for `--city-id`.[/i]")
 
 
 def get_available(
-    selector: Annotated[str, "Selector in dot notation, e.g. '.regions.africa'"]
+    selector: Annotated[str, "Selector in dot notation, e.g. '.regions.africa'"],
 ):
     data = pyrosm.data.available  # type: ignore
     if selector == "":

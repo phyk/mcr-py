@@ -1,5 +1,4 @@
 from scipy.spatial import cKDTree
-import numpy as np
 import pandas as pd
 from h3 import h3
 

@@ -42,7 +42,9 @@ def print_dataframe(
         table.add_row(
             format_value(row[key.STOP_ID_KEY]),  # type: ignore
             format_value(row[key.STOP_NAME_KEY]),  # type: ignore
-            format_value(f"https://maps.google.com/?q={row[key.STOP_LAT_KEY]},{row[key.STOP_LON_KEY]}"),  # type: ignore
+            format_value(
+                f"https://maps.google.com/?q={row[key.STOP_LAT_KEY]},{row[key.STOP_LON_KEY]}"
+            ),  # type: ignore
         )
 
     console = Console()

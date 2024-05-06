@@ -46,7 +46,7 @@ def idx_by_stop_by_route(
 
 @pytest.fixture
 def times_by_stop_by_trip(
-    stop_times_by_trip: dict[str, list[dict[str, str]]]
+    stop_times_by_trip: dict[str, list[dict[str, str]]],
 ) -> dict[str, dict[str, tuple[int, int]]]:
     return create_times_by_stop_by_trip(stop_times_by_trip)
 

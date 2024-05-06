@@ -1,4 +1,3 @@
-import multiprocessing
 
 import pyrosm
 import geopandas as gpd

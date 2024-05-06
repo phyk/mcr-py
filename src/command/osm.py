@@ -15,7 +15,7 @@ app = typer.Typer()
 def list_command(
     selector: Annotated[
         str, typer.Option(help="Selector in dot notation, e.g. '.regions.africa'")
-    ] = ""
+    ] = "",
 ):
     osm.list_available(selector)
 

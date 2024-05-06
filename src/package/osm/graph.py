@@ -8,7 +8,9 @@ from package.logger import rlog
 def create_nx_graph(
     osm: pyrosm.OSM, nodes: gpd.GeoDataFrame, edges: gpd.GeoDataFrame, network_type: str
 ) -> nx.Graph:
-    graph: nx.Graph = osm.to_graph(nodes, edges, graph_type="networkx", network_type=network_type)  # type: ignore
+    graph: nx.Graph = osm.to_graph(
+        nodes, edges, graph_type="networkx", network_type=network_type
+    )  # type: ignore
 
     return graph
 

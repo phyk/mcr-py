@@ -63,7 +63,7 @@ class MCR:
 
         start_bags = self.create_start_bags(start_node_id, start_time_in_seconds)
 
-        self.logger.info(f"Running initial step")
+        self.logger.info("Running initial step")
         for steps in self.initial_steps:
             result_bags = []
             for step in steps:

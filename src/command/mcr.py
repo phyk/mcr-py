@@ -1,7 +1,6 @@
 from typing_extensions import Annotated
 
 import typer
-from pyrosm.data import os
 
 from command.footpaths import CITY_ID_HELP, OSM_HELP, STOPS_HELP
 from command.raptor import STRUCTS_HELP

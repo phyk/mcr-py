@@ -164,7 +164,7 @@ def test_create_idx_by_stop_by_route(
 
 
 def test_create_times_by_stop_by_trip(
-    stop_times_by_trip: dict[str, list[dict[str, str]]]
+    stop_times_by_trip: dict[str, list[dict[str, str]]],
 ):
     times_by_stop_by_trip = create_times_by_stop_by_trip(stop_times_by_trip)
 

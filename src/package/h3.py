@@ -5,7 +5,6 @@ from h3 import h3
 from package import key
 from multiprocessing import Pool
 import folium
-from branca.colormap import linear
 from branca.colormap import LinearColormap
 
 

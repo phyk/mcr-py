@@ -7,7 +7,6 @@ from package.mcr.steps.interface import Step
 from mcr_py import GraphCache
 import mcr_py
 from package.mcr.bag import (
-    IntermediateBags,
     convert_mlc_bags_to_intermediate_bags,
 )
 

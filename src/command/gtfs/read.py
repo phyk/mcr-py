@@ -18,6 +18,6 @@ def read_stops(
         typer.Argument(
             help="Path to the GTFS feed to read. Either a the GTFS zip file or a directory containing the unzipped GTFS files",
         ),
-    ]
+    ],
 ):
     read.print_stops(path)
