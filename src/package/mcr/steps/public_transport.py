@@ -1,18 +1,20 @@
 from logging import Logger
 from typing import Optional
+
+import networkx as nx
+
 from package import storage
 from package.logger import Timed, Timer
-from package.mcr.bag import IntermediateBags
+from package.mcr.bag import (
+    IntermediateBags,
+    convert_mc_raptor_bags_to_intermediate_bags,
+)
 from package.mcr.label import IntermediateLabel, McRAPTORLabel, McRAPTORLabelWithPath
 from package.mcr.path import PathManager, PathType
 from package.mcr.steps.interface import Step, StepBuilder
 from package.osm import graph
 from package.raptor.bag import Bag
-from package.mcr.bag import (
-    convert_mc_raptor_bags_to_intermediate_bags,
-)
 from package.raptor.mcraptor_single import McRaptorSingle
-import networkx as nx
 
 McRAPTORInputBags = dict[str, list[IntermediateLabel]]
 
@@ -26,8 +28,8 @@ class PublicTransportStep(Step):
         enable_limit: bool,
         disable_paths: bool,
         structs_dict: dict,
-        osm_node_to_stop_map: dict[int, int],
-        stop_to_osm_node_map: dict[int, int],
+        osm_node_to_stop_map: dict[int, str],
+        stop_to_osm_node_map: dict[str, int],
     ):
         self.logger = logger
         self.timer = timer
@@ -113,7 +115,7 @@ class PublicTransportStep(Step):
             be set to the length of the path before the step.
         """
         mc_raptor_result_bags = {
-            self.stop_to_osm_node_map[int(stop_id)]: bag
+            self.stop_to_osm_node_map[str(stop_id)]: bag
             for stop_id, bag in bags.items()
         }
         mc_raptor_result_bags = convert_mc_raptor_bags_to_intermediate_bags(
