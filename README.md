@@ -19,6 +19,9 @@ conda activate mcr-py
 
 ### Running Analysis for Cologne
 
+Alternative way for first part (GTFS stuff):
+- run data_pipeline.ipynb, it automatically does the rest of gtfs calculations
+
 Argument 777 stands for the gtfs feed available for cologne. Check for other versions using `gtfs list --country-code DE`
 To include multiple operators available (e.g. also include S-Bahn from db), recheck how the file is used.
 ```
