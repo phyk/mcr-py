@@ -1,21 +1,22 @@
 import logging
-from multiprocessing import Process, Queue
-import pickle
-import psutil
-import time
 import os
-from package import key
-from tqdm.auto import tqdm
-from package.mcr.config import MCRConfig
+import pickle
+import time
+from multiprocessing import Process, Queue
 
-from package.mcr.mcr import MCR, StepBuilderMatrix
-from package.mcr.output import OutputFormat
-from package.mcr5.h3_osm_interaction import H3OSMLocationMapping
+import psutil
+from tqdm.auto import tqdm
+
+from package import key
 from package.logger import (
     copy_settings_to_root_logger,
     make_string_stream_logger,
     rlog,
 )
+from package.mcr.config import MCRConfig
+from package.mcr.mcr import MCR, StepBuilderMatrix
+from package.mcr.output import OutputFormat
+from package.mcr5.h3_osm_interaction import H3OSMLocationMapping
 
 
 class MCR5:
@@ -37,6 +38,7 @@ class MCR5:
         start_time: str,
         output_dir: str,
         max_transfers: int = 2,
+        verbose=False,
     ) -> list[tuple[str, Exception]]:
         """
         Run a MCR5 analysis for each location mapping.
@@ -64,7 +66,8 @@ class MCR5:
                 errors_list.extend([errors.get() for _ in range(errors.qsize())])
                 if errors.full():
                     raise Exception("Error queue is full.")
-                self.print_status(processes, pbar)
+                if verbose:
+                    self.print_status(processes, pbar)
                 time.sleep(1)
 
             p = Process(
@@ -86,7 +89,8 @@ class MCR5:
             p_id_hex_id_map[p.pid] = h3_cell
 
         while self.get_active_process_count(processes) > 0:
-            self.print_status(processes, pbar)
+            if verbose:
+                self.print_status(processes, pbar)
             errors_list.extend([errors.get() for _ in range(errors.qsize())])
             if errors.full():
                 raise Exception("Error queue is full.")

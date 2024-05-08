@@ -5,6 +5,10 @@ import sys
 from datetime import datetime
 from functools import partial
 
+from guppy import hpy
+
+heap = hpy()
+
 sys.path.append("../src/")
 from command.step_config import (
     get_bicycle_only_config,
@@ -19,17 +23,18 @@ from package.logger import rlog, setup
 from package.mcr5.mcr5 import MCR5
 
 setup("INFO")
+heap_status1 = heap.heap()
+rlog.info("Heap Size : %s bytes", str(heap_status1.size))
 
 city_id = "cologne"  # 'Koeln'
 city_id_osm = "koeln"
-date = "20240422"
+date = "20240427"
 geo_meta_path = f"../data/stateful_variables/{city_id.lower()}_geometa.pkl"
 stops = f"../data/gtfs-cleaned/{city_id.lower()}_{date}/stops.csv"
 structs = f"../data/gtfs-cleaned/{city_id.lower()}_{date}/structs.pkl"
 location_mapping_path = f"../data/city_data/location_mappings_{city_id.lower()}.pkl"
 bicycle_base_path = f"../data/sharing_locations_clustered/{city_id.lower()}_bikes/"
 mcr5_output_path = f"../data/mcr5/{city_id.lower()}_{date}"
-# bicycle_location_path = "../data/bicycle_locations/2022-11-01_09_01_00.csv"
 
 geo_meta = GeoMeta.load(geo_meta_path)
 
@@ -143,19 +148,16 @@ bicycle_public_transport_config_args = list(
 
 
 for i, (time, bicycle_location_path) in enumerate(bicycle_public_transport_config_args):
-    print(i, time, bicycle_location_path)
     configs[f"bicycle_public_transport_{i}"] = partial(
         get_bicyle_public_transport_config_ready, bicycle_location_path, time
     )
 
-print()
 for i, time in enumerate(times):
     print(i, time)
     configs[f"public_transport_{i}"] = partial(
         get_public_transport_only_config_ready, time
     )
 
-print()
 for i, bicycle_location_path in enumerate(bicycle_location_paths):
     print(i, bicycle_location_path)
     configs[f"bicycle_{i}"] = partial(
@@ -168,6 +170,8 @@ configs["walking"] = get_walking_only_config_ready
 if os.path.exists(mcr5_output_path):
     raise Exception("Output path already exists")
 
+heap_status2 = heap.heap()
+rlog.info("Heap Size : %s bytes", str(heap_status2.size))
 
 runtimes = {}
 for key, config in configs.items():
@@ -199,6 +203,13 @@ for key, config in configs.items():
         "run_time": run_time,
         "total_time": total_time,
     }
+    heap_status3 = heap.heap()
+    rlog.info("Heap Size : %s bytes", str(heap_status3.size))
+    rlog.info(
+        "Memory Usage after a single run %s bytes",
+        str(heap_status3.size - heap_status2.size),
+    )
+    rlog.info(heap_status3)
 
 with open(os.path.join(mcr5_output_path, "runtimes.pkl"), "wb") as f:
     pickle.dump(runtimes, f)
