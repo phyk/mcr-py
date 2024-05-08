@@ -4,7 +4,6 @@ from package.mcr.label import IntermediateLabel
 from package.mcr.path import PathManager, PathType, Path, GTFSPath
 
 
-
 @pytest.fixture
 def path_manager() -> PathManager:
     return PathManager()
