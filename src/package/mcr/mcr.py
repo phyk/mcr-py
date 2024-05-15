@@ -1,9 +1,10 @@
 from typing import Any, Optional
-from typing_extensions import Sequence
 
 import pandas as pd
+from typing_extensions import Sequence
 
 from package import storage, strtime
+from package.mcr.bag import IntermediateBags
 from package.mcr.config import MCRConfig
 from package.mcr.label import (
     IntermediateLabel,
@@ -12,8 +13,6 @@ from package.mcr.label import (
 from package.mcr.output import OutputFormat
 from package.mcr.path import PathManager
 from package.mcr.steps.interface import Step, StepBuilder
-from package.mcr.bag import IntermediateBags
-
 
 StepBuilderMatrix = Sequence[Sequence[StepBuilder]]
 StepMatrix = list[list[Step]]
