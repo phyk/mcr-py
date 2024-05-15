@@ -5,9 +5,8 @@ import sys
 from datetime import datetime
 from functools import partial
 
+import psutil
 from guppy import hpy
-
-heap = hpy()
 
 sys.path.append("../src/")
 from command.step_config import (
@@ -17,23 +16,33 @@ from command.step_config import (
     get_public_transport_only_config,
     get_walking_only_config,
 )
-from package import storage
+from package import key, storage
 from package.geometa import GeoMeta
 from package.logger import rlog, setup
 from package.mcr5.mcr5 import MCR5
 
+heap = hpy()
 setup("INFO")
-heap_status1 = heap.heap()
-rlog.info("Heap Size : %s bytes", str(heap_status1.size))
+
+
+def pretty_bytes(b: float) -> str:
+    for unit in ["B", "KiB", "MiB", "GiB", "TiB", "PiB"]:
+        if b < 1024:
+            return f"{b:.2f} {unit}"
+        b /= 1024
+    return f"{b:.2f}EiB"
+
+
+key.TMP_DIR_LOCATION = "../tmp"
 
 city_id = "cologne"  # 'Koeln'
-city_id_osm = "koeln"
-date = "20240427"
+city_id_osm = "Koeln"
+date = "20240529"
 geo_meta_path = f"../data/stateful_variables/{city_id.lower()}_geometa.pkl"
 stops = f"../data/gtfs-cleaned/{city_id.lower()}_{date}/stops.csv"
 structs = f"../data/gtfs-cleaned/{city_id.lower()}_{date}/structs.pkl"
 location_mapping_path = f"../data/city_data/location_mappings_{city_id.lower()}.pkl"
-bicycle_base_path = f"../data/sharing_locations_clustered/{city_id.lower()}_bikes/"
+bicycle_base_path = f"../data/sharing_locations_clustered/{city_id.lower()}_nextbike/"
 mcr5_output_path = f"../data/mcr5/{city_id.lower()}_{date}"
 
 geo_meta = GeoMeta.load(geo_meta_path)
@@ -171,7 +180,9 @@ if os.path.exists(mcr5_output_path):
     raise Exception("Output path already exists")
 
 heap_status2 = heap.heap()
-rlog.info("Heap Size : %s bytes", str(heap_status2.size))
+pre_loop_memory = psutil.Process().memory_info().rss
+rlog.info("Heap Size : %s", pretty_bytes(heap_status2.size))
+rlog.info("Pre Loop Memory : %s", pretty_bytes(pre_loop_memory))
 
 runtimes = {}
 for key, config in configs.items():
@@ -180,6 +191,11 @@ for key, config in configs.items():
 
     config = config()
     mcr5 = MCR5(**config["init_kwargs"], max_processes=8)
+    memory_pre_loop = psutil.Process().memory_info().rss
+    rlog.info(
+        "Memory difference after mcr5 load: %s",
+        pretty_bytes(pre_loop_memory - memory_pre_loop),
+    )
 
     loaded_at = datetime.now()
     load_time = loaded_at - start
@@ -189,6 +205,7 @@ for key, config in configs.items():
     location_mappings = config["location_mappings"]
 
     start_time = config.get("start_time", "08:00:00")
+
     errors = mcr5.run(
         location_mappings,
         start_time=start_time,
@@ -203,13 +220,13 @@ for key, config in configs.items():
         "run_time": run_time,
         "total_time": total_time,
     }
-    heap_status3 = heap.heap()
-    rlog.info("Heap Size : %s bytes", str(heap_status3.size))
+    memory_in_loop = psutil.Process().memory_info().rss
+    rlog.info("Memory in Loop : %s", pretty_bytes(memory_in_loop))
     rlog.info(
-        "Memory Usage after a single run %s bytes",
-        str(heap_status3.size - heap_status2.size),
+        "Memory difference after a single run %s",
+        pretty_bytes(memory_in_loop - pre_loop_memory),
     )
-    rlog.info(heap_status3)
+    pre_loop_memory = memory_in_loop
 
 with open(os.path.join(mcr5_output_path, "runtimes.pkl"), "wb") as f:
     pickle.dump(runtimes, f)

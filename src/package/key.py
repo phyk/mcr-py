@@ -1,8 +1,7 @@
 import multiprocessing
 import os
-from typing import TypeVar
 import tempfile
-
+from typing import TypeVar
 
 TRIPS_KEY = "trips"
 STOP_TIMES_KEY = "stop_times"
@@ -94,4 +93,4 @@ TRACER_MAP_KEY = "tracer_map"
 S = TypeVar("S")  # additional information about stop
 T = TypeVar("T")  # additional information about trip
 
-DEFAULT_N_PROCESSES = multiprocessing.cpu_count() // 4
+DEFAULT_N_PROCESSES = multiprocessing.cpu_count()
