@@ -1,6 +1,6 @@
-from package import strtime
 import pandas as pd
 
+from package import strtime
 
 PROFILE_MAX_TIME = strtime.str_time_to_seconds("48:00:00")
 

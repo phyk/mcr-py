@@ -1,14 +1,15 @@
 from typing import Generic, Optional
+
 from typing_extensions import Any, Self
 
 from package import strtime
 from package.key import S, T
 from package.logger import rlog
-from package.raptor.bag import L, Bag, RouteBag
+from package.raptor.bag import Bag, L, RouteBag
 from package.raptor.data import ExpandedDataQuerier
 from package.tracer.tracer import (
-    TraceStart,
     TracerMap,
+    TraceStart,
 )
 
 

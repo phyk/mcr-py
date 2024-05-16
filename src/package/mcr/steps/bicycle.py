@@ -1,11 +1,14 @@
 from logging import Logger
-import numpy as np
 from typing import Optional
+
+import geopandas as gpd
+import numpy as np
+from mcr_py import GraphCache
+
 from package import storage
 from package.geometa import GeoMeta
+from package.logger import Timer, rlog
 from package.mcr.bag import IntermediateBags
-from mcr_py import GraphCache
-from package.logger import Timer
 from package.mcr.data import (
     AVG_BIKING_SPEED,
     DRIVING_PREFIX,
@@ -21,9 +24,7 @@ from package.mcr.data import (
 from package.mcr.path import PathManager, PathType
 from package.mcr.steps.interface import StepBuilder
 from package.mcr.steps.mlc import MLCStep
-import geopandas as gpd
 from package.osm import osm
-from package.logger import rlog
 
 
 class BicycleStep(MLCStep):

@@ -1,7 +1,7 @@
 import pytest
-from package.mcr.label import IntermediateLabel
 
-from package.mcr.path import PathManager, PathType, Path, GTFSPath
+from package.mcr.label import IntermediateLabel
+from package.mcr.path import GTFSPath, Path, PathManager, PathType
 
 
 @pytest.fixture

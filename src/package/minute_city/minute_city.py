@@ -1,16 +1,17 @@
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
+
+import geopandas as gpd
+import pandas as pd
 from shapely.geometry import Polygon
 from tqdm.auto import tqdm
-from package import cache
-from package.osm import key, osm
-import geopandas as gpd
-from package.overpass import attributes, query
-import pandas as pd
-from functools import partial
-from concurrent.futures import ProcessPoolExecutor
-import multiprocessing
-from package.logger import Timed
 
+from package import cache
+from package.logger import Timed
 from package.minute_city import profile
+from package.osm import key, osm
+from package.overpass import attributes, query
 
 
 def fetch_pois_for_area(

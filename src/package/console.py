@@ -1,6 +1,6 @@
-from typing_extensions import Any
 from rich import print
 from rich.tree import Tree
+from typing_extensions import Any
 
 
 def print_tree_from_any(data: Any, root_name: str = ":root:"):

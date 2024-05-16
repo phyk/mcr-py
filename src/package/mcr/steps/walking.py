@@ -1,5 +1,6 @@
-from package.mcr.path import PathType
-from package.osm import osm
+import pandas as pd
+from mcr_py import GraphCache
+
 from package.mcr.data import (
     TRAVEL_TIME_COLUMN,
     add_weights,
@@ -8,10 +9,10 @@ from package.mcr.data import (
     reset_node_ids,
     to_mlc_edges,
 )
+from package.mcr.path import PathType
 from package.mcr.steps.interface import StepBuilder
-from mcr_py import GraphCache
 from package.mcr.steps.mlc import MLCStep
-import pandas as pd
+from package.osm import osm
 
 
 class WalkingStep(MLCStep):

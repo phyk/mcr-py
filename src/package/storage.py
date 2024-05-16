@@ -1,11 +1,12 @@
-from typing_extensions import Any
-import requests
-import pandas as pd
-import geopandas as gpd
 import os
 import pickle
-from package import key
 
+import geopandas as gpd
+import pandas as pd
+import requests
+from typing_extensions import Any
+
+from package import key
 from package.gtfs import dtypes
 
 

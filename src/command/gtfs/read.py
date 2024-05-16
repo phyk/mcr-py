@@ -1,9 +1,8 @@
 from typing import Annotated
-import typer
 
+import typer
 from package import key
 from package.gtfs import read
-
 
 app = typer.Typer()
 

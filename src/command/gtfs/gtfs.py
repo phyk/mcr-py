@@ -1,15 +1,15 @@
 from datetime import datetime
 from typing import Optional
-from typing_extensions import Annotated
-from package.geometa import GeoMeta
+
 import typer
-from shapely.geometry import Polygon
-
 from package import key, storage
-from package.gtfs import clean, catalog, crop
+from package.geometa import GeoMeta
+from package.gtfs import catalog, clean, crop
 from package.logger import Timed
-from command.gtfs import read
+from shapely.geometry import Polygon
+from typing_extensions import Annotated
 
+from command.gtfs import read
 
 app = typer.Typer()
 

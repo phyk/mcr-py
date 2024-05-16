@@ -1,13 +1,12 @@
-from enum import Enum
 import os
+from enum import Enum
 
 import geopandas as gpd
-from package.geometa import GeoMeta
 
-from package.osm import osm
-from package.logger import Timed, rlog
-from package.osm import igraph, graph
 from package import storage
+from package.geometa import GeoMeta
+from package.logger import Timed, rlog
+from package.osm import graph, igraph, osm
 
 
 class GenerationMethod(Enum):

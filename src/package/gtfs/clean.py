@@ -1,9 +1,9 @@
-import pandas as pd
 import geopandas as gpd
+import pandas as pd
 
 from package import key
-from package.logger import Timed
 from package.gtfs import archive
+from package.logger import Timed
 
 
 def clean(gtfs_zip_path: str) -> dict[str, pd.DataFrame]:

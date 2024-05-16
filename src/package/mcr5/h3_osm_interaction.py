@@ -1,6 +1,6 @@
-from scipy.spatial import cKDTree
 import pandas as pd
 from h3 import h3
+from scipy.spatial import cKDTree
 
 
 class H3OSMLocationMapping:

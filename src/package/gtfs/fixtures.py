@@ -1,10 +1,11 @@
-import pytest
 import pandas as pd
+import pytest
+
 from package.gtfs.clean import (
     add_first_stop_info,
     create_paths_df,
-    split_routes_by_direction,
     split_routes,
+    split_routes_by_direction,
 )
 
 ROUTE1_ID = "route1"

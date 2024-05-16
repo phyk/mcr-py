@@ -1,6 +1,5 @@
 from package import key
 
-
 GTFS_DTYPES = {
     key.TRIP_ID_KEY: "string",
     key.STOP_ID_KEY: "string",

@@ -1,9 +1,9 @@
-import pyrosm
 import geopandas as gpd
 import igraph as ig
+import pyrosm
 from tqdm.contrib.concurrent import process_map
-from package import key
 
+from package import key
 from package.logger import Timed
 
 

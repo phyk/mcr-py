@@ -1,5 +1,5 @@
-import pytest
 import pandas as pd
+import pytest
 
 from package.structs.build import (
     create_id_sets,

@@ -1,11 +1,8 @@
-from typing_extensions import Annotated
-
 import typer
-
-from command import build, footpaths, mcr, raptor, osm
+from command import build, footpaths, mcr, osm, raptor
 from command.gtfs import gtfs
-from package import logger, key
-
+from package import key, logger
+from typing_extensions import Annotated
 
 app = typer.Typer(pretty_exceptions_show_locals=False)
 app.command(key.BUILD_STRUCTURES_COMMAND_NAME)(build.build_structures)

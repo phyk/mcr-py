@@ -1,7 +1,5 @@
 import shutil
-from pandas.compat import os
 
-from command.raptor import raptor
 from package import storage, strtime
 from package.output import enrich_raptor_trace_results
 from package.tracer.tracer import (
@@ -9,7 +7,9 @@ from package.tracer.tracer import (
     EnrichedTraceStart,
     EnrichedTraceTrip,
 )
+from pandas.compat import os
 
+from command.raptor import raptor
 
 NESSELRODE_STR_STOP_ID = "818"
 EHRENFELD_BF_STOP_ID = "835"

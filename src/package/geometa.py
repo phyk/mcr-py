@@ -1,8 +1,9 @@
-from shapely.geometry import MultiPolygon, Point, Polygon
 import pickle
+
+import folium
 import geopandas as gpd
 import pandas as pd
-import folium
+from shapely.geometry import MultiPolygon, Point, Polygon
 
 from package import cache
 

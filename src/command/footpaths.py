@@ -1,11 +1,11 @@
-from typing_extensions import Annotated
-from pyrosm.data import os
 import typer
-
 from package import storage
-from package.footpaths import GenerationMethod, generate as direct_generate
-from package.key import COMPLETE_GTFS_CLEAN_COMMAND_NAME, STOPS_KEY, FOOTPATHS_KEY
+from package.footpaths import GenerationMethod
+from package.footpaths import generate as direct_generate
+from package.key import COMPLETE_GTFS_CLEAN_COMMAND_NAME, FOOTPATHS_KEY, STOPS_KEY
 from package.logger import Timed
+from pyrosm.data import os
+from typing_extensions import Annotated
 
 CLEAN_STOPS_FILENAME = storage.get_df_filename_for_name(STOPS_KEY)
 

@@ -1,5 +1,6 @@
 import sys
 from typing import Generic, Optional
+
 from typing_extensions import Self
 
 from package.key import S, T

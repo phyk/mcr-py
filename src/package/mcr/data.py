@@ -1,12 +1,12 @@
 from enum import Enum
 from typing import Tuple, TypeVar
-import pandas as pd
+
 import networkx as nx
+import pandas as pd
 
 from package.geometa import GeoMeta
 from package.logger import rlog
-from package.osm import osm, graph
-
+from package.osm import graph, osm
 
 ACCURACY = 1
 ACCURACY_MULTIPLIER = 10 ** (ACCURACY - 1)

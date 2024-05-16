@@ -1,10 +1,11 @@
 from copy import deepcopy
 from typing import Generic, Tuple
+
 from typing_extensions import Any, Self
 
 from package.key import S, T
 from package.logger import rlog
-from package.raptor.bag import L, Bag, RouteBag
+from package.raptor.bag import Bag, L, RouteBag
 from package.raptor.data import DataQuerier
 
 

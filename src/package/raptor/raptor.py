@@ -1,18 +1,17 @@
-from typing import Optional
-from typing_extensions import Self
-
 import sys
+from typing import Optional
+
+from typing_extensions import Self
 
 from package import strtime
 from package.logger import rlog
 from package.raptor.data import DataQuerier
 from package.tracer.tracer import (
-    TraceStart,
-    TraceTrip,
     TraceFootpath,
     TracerMap,
+    TraceStart,
+    TraceTrip,
 )
-
 
 MarkedRouteStopTuples = dict[str, tuple[str, int]]
 TausPerIteration = dict[int, dict[str, int]]

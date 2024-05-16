@@ -1,11 +1,13 @@
-from typing import Callable, Optional
-import pandas as pd
-import numpy as np
-from h3 import h3
-from package import key
 from multiprocessing import Pool
+from typing import Callable, Optional
+
 import folium
+import numpy as np
+import pandas as pd
 from branca.colormap import LinearColormap
+from h3 import h3
+
+from package import key
 
 
 def add_h3_cell_id_to_df(df: pd.DataFrame, resolution: int) -> pd.DataFrame:
@@ -37,6 +39,26 @@ def add_h3_cell_id_to_df_with_batching(
         )
 
     return pd.concat(results, ignore_index=True)
+
+
+def plot_h3_cells_discrete_colors_on_folium(
+    h3_cells: dict[str, str], folium_map: folium.Map, color_scheme: dict[str, str]
+):
+    for h3_cell in h3_cells:
+        geo_boundary = list(h3.h3_to_geo_boundary(h3_cell))
+        geo_boundary.append(geo_boundary[0])
+
+        value = h3_cells[h3_cell]
+        color = color_scheme[value]
+
+        folium.Polygon(
+            locations=geo_boundary,
+            color=color,
+            weight=0.2,
+            opacity=1,
+            fill_opacity=1,
+            fill_color=color,
+        ).add_to(folium_map)
 
 
 def plot_h3_cells_on_folium(

@@ -1,9 +1,12 @@
 from logging import Logger
 from typing import Optional
-from package import storage
-from package.mcr.bag import IntermediateBags
+
+import geopandas as gpd
 from mcr_py import GraphCache
+
+from package import storage
 from package.logger import Timer
+from package.mcr.bag import IntermediateBags
 from package.mcr.data import (
     AVG_CAR_SPEED,
     DRIVING_PREFIX,
@@ -19,7 +22,6 @@ from package.mcr.data import (
 from package.mcr.path import PathManager, PathType
 from package.mcr.steps.interface import StepBuilder
 from package.mcr.steps.mlc import MLCStep
-import geopandas as gpd
 from package.osm import osm
 
 
