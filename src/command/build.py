@@ -1,14 +1,14 @@
 import os
 from typing import Annotated
+
 import typer
 from package import storage
-
 from package.key import (
-    TRIPS_KEY,
     STOP_TIMES_KEY,
+    TRIPS_KEY,
 )
-from package.structs.build import build_structures as build_structures_direct
 from package.logger import Timed
+from package.structs.build import build_structures as build_structures_direct
 
 
 def build_structures(

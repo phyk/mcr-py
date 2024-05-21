@@ -1,5 +1,6 @@
 from logging import Logger
 from typing import Optional
+
 from package.logger import Timer
 from package.mcr.bag import IntermediateBags
 from package.mcr.path import PathManager

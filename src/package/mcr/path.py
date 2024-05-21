@@ -3,7 +3,6 @@ from typing import Any, Optional
 
 from package.mcr.label import IntermediateLabel
 
-
 PathPoints = list[int | str]
 
 

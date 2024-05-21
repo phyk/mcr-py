@@ -1,7 +1,8 @@
-import pyrosm
 import geopandas as gpd
 import networkx as nx
 import osmnx as ox
+import pyrosm
+
 from package.logger import rlog
 
 

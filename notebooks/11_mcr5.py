@@ -10,15 +10,16 @@ import psutil
 
 sys.path.append("../src/")
 from command.step_config import (
-    get_bicycle_only_config,
-    get_bicycle_public_transport_config,
-    get_car_only_config,
-    get_public_transport_only_config,
-    get_walking_only_config,
+    get_bicycle_only_config_with_data,
+    get_bicycle_public_transport_config_with_data,
+    get_car_only_config_with_data,
+    get_public_transport_only_config_with_data,
+    get_walking_only_config_with_data,
 )
 from package import key, storage
 from package.geometa import GeoMeta
 from package.logger import rlog, setup
+from package.mcr.data import NetworkType, OSMData
 from package.mcr5.mcr5 import MCR5
 
 setup("INFO")
@@ -45,6 +46,11 @@ bicycle_base_path = f"../data/sharing_locations_clustered/{city_id.lower()}_next
 mcr5_output_path = f"../data/mcr5/{city_id.lower()}_{date}"
 
 geo_meta = GeoMeta.load(geo_meta_path)
+geo_data = OSMData(
+    geo_meta,
+    city_id,
+    additional_network_types=[NetworkType.DRIVING, NetworkType.CYCLING],
+)
 
 lm_data = storage.read_any_dict(location_mapping_path)
 location_mappings = lm_data["location_mappings"]
@@ -54,9 +60,9 @@ configs = {}
 
 
 def get_bicyle_public_transport_config_ready(bicycle_location_path, start_time):
-    initial_steps, repeating_steps = get_bicycle_public_transport_config(
-        geo_meta_path=geo_meta_path,
-        city_id=city_id_osm,
+    initial_steps, repeating_steps = get_bicycle_public_transport_config_with_data(
+        geo_meta=geo_meta,
+        geo_data=geo_data,
         bicycle_price_function="next_bike_no_tariff",
         bicycle_location_path=bicycle_location_path,
         structs_path=structs,
@@ -74,9 +80,9 @@ def get_bicyle_public_transport_config_ready(bicycle_location_path, start_time):
 
 
 def get_car_only_config_ready():
-    initial_steps, repeating_steps = get_car_only_config(
-        geo_meta_path=geo_meta_path,
-        city_id=city_id_osm,
+    initial_steps, repeating_steps = get_car_only_config_with_data(
+        geo_meta=geo_meta,
+        geo_data=geo_data,
     )
     return {
         "init_kwargs": {
@@ -89,9 +95,9 @@ def get_car_only_config_ready():
 
 
 def get_bicycle_only_config_ready(bicycle_location_path):
-    initial_steps, repeating_steps = get_bicycle_only_config(
-        geo_meta_path=geo_meta_path,
-        city_id=city_id_osm,
+    initial_steps, repeating_steps = get_bicycle_only_config_with_data(
+        geo_meta=geo_meta,
+        geo_data=geo_data,
         bicycle_price_function="next_bike_no_tariff",
         bicycle_location_path=bicycle_location_path,
     )
@@ -106,9 +112,9 @@ def get_bicycle_only_config_ready(bicycle_location_path):
 
 
 def get_public_transport_only_config_ready(start_time):
-    initial_steps, repeating_steps = get_public_transport_only_config(
-        geo_meta_path=geo_meta_path,
-        city_id=city_id_osm,
+    initial_steps, repeating_steps = get_public_transport_only_config_with_data(
+        geo_meta=geo_meta,
+        geo_data=geo_data,
         structs_path=structs,
         stops_path=stops,
     )
@@ -124,9 +130,9 @@ def get_public_transport_only_config_ready(start_time):
 
 
 def get_walking_only_config_ready():
-    initial_steps, repeating_steps = get_walking_only_config(
-        geo_meta_path=geo_meta_path,
-        city_id=city_id_osm,
+    initial_steps, repeating_steps = get_walking_only_config_with_data(
+        geo_meta=geo_meta,
+        geo_data=geo_data,
     )
     return {
         "init_kwargs": {

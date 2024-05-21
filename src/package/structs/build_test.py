@@ -1,15 +1,15 @@
 import pandas as pd
 
+from package import strtime
 from package.structs.build import (
     create_id_sets,
     create_idx_by_stop_by_route,
     create_routes_by_stop,
     create_stop_times_by_trip,
+    create_stops_by_route_ordered,
     create_times_by_stop_by_trip,
     create_trip_ids_by_route_sorted_by_departure,
 )
-from package import strtime
-from package.structs.build import create_stops_by_route_ordered
 
 
 def test_create_stop_times_by_trip(stop_times_df: pd.DataFrame):

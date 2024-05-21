@@ -10,9 +10,9 @@ from package.tracer.tracer import (
     EnrichedTraceTrip,
     Trace,
     TraceFootpath,
+    TracerMap,
     TraceStart,
     TraceTrip,
-    TracerMap,
 )
 
 

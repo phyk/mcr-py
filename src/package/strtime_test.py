@@ -1,7 +1,8 @@
-import pytest
 import sys
 
-from package.strtime import str_time_to_seconds, seconds_to_str_time
+import pytest
+
+from package.strtime import seconds_to_str_time, str_time_to_seconds
 
 
 def test_str_time_to_seconds():

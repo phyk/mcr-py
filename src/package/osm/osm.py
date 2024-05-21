@@ -1,24 +1,22 @@
-from enum import Enum
 import os
 import shutil
+from enum import Enum
 from typing import Tuple
+
+import geopandas as gpd
+import pandas as pd
+import pyrosm
+from osmnx.distance import cKDTree
+from pyrosm.data import get_data
+from rich import print
+from shapely.geometry import MultiPoint
 from typing_extensions import Annotated
 
-import pyrosm
-import pandas as pd
-import geopandas as gpd
-from shapely.geometry import MultiPoint
-from pyrosm.data import get_data
-from package import storage, cache
+from package import cache, console, key, storage
 from package.geometa import GeoMeta
-from package.osm import osm, key as osm_key
 from package.logger import Timed, rlog
-from package.osm import graph
-from rich import print
-from osmnx.distance import cKDTree
-
-
-from package import console, key
+from package.osm import graph, osm
+from package.osm import key as osm_key
 
 OSM_DIR_PATH = storage.get_tmp_path(key.TMP_OSM_DIR_NAME)
 

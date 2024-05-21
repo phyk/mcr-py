@@ -1,16 +1,14 @@
 from typing import Optional
-from typing_extensions import Annotated
-from geopandas import pd
 
-from pyrosm.data import os
 import typer
-
-from package import storage
-from package import key
-from package.raptor.raptor import Raptor
-from package.structs import build
+from geopandas import pd
+from package import key, storage
 from package.key import BUILD_STRUCTURES_COMMAND_NAME, FOOTPATHS_COMMAND_NAME
 from package.logger import Timed
+from package.raptor.raptor import Raptor
+from package.structs import build
+from pyrosm.data import os
+from typing_extensions import Annotated
 
 FOOTPATHS_HELP = f"""
 A path that should point to a pickle file containing footpaths, as generated \

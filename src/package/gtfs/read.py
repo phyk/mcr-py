@@ -1,7 +1,7 @@
-from rich.table import Table
-from rich.console import Console
-from pyrosm.data import os
 import pandas as pd
+from pyrosm.data import os
+from rich.console import Console
+from rich.table import Table
 
 from package import key, storage
 from package.gtfs import archive

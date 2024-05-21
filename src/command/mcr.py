@@ -1,6 +1,9 @@
-from typing_extensions import Annotated
-
 import typer
+from package.logger import Timed
+from package.mcr import mcr
+from package.mcr.config import MCRConfig
+from package.mcr.output import OutputFormat
+from typing_extensions import Annotated
 
 from command.footpaths import CITY_ID_HELP, OSM_HELP, STOPS_HELP
 from command.raptor import STRUCTS_HELP
@@ -17,10 +20,6 @@ from command.step_config import (
     get_public_transport_only_config,
     get_walking_only_config,
 )
-from package.mcr import mcr
-from package.logger import Timed
-from package.mcr.config import MCRConfig
-from package.mcr.output import OutputFormat
 
 
 def run(

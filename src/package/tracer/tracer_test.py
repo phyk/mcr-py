@@ -1,6 +1,6 @@
 import pytest
 
-from package.tracer.tracer import TracerMap, TraceStart, TraceTrip, TraceFootpath
+from package.tracer.tracer import TraceFootpath, TracerMap, TraceStart, TraceTrip
 
 
 @pytest.fixture

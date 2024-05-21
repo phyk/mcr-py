@@ -1,5 +1,6 @@
 from copy import deepcopy
 from typing import Generic, Optional, TypeVar
+
 from typing_extensions import Self
 
 from package.key import S, T

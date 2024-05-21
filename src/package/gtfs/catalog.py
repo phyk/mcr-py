@@ -1,16 +1,15 @@
+import os
 from re import IGNORECASE
-from typing_extensions import Any
 
 from geopandas import pd
-import os
 from osmnx.elevation import requests
+from rich import print
 from rich.console import Console
 from rich.table import Table
-from rich import print
+from typing_extensions import Any
 
 from package import key, storage
-from package.logger import Timed
-from package.logger import rlog
+from package.logger import Timed, rlog
 
 CATALOG_PATH = storage.get_tmp_path(
     key.TMP_GTFS_DIR_NAME, key.TMP_GTFS_CATALOG_FILE_NAME

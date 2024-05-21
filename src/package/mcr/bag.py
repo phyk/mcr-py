@@ -1,8 +1,9 @@
 from typing import Callable
+
 from mcr_py import PyLabel
+
 from package.mcr.label import IntermediateLabel, McRAPTORLabel, McRAPTORLabelWithPath
 from package.raptor.bag import Bag
-
 
 # key is osm_node_id, value is list of labels
 IntermediateBags = dict[int, list[IntermediateLabel]]

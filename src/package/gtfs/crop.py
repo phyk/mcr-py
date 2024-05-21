@@ -2,9 +2,9 @@ from datetime import datetime
 from typing import Tuple
 
 from geopandas import pd
+
 from package import key
 from package.geometa import GeoMeta
-
 from package.gtfs import archive
 from package.logger import Timed, rlog
 

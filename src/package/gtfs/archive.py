@@ -1,13 +1,12 @@
 import zipfile
 
 import pandas as pd
+
 from package.gtfs import dtypes
-
-
 from package.key import (
     STOP_TIMES_KEY,
-    TRIPS_KEY,
     STOPS_KEY,
+    TRIPS_KEY,
 )
 from package.logger import rlog
 

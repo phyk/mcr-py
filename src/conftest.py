@@ -1,7 +1,6 @@
 import os
 
 import pytest
-
 from package.gtfs.fixtures import *
 from package.structs.fixtures import *
 

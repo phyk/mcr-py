@@ -1,12 +1,12 @@
+import inspect
 import io
 import logging
-import inspect
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
-from time import time
 import pathlib
+from logging import CRITICAL, DEBUG, ERROR, INFO, WARNING
+from time import time
 
-from rich.logging import RichHandler
 import click
+from rich.logging import RichHandler
 
 
 def setup(log_level: str):

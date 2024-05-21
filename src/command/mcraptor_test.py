@@ -1,15 +1,14 @@
 import shutil
-from pandas.compat import os
-from package.raptor.example_labels import ArrivalTimeLabel
 
-from package.raptor.mcraptor import McRaptor
 from package import storage, strtime
+from package.raptor.example_labels import ArrivalTimeLabel
+from package.raptor.mcraptor import McRaptor
 from package.tracer.tracer import (
     TraceFootpath,
     TraceStart,
     TraceTrip,
 )
-
+from pandas.compat import os
 
 NESSELRODE_STR_STOP_ID = "818"
 EHRENFELD_BF_STOP_ID = "835"

@@ -1,8 +1,8 @@
-import pandas as pd
 import folium
+import pandas as pd
 
-from package.tracer.tracer import TraceStart, TraceTrip, TraceFootpath, Trace
 from package import strtime
+from package.tracer.tracer import Trace, TraceFootpath, TraceStart, TraceTrip
 
 
 def add_tracer_list_to_folium_map(
