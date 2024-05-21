@@ -42,7 +42,10 @@ def add_h3_cell_id_to_df_with_batching(
 
 
 def plot_h3_cells_discrete_colors_on_folium(
-    h3_cells: dict[str, str], folium_map: folium.Map, color_scheme: dict[str, str]
+    h3_cells: dict[str, str],
+    folium_map: folium.Map,
+    color_scheme: dict[str, str],
+    fill_opacity=1,
 ):
     for h3_cell in h3_cells:
         geo_boundary = list(h3.h3_to_geo_boundary(h3_cell))
@@ -56,7 +59,7 @@ def plot_h3_cells_discrete_colors_on_folium(
             color=color,
             weight=0.2,
             opacity=1,
-            fill_opacity=1,
+            fill_opacity=fill_opacity,
             fill_color=color,
         ).add_to(folium_map)
 
