@@ -5,6 +5,7 @@ import folium
 import numpy as np
 import pandas as pd
 from branca.colormap import LinearColormap
+from branca.element import MacroElement, Template
 from h3 import h3
 
 from package import key
@@ -45,7 +46,7 @@ def plot_h3_cells_discrete_colors_on_folium(
     h3_cells: dict[str, str],
     folium_map: folium.Map,
     color_scheme: dict[str, str],
-    fill_opacity=1,
+    fill_opacity: float = 1,
 ):
     for h3_cell in h3_cells:
         geo_boundary = list(h3.h3_to_geo_boundary(h3_cell))
@@ -62,6 +63,113 @@ def plot_h3_cells_discrete_colors_on_folium(
             fill_opacity=fill_opacity,
             fill_color=color,
         ).add_to(folium_map)
+    add_legend_to_map(folium_map, color_scheme, fill_opacity)
+
+
+def add_legend_to_map(
+    folium_map: folium.Map,
+    color_scheme: dict[str, str],
+    opacity: float = 1,
+):
+    template = """
+{% macro html(this, kwargs) %}
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>jQuery UI Draggable - Default functionality</title>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  
+  <script>
+  $( function() {
+    $( "#maplegend" ).draggable({
+                    start: function (event, ui) {
+                        $(this).css({
+                            right: "auto",
+                            top: "auto",
+                            bottom: "auto"
+                        });
+                    }
+                });
+});
+
+  </script>
+</head>
+<body>
+
+ 
+<div id='maplegend' class='maplegend' 
+    style='position: absolute; z-index:9999; border:2px solid grey; background-color:rgba(255, 255, 255, 0.8);
+     border-radius:6px; padding: 10px; font-size:16px; right: 20px; top: 20px;'>
+     
+<div class='legend-title'>Legend</div>
+<div class='legend-scale'>
+  <ul class='legend-labels'>"""
+    template_part_2 = """
+  </ul>
+</div>
+</div>
+ 
+</body>
+</html>
+
+<style type='text/css'>
+  .maplegend .legend-title {
+    text-align: left;
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 90%;
+    }
+  .maplegend .legend-scale ul {
+    margin: 0;
+    margin-bottom: 5px;
+    padding: 0;
+    float: left;
+    list-style: none;
+    }
+  .maplegend .legend-scale ul li {
+    font-size: 80%;
+    list-style: none;
+    margin-left: 0;
+    line-height: 18px;
+    margin-bottom: 2px;
+    }
+  .maplegend ul.legend-labels li span {
+    display: block;
+    float: left;
+    height: 16px;
+    width: 30px;
+    margin-right: 5px;
+    margin-left: 0;
+    border: 1px solid #999;
+    }
+  .maplegend .legend-source {
+    font-size: 80%;
+    color: #777;
+    clear: both;
+    }
+  .maplegend a {
+    color: #777;
+    }
+</style>
+{% endmacro %}"""
+
+    for key_, value in color_scheme.items():
+        template += (
+            f'<li><span style="background:{value};opacity:{opacity}"></span>{key_}</li>'
+        )
+
+    template += template_part_2
+    macro = MacroElement()
+    macro._template = Template(template)
+
+    folium_map.get_root().add_child(macro)
+    return folium_map
 
 
 def plot_h3_cells_on_folium(
