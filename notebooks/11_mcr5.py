@@ -2,11 +2,11 @@ import itertools
 import os
 import pickle
 import sys
+import tracemalloc
 from datetime import datetime
 from functools import partial
 
 import psutil
-from guppy import hpy
 
 sys.path.append("../src/")
 from command.step_config import (
@@ -22,7 +22,6 @@ from package.logger import rlog, setup
 from package.mcr.data import NetworkType, OSMData
 from package.mcr5.mcr5 import MCR5
 
-heap = hpy()
 setup("INFO")
 
 
@@ -38,7 +37,7 @@ key.TMP_DIR_LOCATION = "../tmp"
 
 city_id = "cologne"  # 'Koeln'
 city_id_osm = "Koeln"
-date = "20240529"
+date = "20240530"
 geo_meta_path = f"../data/stateful_variables/{city_id.lower()}_geometa.pkl"
 stops = f"../data/gtfs-cleaned/{city_id.lower()}_{date}/stops.csv"
 structs = f"../data/gtfs-cleaned/{city_id.lower()}_{date}/structs.pkl"
@@ -185,10 +184,10 @@ configs["walking"] = get_walking_only_config_ready
 if os.path.exists(mcr5_output_path):
     raise Exception("Output path already exists")
 
-heap_status2 = heap.heap()
-pre_loop_memory = psutil.Process().memory_info().rss
-rlog.info("Heap Size : %s", pretty_bytes(heap_status2.size))
+pre_loop_memory = psutil.Process().memory_info().vms
 rlog.info("Pre Loop Memory : %s", pretty_bytes(pre_loop_memory))
+tracemalloc.start()
+snapshot1 = tracemalloc.take_snapshot()
 
 runtimes = {}
 for key, config in configs.items():
@@ -196,11 +195,22 @@ for key, config in configs.items():
     rlog.info(f"Running MCR5 for {key}")
 
     config = config()
+    snapshot1 = tracemalloc.take_snapshot()
     mcr5 = MCR5(**config["init_kwargs"], max_processes=8)
-    memory_pre_loop = psutil.Process().memory_info().rss
+
+    snapshot2 = tracemalloc.take_snapshot()
+    top_stats = snapshot2.compare_to(snapshot1, "lineno")
+    print("[ Top 10 differences ]")
+    for stat in top_stats[:10]:
+        print(stat)
+    snapshot1 = snapshot2
+
+    memory_pre_loop = psutil.Process().memory_info().vms
+    current, peak = tracemalloc.get_traced_memory()
     rlog.info(
-        "Memory difference after mcr5 load: %s",
-        pretty_bytes(pre_loop_memory - memory_pre_loop),
+        "Memory difference after mcr5 load: %s - %s",
+        pretty_bytes(memory_pre_loop - pre_loop_memory),
+        pretty_bytes(current),
     )
 
     loaded_at = datetime.now()
@@ -226,7 +236,7 @@ for key, config in configs.items():
         "run_time": run_time,
         "total_time": total_time,
     }
-    memory_in_loop = psutil.Process().memory_info().rss
+    memory_in_loop = psutil.Process().memory_info().vms
     rlog.info("Memory in Loop : %s", pretty_bytes(memory_in_loop))
     rlog.info(
         "Memory difference after a single run %s",
