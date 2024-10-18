@@ -17,7 +17,7 @@ pyo3 = "0.19.0"
 bimap = "0.6.3"
 fast_paths = { git = "https://github.com/easbar/fast_paths.git", rev = "6d236d1be5f341071c65ee36c540279986cf7231" }
 rayon = "1.7.0"
-mlc = { version = "0.1.0", path = "../mlc" }
+mlc = { version = "0.1.0", path = "mlc" }
 petgraph = "0.6.3"
 pyo3-log = "0.8.3"
 log = "0.4.20"
