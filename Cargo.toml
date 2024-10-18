@@ -1,11 +1,11 @@
 [package]
-name = "mcr-py"
+name = "_mcr_py"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "mcr_py"
+name = "_mcr_py"
 crate-type = ["cdylib"]
 
 [dependencies]

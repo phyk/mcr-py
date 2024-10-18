@@ -8,7 +8,7 @@
 		"ghcr.io/devcontainers/features/python:1": {
 			"installTools": true,
 			"optimize": true,
-			"version": "3.9"
+			"version": "3.11"
 		}
 	},
 	// Use 'mounts' to make the cargo cache persistent in a Docker Volume.
@@ -24,7 +24,19 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": ".devcontainer/install-dependencies.sh"
+	"postCreateCommand": ".devcontainer/install-dependencies.sh",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-toolsai.jupyter",
+				"ms-toolsai.vscode-jupyter-cell-tags",
+				"ms-python.python",
+				"ms-python.debugpy",
+				"charliermarsh.ruff",
+				"rust-lang.rust-analyzer"
+			]
+		}
+	}
 	// Configure tool-specific properties.
 	// "customizations": {},
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.

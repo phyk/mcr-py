@@ -16,11 +16,11 @@ from command.step_config import (
     get_public_transport_only_config_with_data,
     get_walking_only_config_with_data,
 )
-from package import key, storage
-from package.geometa import GeoMeta
-from package.logger import rlog, setup
-from package.mcr.data import NetworkType, OSMData
-from package.mcr5.mcr5 import MCR5
+from mcr_py.package import key, storage
+from mcr_py.package.geometa import GeoMeta
+from mcr_py.package.logger import rlog, setup
+from mcr_py.package.mcr.data import NetworkType, OSMData
+from mcr_py.package.mcr5.mcr5 import MCR5
 
 setup("INFO")
 

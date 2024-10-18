@@ -12,7 +12,7 @@ fn log_something() {
 }
 
 #[pymodule]
-fn mcr_py(_py: Python, m: &PyModule) -> PyResult<()> {
+fn _mcr_py(_py: Python, m: &PyModule) -> PyResult<()> {
     pyo3_log::init();
     let _ = Logger::new(_py, Caching::LoggersAndLevels)?.install();
 

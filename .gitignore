@@ -6,3 +6,5 @@ target
 /.vscode
 mlc
 .DS_Store
+.venv
+*.so

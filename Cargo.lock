@@ -3,6 +3,20 @@
 version = 3
 
 [[package]]
+name = "_mcr_py"
+version = "0.1.0"
+dependencies = [
+ "bimap",
+ "fast_paths",
+ "log",
+ "mlc",
+ "petgraph",
+ "pyo3",
+ "pyo3-log",
+ "rayon",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -264,20 +278,6 @@ name = "log"
 version = "0.4.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
-
-[[package]]
-name = "mcr-py"
-version = "0.1.0"
-dependencies = [
- "bimap",
- "fast_paths",
- "log",
- "mlc",
- "petgraph",
- "pyo3",
- "pyo3-log",
- "rayon",
-]
 
 [[package]]
 name = "memchr"
