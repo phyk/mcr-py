@@ -1,6 +1,7 @@
 import os
 from re import IGNORECASE
 
+import requests
 from geopandas import pd
 from rich import print
 from rich.console import Console
@@ -39,7 +40,8 @@ ID_COLOR = "magenta"
 def list_catalog(country_code: str, subdivision_name: str, municipality: str):
     """List all available GTFS feeds."""
     catalog = get_catalog()
-    catalog = filter_catalog(catalog, country_code, subdivision_name, municipality)
+    catalog = filter_catalog(catalog, country_code,
+                             subdivision_name, municipality)
 
     print_catalog(catalog)
     print(f"Total: [bold]{len(catalog)}[/bold]\n")
@@ -69,7 +71,8 @@ def download_catalog():
 
 def pre_filter_catalog(catalog: pd.DataFrame) -> pd.DataFrame:
     catalog = catalog[catalog[COL_DATA_TYPE] == "gtfs"]
-    catalog = catalog[(catalog[COL_AUTH_TYPE] != 1) & (catalog[COL_AUTH_TYPE] != 2)]
+    catalog = catalog[(catalog[COL_AUTH_TYPE] != 1) &
+                      (catalog[COL_AUTH_TYPE] != 2)]
     return catalog
 
 
@@ -78,7 +81,8 @@ def filter_catalog(
 ) -> pd.DataFrame:
     if country_code:
         catalog = catalog[
-            catalog[COL_COUNTRY_CODE].str.contains(country_code, flags=IGNORECASE)
+            catalog[COL_COUNTRY_CODE].str.contains(
+                country_code, flags=IGNORECASE)
         ]
     if subdivision_name:
         catalog = catalog[
@@ -88,7 +92,8 @@ def filter_catalog(
         ]
     if municipality:
         catalog = catalog[
-            catalog[COL_MUNICIPALITY].str.contains(municipality, flags=IGNORECASE)
+            catalog[COL_MUNICIPALITY].str.contains(
+                municipality, flags=IGNORECASE)
         ]
     return catalog
 
@@ -100,7 +105,8 @@ def print_catalog(catalog: pd.DataFrame):
 
     table = Table(title="GTFS Catalog", show_lines=True)
 
-    index_max_length = max(int(catalog.index.astype(str).str.len().max()), len("ID"))
+    index_max_length = max(
+        int(catalog.index.astype(str).str.len().max()), len("ID"))
     country_code_max_length = max(
         int(catalog[COL_COUNTRY_CODE].str.len().max()), len("Code")
     )

@@ -10,8 +10,6 @@ from mcr_py.package.geometa import GeoMeta
 from mcr_py.package.gtfs import catalog, clean, crop
 from mcr_py.package.logger import Timed
 
-from mcr_py.package.gtfs import read
-
 app = typer.Typer()
 
 
@@ -171,4 +169,4 @@ def main():
     pass
 
 
-app.add_typer(read.app, name=key.GTFS_SUB_UPPER_READ_COMMAND_NAME)
+app.add_typer(app, name=key.GTFS_SUB_UPPER_READ_COMMAND_NAME)
