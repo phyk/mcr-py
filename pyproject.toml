@@ -28,6 +28,7 @@ maturin = "^1.7.4"
 folium = "^0.17.0"
 pyrosm = "^0.6.2"
 requests = "^2.32.3"
+overpy = "^0.7"
 
 [tool.poetry.group.dev.dependencies]
 maturin = "^1.7.4"

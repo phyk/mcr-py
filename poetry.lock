@@ -1579,6 +1579,17 @@ files = [
 ]
 
 [[package]]
+name = "overpy"
+version = "0.7"
+description = "Python Wrapper to access the OpenStreepMap Overpass API"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "overpy-0.7-py3-none-any.whl", hash = "sha256:cc888c9dcdf9076e667b435909f57e028845c4a1133b6a6f3528284a304516c3"},
+    {file = "overpy-0.7.tar.gz", hash = "sha256:f6df5073de0cc1f63aed6d2632140f98c3d91fa3a2e3bef1bcfaa6225500f364"},
+]
+
+[[package]]
 name = "overrides"
 version = "7.7.0"
 description = "A decorator to automatically detect mismatch when overriding a method."
@@ -2893,4 +2904,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "7f68e7d7cff9d057a5729055dd167e43c96a0a3ba1c7f09629e9606f529476d5"
+content-hash = "ac4c4898234b3f1b2ead48e9d388cf0b3873d0e0b6d4d1f7eb47ed7778b59038"

@@ -1,3 +1,4 @@
+import os
 import zipfile
 
 import pandas as pd
@@ -42,7 +43,8 @@ def read_dfs(gtfs_zip_path: str) -> dict[str, pd.DataFrame]:
 
         for expected_file in EXPECTED_FILES:
             if expected_file not in contained:
-                raise Exception(f"Expected file {expected_file} not in zip file")
+                raise Exception(
+                    f"Expected file {expected_file} not in zip file")
 
         for file in EXPECTED_FILES:
             df = read_file(zip_ref, file)
@@ -63,6 +65,7 @@ def write_dfs(dfs: dict[str, pd.DataFrame], output: str):
     """
     Writes a dictionary of dataframes to a GTFS zip file.
     """
+    os.makedirs(os.path.dirname(output), exist_ok=True)
     with zipfile.ZipFile(output, "w") as zip_ref:
         for name, df in dfs.items():
             file = get_gtfs_filename(name)
