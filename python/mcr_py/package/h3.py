@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from branca.colormap import LinearColormap
 from branca.element import MacroElement, Template
-from h3 import h3
+import h3
 
 from mcr_py.package import key
 
@@ -16,16 +16,12 @@ def add_h3_cell_id_to_df(df: pd.DataFrame, resolution: int) -> pd.DataFrame:
     Add a column to the dataframe with the H3 cell ID for the given resolution.
     Expected columns are "lat" and "lon".
     """
-    df["h3_cell_id"] = df.apply(
-        lambda row: h3.geo_to_h3(row["lat"], row["lon"], resolution), axis=1
-    )
+    df["h3_cell_id"] = h3.geo_to_cells(df['geometry'], res=resolution)
     return df
 
 
 def process_batch(df_batch, resolution):
-    df_batch["h3_cell_id"] = df_batch.apply(
-        lambda row: h3.geo_to_h3(row["lat"], row["lon"], resolution), axis=1
-    )
+    df_batch["h3_cell_id"] = h3.geo_to_cells(df_batch['geometry'], res=resolution)
     return df_batch
 
 
@@ -49,7 +45,7 @@ def plot_h3_cells_discrete_colors_on_folium(
     fill_opacity: float = 1,
 ):
     for h3_cell in h3_cells:
-        geo_boundary = list(h3.h3_to_geo_boundary(h3_cell))
+        geo_boundary = list(h3.cells_to_h3shape(h3_cell))
         geo_boundary.append(geo_boundary[0])
 
         value = h3_cells[h3_cell]
@@ -84,7 +80,7 @@ def add_legend_to_map(
 
   <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-  
+
   <script>
   $( function() {
     $( "#maplegend" ).draggable({
@@ -102,11 +98,11 @@ def add_legend_to_map(
 </head>
 <body>
 
- 
-<div id='maplegend' class='maplegend' 
+
+<div id='maplegend' class='maplegend'
     style='position: absolute; z-index:9999; border:2px solid grey; background-color:rgba(255, 255, 255, 0.8);
      border-radius:6px; padding: 10px; font-size:16px; right: 20px; top: 20px;'>
-     
+
 <div class='legend-title'>Legend</div>
 <div class='legend-scale'>
   <ul class='legend-labels'>"""
@@ -114,7 +110,7 @@ def add_legend_to_map(
   </ul>
 </div>
 </div>
- 
+
 </body>
 </html>
 
@@ -202,7 +198,7 @@ def plot_h3_cells_on_folium(
         colormap.add_to(folium_map)
 
     for h3_cell in h3_cells:
-        geo_boundary = list(h3.h3_to_geo_boundary(h3_cell))
+        geo_boundary = list(h3.cells_to_h3shape(h3_cell))
         geo_boundary.append(geo_boundary[0])
 
         opacity = 0
