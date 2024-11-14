@@ -7,7 +7,7 @@ from time import time
 
 import click
 from rich.logging import RichHandler
-
+from rich.console import Console
 
 def setup(log_level: str):
     FORMAT = "%(message)s"
@@ -15,7 +15,7 @@ def setup(log_level: str):
         level=log_level,
         format=FORMAT,
         datefmt="[%X]",
-        handlers=[RichHandler(rich_tracebacks=True, tracebacks_suppress=[click])],
+        handlers=[RichHandler(rich_tracebacks=True, console=Console(force_jupyter=False), tracebacks_suppress=[click])],
     )
 
 
