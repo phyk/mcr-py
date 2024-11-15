@@ -1,6 +1,5 @@
 import geopandas as gpd
 import networkx as nx
-import osmnx as ox
 import pyrosm
 
 from mcr_py.package.logger import rlog

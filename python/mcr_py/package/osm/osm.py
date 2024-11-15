@@ -6,7 +6,7 @@ from typing import Tuple
 import geopandas as gpd
 import pandas as pd
 import pyrosm
-from osmnx.distance import cKDTree
+# from osmnx.distance import cKDTree
 from pyrosm.data import get_data
 from rich import print
 from shapely.geometry import MultiPoint

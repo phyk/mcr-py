@@ -1,11 +1,23 @@
 import pickle
+import os
 
 import folium
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import MultiPolygon, Point, Polygon
+import shapely.geometry.base
+import shapely.ops
+import pyproj
 
 from mcr_py.package import cache
+
+
+def convert_to_crs(geometry: shapely.geometry.base.BaseGeometry, crs: str, crs_target: str):
+    crs_source = pyproj.CRS(crs)
+    crs_sink = pyproj.CRS(crs_target)
+    transform_source_sink = pyproj.Transformer.from_crs(
+        crs_source, crs_sink, always_xy=True).transform
+    return shapely.ops.transform(transform_source_sink, geometry)
 
 
 class GeoMeta:
@@ -13,15 +25,25 @@ class GeoMeta:
     GeoMeta incorporates general geospatial information, including the boundary of the area of consideration.
     """
 
-    BUFFER = 0.05  # roughly 5km
+    BUFFER = 10000  # roughly 5km
 
-    def __init__(self, boundary: Polygon):
-        self.boundary = boundary.buffer(self.BUFFER)
+    def __init__(self, boundary: Polygon, crs: str, crs_target: str):
+        self.crs = crs
+        self.crs_target = crs_target
         self.unbuffered_boundary = boundary
+        buffered_boundary = convert_to_crs(self.unbuffered_boundary, crs, crs_target)
+        buffered_boundary = buffered_boundary.buffer(self.BUFFER)
+        self.boundary = convert_to_crs(buffered_boundary, crs_target, crs)
         self.residential_area = None
 
     def hash_boundary(self):
         return cache.hash_str(self.boundary.wkt)
+
+    def get_bounding_box(self, use_buffer: bool = True):
+        if use_buffer:
+            return self.boundary.bounds
+        else:
+            return self.unbuffered_boundary.bounds
 
     @staticmethod
     def load(path: str):
@@ -35,15 +57,17 @@ class GeoMeta:
         self.residential_area = residential_area
 
     def save(self, path: str):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+
         with open(path, "wb") as f:
             pickle.dump(self, f)
 
     def crop_gdf(
-        self, locations: gpd.GeoDataFrame, buffer: float = 0
+        self, locations: gpd.GeoDataFrame, use_buffer: bool = True
     ) -> gpd.GeoDataFrame:
-        boundary = self.boundary
-        if buffer > 0:
-            boundary = boundary.buffer(buffer)
+        boundary = self.unbuffered_boundary
+        if use_buffer:
+            boundary = boundary.boundary
 
         locations = locations.loc[locations.geometry.within(boundary), :]
 

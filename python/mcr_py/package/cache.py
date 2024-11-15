@@ -10,6 +10,10 @@ from mcr_py.package import storage
 
 tempdir = storage.get_tmp_path()
 
+def overwrite_tempdir(path):
+    global tempdir
+    tempdir = path
+
 
 def hash_gdf(gdf: gpd.GeoDataFrame) -> int:
     return int(

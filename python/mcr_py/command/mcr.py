@@ -5,9 +5,9 @@ from mcr_py.package.mcr.config import MCRConfig
 from mcr_py.package.mcr.output import OutputFormat
 from typing_extensions import Annotated
 
-from command.footpaths import CITY_ID_HELP, OSM_HELP, STOPS_HELP
-from command.raptor import STRUCTS_HELP
-from command.step_config import (
+from mcr_py.command.footpaths import CITY_ID_HELP, OSM_HELP, STOPS_HELP
+from mcr_py.command.raptor import STRUCTS_HELP
+from mcr_py.command.step_config import (
     ALL_CONFIGS,
     BICYCLE_AND_PUBLIC_TRANSPORT_CONFIG,
     BICYCLE_CONFIG,
