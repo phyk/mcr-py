@@ -1,22 +1,25 @@
-import pickle
 import os
+import pickle
 
 import folium
 import geopandas as gpd
 import pandas as pd
-from shapely.geometry import MultiPolygon, Point, Polygon
+import pyproj
 import shapely.geometry.base
 import shapely.ops
-import pyproj
+from shapely.geometry import MultiPolygon, Point, Polygon
 
 from mcr_py.package import cache
 
 
-def convert_to_crs(geometry: shapely.geometry.base.BaseGeometry, crs: str, crs_target: str):
+def convert_to_crs(
+    geometry: shapely.geometry.base.BaseGeometry, crs: str, crs_target: str
+):
     crs_source = pyproj.CRS(crs)
     crs_sink = pyproj.CRS(crs_target)
     transform_source_sink = pyproj.Transformer.from_crs(
-        crs_source, crs_sink, always_xy=True).transform
+        crs_source, crs_sink, always_xy=True
+    ).transform
     return shapely.ops.transform(transform_source_sink, geometry)
 
 
@@ -67,18 +70,22 @@ class GeoMeta:
     ) -> gpd.GeoDataFrame:
         boundary = self.unbuffered_boundary
         if use_buffer:
-            boundary = boundary.boundary
+            boundary = self.boundary
 
         locations = locations.loc[locations.geometry.within(boundary), :]
 
         return locations
 
     def crop_df(
-        self, locations: pd.DataFrame, lat_col: str, lon_col: str, buffer: float = 0
+        self,
+        locations: pd.DataFrame,
+        lat_col: str,
+        lon_col: str,
+        use_buffer: bool = True,
     ) -> pd.DataFrame:
-        boundary = self.boundary
-        if buffer > 0:
-            boundary = boundary.buffer(buffer)
+        boundary = self.unbuffered_boundary
+        if use_buffer:
+            boundary = self.boundary
 
         locations = locations.loc[
             locations.apply(
