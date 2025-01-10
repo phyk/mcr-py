@@ -34,7 +34,8 @@ class GeoMeta:
         self.crs = crs
         self.crs_target = crs_target
         self.unbuffered_boundary = boundary
-        buffered_boundary = convert_to_crs(self.unbuffered_boundary, crs, crs_target)
+        buffered_boundary = convert_to_crs(
+            self.unbuffered_boundary, crs, crs_target)
         buffered_boundary = buffered_boundary.buffer(self.BUFFER)
         self.boundary = convert_to_crs(buffered_boundary, crs_target, crs)
         self.residential_area = None
@@ -53,7 +54,8 @@ class GeoMeta:
         with open(path, "rb") as f:
             loaded = pickle.load(f)
             if not isinstance(loaded, GeoMeta):
-                raise ValueError(f"File at {path} does not contain a GeoMeta object.")
+                raise ValueError(
+                    f"File at {path} does not contain a GeoMeta object.")
             return loaded
 
     def set_residential_area(self, residential_area: MultiPolygon):
