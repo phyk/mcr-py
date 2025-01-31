@@ -2,11 +2,11 @@ from multiprocessing import Pool
 from typing import Callable, Optional
 
 import folium
+import h3
 import numpy as np
 import pandas as pd
 from branca.colormap import LinearColormap
 from branca.element import MacroElement, Template
-import h3
 
 from mcr_py.package import key
 
@@ -16,12 +16,12 @@ def add_h3_cell_id_to_df(df: pd.DataFrame, resolution: int) -> pd.DataFrame:
     Add a column to the dataframe with the H3 cell ID for the given resolution.
     Expected columns are "lat" and "lon".
     """
-    df["h3_cell_id"] = h3.geo_to_cells(df['geometry'], res=resolution)
+    df["h3_cell_id"] = h3.geo_to_cells(df["geometry"], res=resolution)
     return df
 
 
 def process_batch(df_batch, resolution):
-    df_batch["h3_cell_id"] = h3.geo_to_cells(df_batch['geometry'], res=resolution)
+    df_batch["h3_cell_id"] = h3.geo_to_cells(df_batch["geometry"], res=resolution)
     return df_batch
 
 
@@ -156,9 +156,8 @@ def add_legend_to_map(
 {% endmacro %}"""
 
     for key_, value in color_scheme.items():
-        template += (
-            f'<li><span style="background:{value};opacity:{opacity}"></span>{key_}</li>'
-        )
+        template += f'<li><span style="background:{value};opacity:{
+                opacity}"></span>{key_}</li>'
 
     template += template_part_2
     macro = MacroElement()
@@ -198,7 +197,7 @@ def plot_h3_cells_on_folium(
         colormap.add_to(folium_map)
 
     for h3_cell in h3_cells:
-        geo_boundary = list(h3.cells_to_h3shape(h3_cell))
+        geo_boundary = list(h3.cell_to_boundary(h3_cell))
         geo_boundary.append(geo_boundary[0])
 
         opacity = 0
