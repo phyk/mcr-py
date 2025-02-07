@@ -1,5 +1,6 @@
 import os
 import pickle
+from typing import List, Tuple
 
 import folium
 import geopandas as gpd
@@ -34,8 +35,7 @@ class GeoMeta:
         self.crs = crs
         self.crs_target = crs_target
         self.unbuffered_boundary = boundary
-        buffered_boundary = convert_to_crs(
-            self.unbuffered_boundary, crs, crs_target)
+        buffered_boundary = convert_to_crs(self.unbuffered_boundary, crs, crs_target)
         buffered_boundary = buffered_boundary.buffer(self.BUFFER)
         self.boundary = convert_to_crs(buffered_boundary, crs_target, crs)
         self.residential_area = None
@@ -49,13 +49,23 @@ class GeoMeta:
         else:
             return self.unbuffered_boundary.bounds
 
+    def get_bounding_box_as_coord_list(
+        self, use_buffer: bool = True
+    ) -> List[Tuple[float, float]]:
+        bounding_box = self.get_bounding_box(use_buffer=use_buffer)
+        return [
+            (bounding_box[0], bounding_box[1]),
+            (bounding_box[0], bounding_box[3]),
+            (bounding_box[2], bounding_box[3]),
+            (bounding_box[2], bounding_box[1]),
+        ]
+
     @staticmethod
     def load(path: str):
         with open(path, "rb") as f:
             loaded = pickle.load(f)
             if not isinstance(loaded, GeoMeta):
-                raise ValueError(
-                    f"File at {path} does not contain a GeoMeta object.")
+                raise ValueError(f"File at {path} does not contain a GeoMeta object.")
             return loaded
 
     def set_residential_area(self, residential_area: MultiPolygon):

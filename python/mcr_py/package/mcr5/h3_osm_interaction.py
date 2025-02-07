@@ -1,5 +1,5 @@
+import h3
 import pandas as pd
-from h3 import h3
 from scipy.spatial import cKDTree
 
 
@@ -43,19 +43,19 @@ def get_location_mappings_for_cells(
 
     invalid_h3_cells: list[str] = []
 
-    cell_centers = [h3.h3_to_geo(h3_cell) for h3_cell in h3_cells]
+    cell_centers = [h3.cell_to_latlng(h3_cell) for h3_cell in h3_cells]
     all_distances, all_indices = kdtree.query(cell_centers, k=max_tries)
 
-    resolution = h3.h3_get_resolution(h3_cells[0])
+    resolution = h3.get_resolution(h3_cells[0])
 
     for h3_cell, (distances, indices) in zip(h3_cells, zip(all_distances, all_indices)):
         tries = 0
         distance, index = distances[tries], indices[tries]
         while tries < max_tries:
             distance, index = distances[tries], indices[tries]
-            h3_cell_of_closest_node = h3.geo_to_h3(
+            h3_cell_of_closest_node = h3.latlng_to_cell(
                 *osm_nodes_df.iloc[index][["lat", "lon"]].to_numpy(),
-                resolution=resolution,
+                res=resolution,
             )
 
             if h3_cell_of_closest_node == h3_cell:

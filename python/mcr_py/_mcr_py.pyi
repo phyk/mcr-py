@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 PyBags = dict[int, list[PyLabel]]
 
@@ -17,6 +17,7 @@ class PyLabel:
     node_id: int
 
 def run_mlc(graph_cache: GraphCache, start_node_id: int) -> PyBags: ...
+def log_something(): ...
 def run_mlc_with_node_and_time(
     graph_cache: GraphCache,
     start_node_id: int,
@@ -32,3 +33,24 @@ def run_mlc_with_bags(
     disable_paths: Optional[bool] = None,
     enable_limit: Optional[bool] = None,
 ) -> PyBags: ...
+def load_osm_cycling(
+    city_name: str,
+    bounding_box: List[Tuple[float, float]],
+    archive_path: str,
+    outpath: str,
+    download: bool,
+): ...
+def load_osm_walking(
+    city_name: str,
+    bounding_box: List[Tuple[float, float]],
+    archive_path: str,
+    outpath: str,
+    download: bool,
+): ...
+def load_osm_driving(
+    city_name: str,
+    bounding_box: List[Tuple[float, float]],
+    archive_path: str,
+    outpath: str,
+    download: bool,
+): ...

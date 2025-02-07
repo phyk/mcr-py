@@ -1,4 +1,4 @@
-from h3 import h3
+import h3
 
 
 def get_h3_cells_for_nodes(nodes: list[dict], resolution: int) -> set[str]:
@@ -6,7 +6,7 @@ def get_h3_cells_for_nodes(nodes: list[dict], resolution: int) -> set[str]:
 
     for node in nodes:
         lat, lon = node["lat"], node["lon"]
-        h3_cell = h3.geo_to_h3(lat, lon, resolution)
+        h3_cell = h3.latlng_to_cell(lat, lon, resolution)
         h3_cells.add(h3_cell)
 
     return h3_cells
@@ -29,7 +29,7 @@ def get_h3_cells_for_bbox(
     while lat <= max_lat:
         lon = min_lon
         while lon <= max_lon:
-            h3_cell = h3.geo_to_h3(lat, lon, resolution)
+            h3_cell = h3.latlng_to_cell(lat, lon, resolution)
             h3_cells.add(h3_cell)
             lon += step_size
         lat += step_size
