@@ -1,5 +1,11 @@
 # mcr-py
 
+## Todos
+- [ ] Use Rich logger (rust) for logging the osmtools integration and the download of osm data
+- [ ] make the download of osm data available as API call
+- [ ] cleanup unused functions
+- [ ] go through mcr5 preps and streamline/reduce coding
+
 ## Installation
 
 Recommendation: Use mamba to create the environment faster.
@@ -40,7 +46,7 @@ Build-structures prepares the format exactly for the algorithm.
 python src/main.py gtfs crop ./data/vrs.zip ./data/cologne_gtfs.zip \                                                                                        ─╯
     --geometa-path ./data/geometa.pkl \
     --time-start 23.06.2023-00:00:00 \
-    --time-end 24.06.2023-00:00:00 
+    --time-end 24.06.2023-00:00:00
 python src/main.py gtfs clean  ./data/cologne_gtfs.zip ./data/cleaned/
 python src/main.py build-structures ./data/cleaned/ ./data/structs.pkl
 ```
