@@ -1361,6 +1361,7 @@ dependencies = [
  "geo",
  "geo-types",
  "h3o",
+ "log",
  "osmpbfreader",
  "petgraph",
  "proj",

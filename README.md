@@ -1,9 +1,7 @@
 # mcr-py
 
 ## Todos
-- [ ] Use Rich logger (rust) for logging the osmtools integration and the download of osm data
-- [ ] make the download of osm data available as API call
-- [ ] cleanup unused functions
+- [ ] cleanup unused functions in python mcr5
 - [ ] go through mcr5 preps and streamline/reduce coding
 
 ## Installation

@@ -1,5 +1,15 @@
 use osmtools::extractor::{_load_osm_cycling, _load_osm_driving, _load_osm_walking};
+use osmtools::download::download;
 use pyo3::prelude::*;
+
+#[pyfunction]
+pub fn download_osm_data(py: Python, city_name: &str, archive_path: &str) -> String {
+    py.allow_threads(|| {
+        let result = download(&city_name.into(), &archive_path.into()).expect("Download process errored");
+        return result.to_str().expect("Path not convertible to string").into();
+    })
+}
+
 
 #[pyfunction]
 pub fn load_osm_cycling(
