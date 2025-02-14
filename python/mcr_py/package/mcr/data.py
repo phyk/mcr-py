@@ -49,6 +49,7 @@ class OSMData:
             NetworkType, tuple[pd.DataFrame, pd.DataFrame, nx.Graph]
         ] = {}
 
+        raise NotImplementedError()
         for network_type in additional_network_types:
             (
                 osm_nodes,
@@ -69,10 +70,16 @@ class OSMData:
         edges = pl.read_csv(
             f"{self.cache_path}/{self.city_id.lower()}_walking_edges.csv")
 
+        nxgraph = graph.create_nx_graph()
+
+        # Filter nodes and edges
+        return nodes, edges, nxgraph
+
     def read_network(
         self,
         network_type: str,
     ) -> tuple[pd.DataFrame, pd.DataFrame, nx.Graph]:
+        raise NotImplementedError()
         osm_reader = osm.get_osm_reader_for_city_id_or_osm_path(
             self.city_id, self.osm_path
         )
