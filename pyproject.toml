@@ -33,6 +33,7 @@ dependencies = [
     "pre-commit>=4.0.1",
     "pyarrow>=19.0.0",
     "pyrosm>=0.6.2",
+    "pytest>=8.3.5",
     "requests>=2.32.3",
     "scikit-learn>=1.6.1",
     "seaborn>=0.13.2",

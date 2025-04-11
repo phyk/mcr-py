@@ -4,53 +4,10 @@ from functools import partial
 
 import geopandas as gpd
 import pandas as pd
-from shapely.geometry import Polygon
 from tqdm.auto import tqdm
 
-from mcr_py.package import cache
 from mcr_py.package.logger import Timed
 from mcr_py.package.minute_city import profile
-from mcr_py.package.osm import key, osm
-from mcr_py.package.overpass import attributes, query
-
-
-def fetch_pois_for_area(
-    area_of_interest: Polygon, nodes: gpd.GeoDataFrame
-) -> gpd.GeoDataFrame:
-    """
-    Fetches POIs for the given area of interest and assigns the nearest osm node id to each POI.
-
-    Args:
-        area_of_interest (Polygon): The area of interest to fetch POIs for.
-        nodes (gpd.GeoDataFrame): The OSM nodes to use for assigning nearest osm node ids.
-
-    Returns:
-        gpd.GeoDataFrame: The POIs for the given area of interest.
-    """
-    hash = cache.combine_hashes(
-        [
-            cache.hash_polygon(area_of_interest),
-            cache.hash_gdf(nodes[["lat", "long"]]),  # type: ignore
-        ]
-    )
-    if cache.cache_entry_exists(
-        hash,
-        key.POIS_FILE_IDENTIFIER,
-    ):
-        return cache.read_gdf(hash, key.POIS_FILE_IDENTIFIER)
-
-    bounds: tuple[float, float, float, float] = area_of_interest.bounds  # type: ignore
-
-    queries = [
-        (name, query.build(attr, bounds))
-        for name, attr in attributes.X_MINUTE_CITY_QUERIES
-    ]
-    pois = query.fetch_and_merge_queries_async(queries, area_of_interest)
-    pois: gpd.GeoDataFrame = osm.add_nearest_osm_node_id(pois, nodes)  # type: ignore
-
-    cache.cache_gdf(pois, hash, key.POIS_FILE_IDENTIFIER)
-
-    return pois
 
 
 def add_pois_to_labels(labels: pd.DataFrame, pois: gpd.GeoDataFrame) -> pd.DataFrame:
