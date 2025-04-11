@@ -231,9 +231,7 @@ def list_column_to_osm_nodes(
         df: The dataframe to assign to osm_nodes_df. Must contain columns "nearest_osm_node_id" and column.
         osm_nodes_df: The dataframe to assign df to. The index must be the osm node ids.
     """
-    grouped: pd.Series = df.groupby("nearest_osm_node_id")[column].agg(
-        lambda x: list(set(x))
-    )  # type: ignore
+    grouped: pd.Series = df.groupby("osm_id")[column].agg(lambda x: list(set(x)))  # type: ignore
     # drop column if it already exists to make this function idempotent
     if column in osm_nodes_df.columns:
         osm_nodes_df = osm_nodes_df.drop(columns=[column])

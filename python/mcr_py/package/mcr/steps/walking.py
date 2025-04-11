@@ -64,15 +64,15 @@ class WalkingStepBuilder(StepBuilder):
         Args:
             pois: A dataframe containing POIs. Must have the columns "nearest_osm_node_id" and "type".
         """
-        osm_nodes = osm.list_column_to_osm_nodes(self.osm_nodes, pois, "type")
+        osm_nodes = osm.list_column_to_osm_nodes(self.osm_nodes, pois, "poi_type")
         type_map: dict[str, int] = {}
-        for t in pois["type"].unique():
+        for t in pois["poi_type"].unique():
             type_map[t] = len(type_map)
 
-        osm_nodes["type_internal"] = osm_nodes["type"].map(
+        osm_nodes["type_internal"] = osm_nodes["poi_type"].map(
             lambda x: list(map(type_map.get, x))
         )
-        osm_nodes["resetted_walking_node_id"] = osm_nodes["id"].map(
+        osm_nodes["resetted_walking_node_id"] = osm_nodes["osm_id"].map(
             self.walking_node_to_resetted_map  # type: ignore
         )
 

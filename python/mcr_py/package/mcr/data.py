@@ -35,15 +35,14 @@ class OSMData:
         osm_path: str = "",
         cache_path: str = "",
         additional_network_types: list[NetworkType] = [],
-        redownload=False
+        redownload=False,
     ):
         self.geo_meta = geo_meta
         self.city_id = city_id
         self.osm_path = osm_path
         self.cache_path = cache_path
 
-        self.osm_nodes, self.osm_edges, self.nxgraph = self.read_walking(
-            redownload)
+        self.osm_nodes, self.osm_edges, self.nxgraph = self.read_walking(redownload)
 
         self.additional_networks: dict[
             NetworkType, tuple[pd.DataFrame, pd.DataFrame, nx.Graph]
@@ -63,12 +62,19 @@ class OSMData:
             )
 
     def read_walking(self, redownload: bool):
-        load_osm_walking(self.city_id, self.geo_meta.get_bounding_box_as_coord_list(
-        ), self.osm_path, self.cache_path, download=redownload)
+        load_osm_walking(
+            self.city_id,
+            self.geo_meta.get_bounding_box_as_coord_list(),
+            self.osm_path,
+            self.cache_path,
+            download=redownload,
+        )
         nodes = pl.read_csv(
-            f"{self.cache_path}/{self.city_id.lower()}_walking_nodes.csv")
+            f"{self.cache_path}/{self.city_id.lower()}_walking_nodes.csv"
+        )
         edges = pl.read_csv(
-            f"{self.cache_path}/{self.city_id.lower()}_walking_edges.csv")
+            f"{self.cache_path}/{self.city_id.lower()}_walking_edges.csv"
+        )
 
         nxgraph = graph.create_nx_graph()
 
@@ -89,14 +95,12 @@ class OSMData:
         ) = osm.get_graph_for_city_cropped_to_boundary(
             osm_reader, self.geo_meta, network_type
         )
-        nxgraph = graph.create_nx_graph(
-            osm_reader, osm_nodes, osm_edges, network_type)
+        nxgraph = graph.create_nx_graph(osm_reader, osm_nodes, osm_edges, network_type)
 
         osm_nodes = osm_nodes.set_index("id")
         osm_nodes["id"] = osm_nodes.index
 
-        osm_edges: pd.DataFrame = osm_edges[[
-            "u", "v", "length"]]  # type: ignore
+        osm_edges: pd.DataFrame = osm_edges[["u", "v", "length"]]  # type: ignore
 
         return osm_nodes, osm_edges, nxgraph
 
@@ -159,8 +163,7 @@ def create_multi_modal_graph(
     walking_osm_edges = add_travel_time(walking_osm_edges, AVG_WALKING_SPEED)
     # walking end
 
-    transfer_edges = create_transfer_edges(
-        walking_osm_nodes, driving_osm_nodes)
+    transfer_edges = create_transfer_edges(walking_osm_nodes, driving_osm_nodes)
 
     multi_modal_edges = combine_edges(
         walking_osm_edges, driving_osm_edges, transfer_edges
@@ -190,8 +193,7 @@ def combine_edges(
     bike_edges: pd.DataFrame,
     transfer_edges: pd.DataFrame,
 ) -> pd.DataFrame:
-    edges = pd.concat([walking_edges, bike_edges,
-                      transfer_edges], ignore_index=True)
+    edges = pd.concat([walking_edges, bike_edges, transfer_edges], ignore_index=True)
 
     # fill travel_time for transfer edges and
     # travel_time_bike for walking and transfer edges
@@ -204,16 +206,16 @@ def reset_node_ids(
     nodes: pd.DataFrame, edges: pd.DataFrame
 ) -> Tuple[pd.DataFrame, pd.DataFrame, dict[str, int]]:
     node_to_resetted_map: dict[str, int] = {}
-    for i, node_id in enumerate(nodes.id.unique()):
+    for i, node_id in enumerate(nodes["osm_id"].unique()):
         node_to_resetted_map[node_id] = i
 
-    nodes["old_id"] = nodes["id"]
-    nodes["id"] = nodes["id"].map(node_to_resetted_map)  # type: ignore
-    edges["u"] = edges["u"].map(node_to_resetted_map)  # type: ignore
-    edges["v"] = edges["v"].map(node_to_resetted_map)  # type: ignore
+    nodes["old_id"] = nodes["osm_id"]
+    nodes["osm_id"] = nodes["osm_id"].map(node_to_resetted_map)  # type: ignore
+    edges["u"] = edges["source_osm"].map(node_to_resetted_map)  # type: ignore
+    edges["v"] = edges["dest_osm"].map(node_to_resetted_map)  # type: ignore
 
     edges_na = edges[["u", "v"]].isna().sum().sum()
-    nodes_na = nodes["id"].isna().sum()
+    nodes_na = nodes["osm_id"].isna().sum()
     total_na = edges_na + nodes_na
     if total_na > 0:
         raise ValueError(

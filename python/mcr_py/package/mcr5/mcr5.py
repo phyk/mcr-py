@@ -4,6 +4,7 @@ import pickle
 import time
 from multiprocessing import Process, Queue
 
+import pandas as pd
 import psutil
 from tqdm.auto import tqdm
 
@@ -16,7 +17,6 @@ from mcr_py.package.logger import (
 from mcr_py.package.mcr.config import MCRConfig
 from mcr_py.package.mcr.mcr import MCR, StepBuilderMatrix
 from mcr_py.package.mcr.output import OutputFormat
-from mcr_py.package.mcr5.h3_osm_interaction import H3OSMLocationMapping
 
 
 class MCR5:
@@ -34,7 +34,7 @@ class MCR5:
 
     def run(
         self,
-        location_mappings: list[H3OSMLocationMapping],
+        location_mappings: pd.DataFrame,
         start_time: str,
         output_dir: str,
         max_transfers: int = 2,
@@ -55,10 +55,7 @@ class MCR5:
 
         errors_list = []
         pbar = tqdm(location_mappings, desc="Starting")
-        for location_mapping in location_mappings:
-            h3_cell = location_mapping.h3_cell
-            osm_node_id = location_mapping.osm_node_id
-
+        for osm_node_id, h3_cell in location_mappings.itertuples(index=False):
             while (
                 self.get_active_process_count(processes) >= self.max_processes
                 or get_available_memory() < self.min_free_memory
