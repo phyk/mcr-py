@@ -6,6 +6,7 @@ from typing import Tuple
 import geopandas as gpd
 import pandas as pd
 import pyrosm
+
 # from osmnx.distance import cKDTree
 from pyrosm.data import get_data
 from rich import print
@@ -204,7 +205,7 @@ def add_nearest_osm_node_id(
 
         if outlier_method == OutlierMethod.REMOVE:
             df_lat_long = df_lat_long.loc[df_lat_long["distance"] <= max_distance]
-            rlog.warn(
+            rlog.warning(
                 f"Removed {len(problematic_entries)} entries with distance to nearest OSM node larger than {max_distance} meters"
             )
         elif outlier_method == OutlierMethod.WARN:

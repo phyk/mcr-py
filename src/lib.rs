@@ -3,7 +3,9 @@ use pyo3::prelude::*;
 use pyo3_log::{Caching, Logger};
 use rs::graph_cache::GraphCache;
 use rs::mlc_adapter::{run_mlc, run_mlc_with_bags, run_mlc_with_node_and_time, PyLabel};
-use rs::osmtools_adapter::{load_osm_cycling, load_osm_driving, load_osm_walking, download_osm_data};
+use rs::osmtools_adapter::{
+    download_osm_data, load_osm_cycling, load_osm_driving, load_osm_pois, load_osm_walking,
+};
 
 mod rs;
 
@@ -28,6 +30,7 @@ fn _mcr_py(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(load_osm_driving, m)?)?;
     m.add_function(wrap_pyfunction!(load_osm_walking, m)?)?;
     m.add_function(wrap_pyfunction!(download_osm_data, m)?)?;
+    m.add_function(wrap_pyfunction!(load_osm_pois, m)?)?;
 
     m.add_class::<GraphCache>()?;
     m.add_class::<PyLabel>()?;

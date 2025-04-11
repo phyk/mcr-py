@@ -1,4 +1,6 @@
 import pandas as pd
+
+from mcr_py import GraphCache
 from mcr_py.package.mcr.data import (
     TRAVEL_TIME_COLUMN,
     add_weights,
@@ -11,8 +13,6 @@ from mcr_py.package.mcr.path import PathType
 from mcr_py.package.mcr.steps.interface import StepBuilder
 from mcr_py.package.mcr.steps.mlc import MLCStep
 from mcr_py.package.osm import osm
-
-from mcr_py import GraphCache
 
 
 class WalkingStep(MLCStep):
@@ -29,8 +29,7 @@ class WalkingStepBuilder(StepBuilder):
         osm_edges: pd.DataFrame,
         pois: pd.DataFrame,
     ):
-        walking_nodes, walking_edges = create_walking_graph(
-            osm_nodes, osm_edges)
+        walking_nodes, walking_edges = create_walking_graph(osm_nodes, osm_edges)
 
         (
             walking_nodes,
@@ -83,5 +82,4 @@ class WalkingStepBuilder(StepBuilder):
             )["type_internal"]
         ).to_dict()
 
-        self.walking_graph_cache.set_node_weights(
-            resetted_walking_node_id_to_type_map)
+        self.walking_graph_cache.set_node_weights(resetted_walking_node_id_to_type_map)

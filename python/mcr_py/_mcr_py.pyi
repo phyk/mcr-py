@@ -55,3 +55,11 @@ def load_osm_driving(
     download: bool,
 ): ...
 def download_osm_data(city_name: str, archive_path: str): ...
+def load_osm_pois(
+    city_name: str,
+    bounding_box: List[Tuple[float, float]],
+    archive_path: str,
+    nodes_to_match_path: str,
+    outpath: str,
+    download: bool,
+): ...

@@ -120,10 +120,7 @@ def get_bicycle_only_config_with_data(
     return initial_steps, repeating_steps
 
 
-def get_walking_only_config_with_data(geo_meta, geo_data):
-    with Timed.info("Fetching POI for runtime optimization"):
-        pois = minute_city.fetch_pois_for_area(geo_meta.boundary, geo_data.osm_nodes)  # type: ignore
-
+def get_walking_only_config_with_data(geo_meta, geo_data, pois):
     walking_step = WalkingStepBuilder(
         geo_data.osm_nodes,
         geo_data.osm_edges,
