@@ -1,5 +1,8 @@
 import shutil
 
+from pandas.compat import os
+
+from mcr_py.command.raptor import raptor
 from mcr_py.package import storage, strtime
 from mcr_py.package.output import enrich_raptor_trace_results
 from mcr_py.package.tracer.tracer import (
@@ -7,9 +10,6 @@ from mcr_py.package.tracer.tracer import (
     EnrichedTraceStart,
     EnrichedTraceTrip,
 )
-from pandas.compat import os
-
-from command.raptor import raptor
 
 NESSELRODE_STR_STOP_ID = "818"
 EHRENFELD_BF_STOP_ID = "835"
@@ -47,7 +47,8 @@ def test_raptor(testdata_path: str):
 
     # all stops are reachable
     assert (arrival_times.arrival_time == "--:--:--").sum() == 0
-    assert arrival_times.loc[EHRENFELD_BF_STOP_ID, "arrival_time"] == "15:27:27"
+    assert arrival_times.loc[EHRENFELD_BF_STOP_ID,
+                             "arrival_time"] == "15:27:27"
 
     tracers = tracer_map.tracers[EHRENFELD_BF_STOP_ID]
     assert len(tracers) == 4
@@ -77,4 +78,5 @@ def test_raptor(testdata_path: str):
     assert isinstance(footpath_trace, EnrichedTraceFootpath)
     assert footpath_trace.start_stop_id == VENLOER_STR_STOP_ID
     assert footpath_trace.end_stop_id == EHRENFELD_BF_STOP_ID
-    assert footpath_trace.walking_time == strtime.str_time_to_seconds("00:02:27")
+    assert footpath_trace.walking_time == strtime.str_time_to_seconds(
+        "00:02:27")
