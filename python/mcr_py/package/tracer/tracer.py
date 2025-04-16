@@ -41,10 +41,12 @@ class TracerMap:
 
         :returns: str - A formatted string showing the traces associated with each stop.
         """
+        sorted_keys = list(self.tracers.keys())
+        sorted_keys.sort()
         return "\n".join(
             [
-                f"{stop_id}: {', '.join([str(trace) for trace in tracers])}"
-                for stop_id, tracers in self.tracers.items()
+                f"{stop_id}: {', '.join([str(trace) for trace in self.tracers[stop_id]])}"
+                for stop_id in sorted_keys
             ]
         )
 

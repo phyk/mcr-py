@@ -16,6 +16,16 @@ def crop(
     time_start: datetime,
     time_end: datetime,
 ):
+    """
+    Crops GTFS data based on geographic and temporal constraints.
+
+    :param path: str - The path to the input GTFS data.
+    :param output: str - The path where the cropped GTFS data will be saved.
+    :param geo_meta: GeoMeta - An object containing geographic metadata for cropping.
+    :param time_start: datetime - The start time for the cropping window.
+    :param time_end: datetime - The end time for the cropping window.
+    :raises ValueError: If the bounding box results in no trips or stops remaining.
+    """
     with Timed.info("Reading GTFS data"):
         dfs = archive.read_dfs(path)
 
@@ -95,13 +105,23 @@ def reconcile_trips_and_stop_times_with_stops(
     stops_df: pl.DataFrame,
 ) -> Tuple[pl.DataFrame, pl.DataFrame]:
     """
-    Crop trips and stop times to the given stops.
+    Crops trips and stop times to only include those associated with the given stops.
+
+    :param trips_df: pl.DataFrame - The DataFrame containing trip information.
+    :param stop_times_df: pl.DataFrame - The DataFrame containing stop times information.
+    :param stops_df: pl.DataFrame - The DataFrame containing stop information.
+    :returns: Tuple[pl.DataFrame, pl.DataFrame] - The cropped trips and stop times DataFrames.
     """
-    stop_ids = stops_df[key.STOP_ID_KEY].unique()
-    stop_times_df = stop_times_df[stop_times_df[key.STOP_ID_KEY].isin(stop_ids)]  # type: ignore
-    # only keep trips that have at least two entries in stop_times_df
-    stop_times_df = stop_times_df[stop_times_df[key.TRIP_ID_KEY].duplicated(keep=False)]  # type: ignore
-    trips_df = trips_df[trips_df[key.TRIP_ID_KEY].isin(stop_times_df[key.TRIP_ID_KEY])]  # type: ignore
+    stop_ids = stops_df.get_column(key.STOP_ID_KEY).unique()
+    stop_times_df = stop_times_df.filter(
+        pl.col(key.STOP_ID_KEY).is_in(stop_ids)
+        & (pl.col(key.TRIP_ID_KEY).is_duplicated())
+    )
+    trips_df = trips_df.filter(
+        pl.col(key.TRIP_ID_KEY).is_in(
+            stop_times_df.get_column(key.TRIP_ID_KEY).unique()
+        )
+    )  # type: ignore
 
     return trips_df, stop_times_df
 
@@ -113,26 +133,31 @@ def crop_trips(
     time_end: datetime,
 ) -> Tuple[pl.DataFrame, pl.DataFrame]:
     """
-    Crop trips to those that occur within the given time range.
+    Crops trips to those that occur within the specified time range.
+
+    :param trips_df: pl.DataFrame - The DataFrame containing trip information.
+    :param calendar_df: pl.DataFrame - The DataFrame containing calendar information.
+    :param time_start: datetime - The start time for the cropping window.
+    :param time_end: datetime - The end time for the cropping window.
+    :returns: Tuple[pl.DataFrame, pl.DataFrame] - The cropped trips and calendar DataFrames.
     """
-    parsed_calendar_df = calendar_df.copy()
-    parsed_calendar_df[key.CALENDAR_START_DATE_KEY] = pl.to_datetime(
-        parsed_calendar_df[key.CALENDAR_START_DATE_KEY],
-        format=key.CALENDAR_DATE_TIME_FORMAT,
+    calendar_df = calendar_df.filter(
+        (
+            pl.col(key.CALENDAR_START_DATE_KEY)
+            .cast(pl.String)
+            .str.to_date(format=key.CALENDAR_DATE_TIME_FORMAT)
+            <= time_end
+        )
+        & (
+            pl.col(key.CALENDAR_END_DATE_KEY)
+            .cast(pl.String)
+            .str.to_date(format=key.CALENDAR_DATE_TIME_FORMAT)
+            >= time_start
+        )
     )
-    parsed_calendar_df[key.CALENDAR_END_DATE_KEY] = pl.to_datetime(
-        parsed_calendar_df[key.CALENDAR_END_DATE_KEY],
-        format=key.CALENDAR_DATE_TIME_FORMAT,
-    )
 
-    time_ranges_touch = (
-        parsed_calendar_df[key.CALENDAR_START_DATE_KEY] <= time_end
-    ) & (parsed_calendar_df[key.CALENDAR_END_DATE_KEY] >= time_start)
-
-    calendar_df = calendar_df[time_ranges_touch]  # type: ignore
-
-    service_ids = calendar_df[key.SERVICE_ID_KEY].unique()
-    trips_df = trips_df[trips_df[key.SERVICE_ID_KEY].isin(service_ids)]  # type: ignore
+    service_ids = calendar_df.get_column(key.SERVICE_ID_KEY).unique()
+    trips_df = trips_df.filter(pl.col(key.SERVICE_ID_KEY).is_in(service_ids))  # type: ignore
 
     return trips_df, calendar_df
 
@@ -142,10 +167,14 @@ def reconcile_stop_times_with_trips(
     trips_df: pl.DataFrame,
 ) -> pl.DataFrame:
     """
-    Crop stop times to those that occur within the given trips.
+    Crops stop times to only include those associated with the specified trips.
+
+    :param stop_times_df: pl.DataFrame - The DataFrame containing stop times information.
+    :param trips_df: pl.DataFrame - The DataFrame containing trip information.
+    :returns: pl.DataFrame - The cropped stop times DataFrame.
     """
-    trip_ids = trips_df[key.TRIP_ID_KEY].unique()
-    stop_times_df = stop_times_df[stop_times_df[key.TRIP_ID_KEY].isin(trip_ids)]  # type: ignore
+    trip_ids = trips_df.get_column(key.TRIP_ID_KEY).unique()
+    stop_times_df = stop_times_df.filter(pl.col(key.TRIP_ID_KEY).is_in(trip_ids))
 
     return stop_times_df
 
@@ -155,9 +184,13 @@ def reconcile_stops_with_stop_times(
     stop_times_df: pl.DataFrame,
 ) -> pl.DataFrame:
     """
-    Crop stops to those that occur within the given stop times.
+    Crops stops to only include those associated with the specified stop times.
+
+    :param stops_df: pl.DataFrame - The DataFrame containing stop information.
+    :param stop_times_df: pl.DataFrame - The DataFrame containing stop times information.
+    :returns: pl.DataFrame - The cropped stops DataFrame.
     """
-    stop_ids = stop_times_df[key.STOP_ID_KEY].unique()
-    stops_df = stops_df[stops_df[key.STOP_ID_KEY].isin(stop_ids)]  # type: ignore
+    stop_ids = stop_times_df.get_column(key.STOP_ID_KEY).unique()
+    stops_df = stops_df.filter(pl.col(key.STOP_ID_KEY).is_in(stop_ids))
 
     return stops_df

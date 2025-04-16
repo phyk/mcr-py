@@ -1,6 +1,4 @@
 import os
-from re import IGNORECASE
-
 from mcr_py.package.utils import storage
 import requests
 import polars as pl
@@ -39,7 +37,13 @@ ID_COLOR = "magenta"
 
 
 def list_catalog(country_code: str, subdivision_name: str, municipality: str):
-    """List all available GTFS feeds."""
+    """
+    Lists all available GTFS feeds based on the specified filters.
+
+    :param country_code: str - The country code to filter the catalog.
+    :param subdivision_name: str - The subdivision name to filter the catalog.
+    :param municipality: str - The municipality name to filter the catalog.
+    """
     catalog = get_catalog()
     catalog = filter_catalog(catalog, country_code, subdivision_name, municipality)
 
@@ -51,18 +55,27 @@ def list_catalog(country_code: str, subdivision_name: str, municipality: str):
 
 
 def get_catalog() -> pl.DataFrame:
+    """
+    Retrieves the GTFS catalog as a DataFrame, downloading it if necessary.
+
+    :returns: pl.DataFrame - The DataFrame containing the GTFS catalog.
+    """
     if not os.path.exists(CATALOG_PATH):
         rlog.info("Downloading GTFS catalog...")
         download_catalog()
-
     catalog = pl.read_csv(CATALOG_PATH)
-    catalog = catalog[RELEVANT_COLUMNS]
+    catalog = catalog.select(RELEVANT_COLUMNS).with_columns(
+        pl.Series("index", range(0, len(catalog)))
+    )
     catalog = pre_filter_catalog(catalog)
-    catalog = catalog.fillna("")
+    catalog = catalog.fill_nan(pl.lit(""))
     return catalog
 
 
 def download_catalog():
+    """
+    Downloads the GTFS catalog from the specified URL and saves it to the local path.
+    """
     request = requests.get(key.GTFS_CATALOG_URL)
     os.makedirs(os.path.dirname(CATALOG_PATH), exist_ok=True)
     with open(CATALOG_PATH, "wb") as f:
@@ -70,47 +83,70 @@ def download_catalog():
 
 
 def pre_filter_catalog(catalog: pl.DataFrame) -> pl.DataFrame:
-    catalog = catalog[catalog[COL_DATA_TYPE] == "gtfs"]
-    catalog = catalog[(catalog[COL_AUTH_TYPE] != 1) & (catalog[COL_AUTH_TYPE] != 2)]
-    return catalog
+    """
+    Filters the catalog to include only entries of type 'gtfs' and without specific authentication types.
+
+    :param catalog: pl.DataFrame - The DataFrame containing the GTFS catalog.
+    :returns: pl.DataFrame - The filtered catalog DataFrame.
+    """
+    return catalog.filter(
+        (pl.col(COL_DATA_TYPE) == "gtfs") & (~pl.col(COL_AUTH_TYPE).is_in([1, 2]))
+    )
 
 
 def filter_catalog(
     catalog: pl.DataFrame, country_code: str, subdivision_name: str, municipality: str
 ) -> pl.DataFrame:
+    """
+    Filters the catalog DataFrame based on country code, subdivision name, and municipality.
+
+    :param catalog: pl.DataFrame - The DataFrame containing the GTFS catalog.
+    :param country_code: str - The country code to filter the catalog.
+    :param subdivision_name: str - The subdivision name to filter the catalog.
+    :param municipality: str - The municipality name to filter the catalog.
+    :returns: pl.DataFrame - The filtered catalog DataFrame.
+    """
     if country_code:
-        catalog = catalog[
-            catalog[COL_COUNTRY_CODE].str.contains(country_code, flags=IGNORECASE)
-        ]
+        catalog = catalog.filter(
+            pl.col(COL_COUNTRY_CODE).str.contains(f"(?i){country_code}")
+        )
     if subdivision_name:
-        catalog = catalog[
-            catalog[COL_SUBDIVISION_NAME].str.contains(
-                subdivision_name, flags=IGNORECASE
-            )
-        ]
+        catalog = catalog.filter(
+            pl.col(COL_SUBDIVISION_NAME).str.contains(f"(?i){subdivision_name}")
+        )
     if municipality:
-        catalog = catalog[
-            catalog[COL_MUNICIPALITY].str.contains(municipality, flags=IGNORECASE)
-        ]
+        catalog = catalog.filter(
+            pl.col(COL_MUNICIPALITY).str.contains(f"(?i){municipality}")
+        )
     return catalog
 
 
 def print_catalog(catalog: pl.DataFrame):
+    """
+    Prints the GTFS catalog in a formatted table.
+
+    :param catalog: pl.DataFrame - The DataFrame containing the GTFS catalog to print.
+    """
     if len(catalog) == 0:
         print("[i] No GTFS feeds found.[/i]")
         return
 
     table = Table(title="GTFS Catalog", show_lines=True)
 
-    index_max_length = max(int(catalog.index.astype(str).str.len().max()), len("ID"))
+    index_max_length = max(
+        max(catalog.get_column("index").cast(pl.String).str.len_chars()), len("ID")
+    )
     country_code_max_length = max(
-        int(catalog[COL_COUNTRY_CODE].str.len().max()), len("Code")
+        catalog.get_column(COL_COUNTRY_CODE).str.len_chars().max(),  # type: ignore
+        len("Code"),
     )
     subdivision_max_length = max(
-        int(catalog[COL_SUBDIVISION_NAME].str.len().max()), len("Subdivision")
+        catalog.get_column(COL_SUBDIVISION_NAME).str.len_chars().max(),  # type: ignore
+        len("Subdivision"),
     )
     municipality_max_length = max(
-        int(catalog[COL_MUNICIPALITY].str.len().max()), len("Municipality")
+        int(catalog.get_column(COL_MUNICIPALITY).str.len_chars().max()),  # type: ignore
+        len("Municipality"),
     )
 
     table.add_column("ID", style=ID_COLOR, width=index_max_length)
@@ -119,13 +155,21 @@ def print_catalog(catalog: pl.DataFrame):
     table.add_column("Municipality", width=municipality_max_length)
     table.add_column("Provider")
 
-    for index, row in catalog.iterrows():
+    for index, cc, sn, mu, pr in catalog.select(
+        [
+            "index",
+            COL_COUNTRY_CODE,
+            COL_SUBDIVISION_NAME,
+            COL_MUNICIPALITY,
+            COL_PROVIDER,
+        ]
+    ).iter_rows():
         table.add_row(
             format_value(index),
-            format_value(row[COL_COUNTRY_CODE]),  # type: ignore
-            format_value(row[COL_SUBDIVISION_NAME]),  # type: ignore
-            format_value(row[COL_MUNICIPALITY]),  # type: ignore
-            format_value(row[COL_PROVIDER]),  # type: ignore
+            format_value(cc),  # type: ignore
+            format_value(sn),  # type: ignore
+            format_value(mu),  # type: ignore
+            format_value(pr),  # type: ignore
         )
 
     console = Console()
@@ -133,21 +177,32 @@ def print_catalog(catalog: pl.DataFrame):
 
 
 def format_value(value: Any) -> str:
+    """
+    Formats a value for display, replacing None with a dash.
+
+    :param value: Any - The value to format.
+    :returns: str - The formatted string representation of the value.
+    """
     formatted_value = str(value) or "-"
     return formatted_value
 
 
 def download(id: int, output: str):
+    """
+    Downloads a GTFS feed based on the specified ID and saves it to the output path.
+
+    :param id: int - The ID of the GTFS feed to download.
+    :param output: str - The path where the downloaded feed will be saved.
+    """
     catalog = get_catalog()
-    catalog = catalog[catalog.index == id]
+    catalog = catalog.filter(pl.col("index") == id)
 
     if len(catalog) == 0:
         rlog.error(f"GTFS feed with ID {id} not found.")
         return
 
-    row = catalog.iloc[0]
+    row = catalog.row(0, named=True)
     url = row[COL_DOWNLOAD_URL]
-
     if not url:
         rlog.error(f"GTFS feed with ID {id} has no download URL.")
         return

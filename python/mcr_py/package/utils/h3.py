@@ -1,204 +1,253 @@
-import os
-import pickle
-from typing import List, Tuple
+from typing import Callable, Optional
 
 import folium
+import h3
 import polars as pl
-import polars_st as st
-import pyproj
-import shapely.geometry.base
-import shapely.ops
-from shapely.geometry import MultiPolygon, Polygon
-
-from mcr_py.package.utils import cache
+import polars_h3 as pl_h3
+from branca.colormap import LinearColormap
+from branca.element import MacroElement
+from jinja2 import Template
 
 
-def convert_to_crs(
-    geometry: shapely.geometry.base.BaseGeometry, crs: str, crs_target: str
+def add_h3_cell_id_to_df(df: pl.DataFrame, resolution: int) -> pl.DataFrame:
+    """
+    Add a column to the dataframe with the H3 cell ID for the given resolution.
+
+    df: The input dataframe expected to have "lat" and "lon" columns.
+    resolution: The H3 resolution level to compute the cell ID.
+
+    :returns: A new dataframe with an additional column "h3_cell_id".
+    """
+    df = df.with_columns(
+        pl_h3.latlng_to_cell(pl.col("lat"), pl.col("lon"), resolution=resolution).alias(
+            "h3_cell_id"
+        )
+    )
+    return df
+
+
+def plot_h3_cells_discrete_colors_on_folium(
+    h3_cells: dict[str, str],
+    folium_map: folium.Map,
+    color_scheme: dict[str, str],
+    fill_opacity: float = 1,
 ):
     """
-    Convert the geometry from one coordinate reference system (CRS) to another.
+    Plot H3 cells on a Folium map using discrete colors.
 
-    geometry: The geometry to be transformed.
-    crs: The source CRS as a string (e.g., "EPSG:4326").
-    crs_target: The target CRS as a string (e.g., "EPSG:3857").
+    h3_cells: A dictionary mapping H3 cell IDs to values for coloring.
+    folium_map: The Folium map object to which the cells will be added.
+    color_scheme: A dictionary mapping values to colors.
+    fill_opacity: The opacity of the filled polygons (default is 1).
 
-    :returns: The transformed geometry in the target CRS.
+    :returns: None
     """
-    crs_source = pyproj.CRS(crs)
-    crs_sink = pyproj.CRS(crs_target)
-    transform_source_sink = pyproj.Transformer.from_crs(
-        crs_source, crs_sink, always_xy=True
-    ).transform
-    return shapely.ops.transform(transform_source_sink, geometry)
+    for h3_cell in h3_cells:
+        geo_boundary = h3.cells_to_h3shape([h3_cell], tight=True)
+        geo_boundary = geo_boundary.outer  # type: ignore
+
+        value = h3_cells[h3_cell]
+        color = color_scheme[value]
+
+        folium.Polygon(
+            locations=geo_boundary,
+            color=color,
+            weight=0.2,
+            opacity=1,
+            fill_opacity=fill_opacity,
+            fill_color=color,
+        ).add_to(folium_map)
+    add_legend_to_map(folium_map, color_scheme, fill_opacity)
 
 
-class GeoMeta:
+def add_legend_to_map(
+    folium_map: folium.Map,
+    color_scheme: dict[str, str],
+    opacity: float = 1,
+):
     """
-    GeoMeta incorporates general geospatial information, including the boundary of the area of consideration.
+    Add a legend to the Folium map.
+
+    folium_map: The Folium map object to which the legend will be added.
+    color_scheme: A dictionary mapping values to colors for the legend.
+    opacity: The opacity of the legend items (default is 1).
+
+    :returns: The updated Folium map with the legend added.
     """
+    template = """
+{% macro html(this, kwargs) %}
 
-    BUFFER = 10000  # roughly 5km
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>jQuery UI Draggable - Default functionality</title>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
-    def __init__(self, boundary: Polygon, crs: str, crs_target: str):
-        """
-        Initialize the GeoMeta object with a boundary, source CRS, and target CRS.
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
-        boundary: The polygon representing the boundary.
-        crs: The source CRS as a string.
-        crs_target: The target CRS as a string.
-        """
-        self.crs = crs
-        self.crs_target = crs_target
-        self.unbuffered_boundary = boundary
-        buffered_boundary = convert_to_crs(self.unbuffered_boundary, crs, crs_target)
-        buffered_boundary = buffered_boundary.buffer(self.BUFFER)
-        self.boundary = convert_to_crs(buffered_boundary, crs_target, crs)
-        self.residential_area = None
+  <script>
+  $( function() {
+    $( "#maplegend" ).draggable({
+                    start: function (event, ui) {
+                        $(this).css({
+                            right: "auto",
+                            top: "auto",
+                            bottom: "auto"
+                        });
+                    }
+                });
+});
 
-    def hash_boundary(self):
-        """
-        Generate a hash string for the boundary geometry.
+  </script>
+</head>
+<body>
 
-        :returns: A hash string representing the boundary.
-        """
-        return cache.hash_str(self.boundary.wkt)
 
-    def get_bounding_box(self, use_buffer: bool = True):
-        """
-        Get the bounding box of the boundary.
+<div id='maplegend' class='maplegend'
+    style='position: absolute; z-index:9999; border:2px solid grey; background-color:rgba(255, 255, 255, 0.8);
+     border-radius:6px; padding: 10px; font-size:16px; right: 20px; top: 20px;'>
 
-        use_buffer: Whether to use the buffered boundary or the unbuffered boundary.
+<div class='legend-title'>Legend</div>
+<div class='legend-scale'>
+  <ul class='legend-labels'>"""
+    template_part_2 = """
+  </ul>
+</div>
+</div>
 
-        :returns: A tuple representing the bounding box (minx, miny, maxx, maxy).
-        """
-        if use_buffer:
-            return self.boundary.bounds
+</body>
+</html>
+
+<style type='text/css'>
+  .maplegend .legend-title {
+    text-align: left;
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 90%;
+    }
+  .maplegend .legend-scale ul {
+    margin: 0;
+    margin-bottom: 5px;
+    padding: 0;
+    float: left;
+    list-style: none;
+    }
+  .maplegend .legend-scale ul li {
+    font-size: 80%;
+    list-style: none;
+    margin-left: 0;
+    line-height: 18px;
+    margin-bottom: 2px;
+    }
+  .maplegend ul.legend-labels li span {
+    display: block;
+    float: left;
+    height: 16px;
+    width: 30px;
+    margin-right: 5px;
+    margin-left: 0;
+    border: 1px solid #999;
+    }
+  .maplegend .legend-source {
+    font-size: 80%;
+    color: #777;
+    clear: both;
+    }
+  .maplegend a {
+    color: #777;
+    }
+</style>
+{% endmacro %}"""
+
+    for key_, value in color_scheme.items():
+        template += (
+            f'<li><span style="background:{value};opacity:{opacity}"></span>{key_}</li>'
+        )
+
+    template += template_part_2
+    macro = MacroElement()
+    macro._template = Template(template)
+
+    folium_map.get_root().add_child(macro)
+    return folium_map
+
+
+def plot_h3_cells_on_folium(
+    h3_cells: set[str] | dict[str, int],
+    folium_map: folium.Map,
+    reverse_color: bool = False,
+    popup_callback: Optional[Callable] = None,
+    color: str = "blue",
+    maximum: Optional[int] = None,
+    show_legend: bool = False,
+    legend_color_map=None,
+    legend_is_scaled: bool = False,
+    legend_value_callback: Optional[Callable] = None,
+    legend_caption: str = "",
+) -> None:
+    """
+    Plot H3 cells on a Folium map with optional popup and legend.
+
+    h3_cells: A set of H3 cell IDs or a dictionary mapping H3 cell IDs to values.
+    folium_map: The Folium map object to which the cells will be added.
+    reverse_color: Whether to reverse the color scale (default is False).
+    popup_callback: Optional callback function for generating popups.
+    color: The color of the polygons (default is "blue").
+    maximum: The maximum value for scaling the opacity (default is None).
+    show_legend: Whether to display a legend on the map (default is False).
+    legend_color_map: Optional color map for the legend.
+    legend_is_scaled: Whether the legend is scaled (default is False).
+    legend_value_callback: Optional callback for determining the maximum value for the legend.
+    legend_caption: Caption for the legend.
+
+    :returns: None
+    """
+    is_dict = isinstance(h3_cells, dict)
+    maximum_value = (
+        maximum if maximum is not None else (max(h3_cells.values()) if is_dict else 0)
+    )
+
+    if show_legend:
+        colormap = legend_color_map or LinearColormap([(255, 255, 255, 0), color])
+        if not legend_is_scaled:
+            if legend_value_callback:
+                maximum_value_legend = legend_value_callback(maximum_value)
+            else:
+                maximum_value_legend = maximum_value
+            colormap = colormap.scale(0, maximum_value_legend)
+        colormap.caption = legend_caption
+        colormap.add_to(folium_map)
+
+    for h3_cell in h3_cells:
+        geo_boundary = list(h3.cell_to_boundary(h3_cell))
+        geo_boundary.append(geo_boundary[0])
+
+        opacity = 0
+        value = None
+        if is_dict:
+            value = h3_cells[h3_cell]
+            opacity = value / maximum_value
+            if reverse_color:
+                opacity = 1 - opacity
+
+        popup = None
+        if popup_callback:
+            if popup_callback.__code__.co_argcount == 1:
+                popup = popup_callback(value)
+            elif popup_callback.__code__.co_argcount == 2:
+                popup = popup_callback(h3_cell, value)
         else:
-            return self.unbuffered_boundary.bounds
+            popup = f"Value: {value}" if value else None
 
-    def get_bounding_box_as_coord_list(
-        self, use_buffer: bool = True
-    ) -> List[Tuple[float, float]]:
-        """
-        Get the bounding box as a list of coordinates.
-
-        use_buffer: Whether to use the buffered boundary or the unbuffered boundary.
-
-        :returns: A list of tuples representing the corners of the bounding box.
-        """
-        bounding_box = self.get_bounding_box(use_buffer=use_buffer)
-        return [
-            (bounding_box[0], bounding_box[1]),
-            (bounding_box[0], bounding_box[3]),
-            (bounding_box[2], bounding_box[3]),
-            (bounding_box[2], bounding_box[1]),
-        ]
-
-    @staticmethod
-    def load(path: str):
-        """
-        Load a GeoMeta object from a pickle file.
-
-        path: The path to the pickle file containing the GeoMeta object.
-
-        :returns: The loaded GeoMeta object.
-        :raises ValueError: If the loaded object is not a GeoMeta.
-        """
-        with open(path, "rb") as f:
-            loaded = pickle.load(f)
-            if not isinstance(loaded, GeoMeta):
-                raise ValueError(f"File at {path} does not contain a GeoMeta object.")
-            return loaded
-
-    def set_residential_area(self, residential_area: MultiPolygon):
-        """
-        Set the residential area for the GeoMeta object.
-
-        residential_area: A MultiPolygon representing the residential area.
-        """
-        self.residential_area = residential_area
-
-    def save(self, path: str):
-        """
-        Save the GeoMeta object to a pickle file.
-
-        path: The path where the GeoMeta object will be saved.
-        """
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-
-        with open(path, "wb") as f:
-            pickle.dump(self, f)
-
-    def crop_gdf(
-        self, locations: pl.DataFrame, use_buffer: bool = True
-    ) -> pl.DataFrame:
-        """
-        Crop a GeoDataFrame to the boundaries defined in the GeoMeta object.
-
-        locations: The input GeoDataFrame to be cropped.
-        use_buffer: Whether to use the buffered boundary or the unbuffered boundary.
-
-        :returns: A cropped GeoDataFrame containing only the locations within the boundary.
-        """
-        boundary = self.unbuffered_boundary
-        if use_buffer:
-            boundary = self.boundary
-        locations = locations.filter(
-            st.geom("geometry").st.within(st.from_wkt(pl.lit(boundary.wkt)))
-        )
-
-        return locations
-
-    def crop_df(
-        self,
-        locations: pl.DataFrame,
-        lat_col: str,
-        lon_col: str,
-        use_buffer: bool = True,
-    ) -> pl.DataFrame:
-        """
-        Crop a DataFrame of locations to the boundaries defined in the GeoMeta object.
-
-        locations: The input DataFrame to be cropped.
-        lat_col: The name of the latitude column.
-        lon_col: The name of the longitude column.
-        use_buffer: Whether to use the buffered boundary or the unbuffered boundary.
-
-        :returns: A cropped DataFrame containing only the locations within the boundary.
-        """
-        boundary = self.unbuffered_boundary
-        if use_buffer:
-            boundary = self.boundary
-
-        locations = locations.filter(
-            st.from_coords(pl.concat_arr(lon_col, lat_col)).st.within(
-                st.from_wkt(pl.lit(boundary.wkt))
-            )
-        )
-
-        return locations
-
-    def get_center_lat_lon(self) -> tuple[float, float]:
-        """
-        Get the latitude and longitude of the centroid of the boundary.
-
-        :returns: A tuple containing the latitude and longitude of the centroid.
-        """
-        lon, lat = self.boundary.centroid.coords[0]
-        return lat, lon
-
-    def add_to_folium_map(self, m: folium.Map) -> folium.Map:
-        """
-        Add the boundary and residential area to a Folium map.
-
-        m: The Folium map to which the geometries will be added.
-
-        :returns: The updated Folium map with added geometries.
-        """
-        folium.GeoJson(self.boundary).add_to(m)
-        folium.GeoJson(self.unbuffered_boundary).add_to(m)
-
-        if self.residential_area is not None:
-            folium.GeoJson(self.residential_area).add_to(m)
-        return m
+        folium.Polygon(
+            locations=geo_boundary,
+            color=color,
+            weight=0.2,
+            opacity=1,
+            fill_color=color,
+            fill_opacity=opacity,
+            popup=popup,
+        ).add_to(folium_map)

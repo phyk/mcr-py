@@ -13,6 +13,12 @@ from mcr_py.package.utils.logger import rlog
 
 
 def get_gtfs_filename(name: str) -> str:
+    """
+    Generates the GTFS filename for a given name.
+
+    :param name: str - The base name of the GTFS file.
+    :returns: str - The formatted GTFS filename with .txt extension.
+    """
     return f"{name}.txt"
 
 
@@ -35,6 +41,10 @@ EXPECTED_FILES = [
 def read_dfs(gtfs_zip_path: str) -> dict[str, pl.DataFrame]:
     """
     Reads GTFS zip file and returns a dictionary of dataframes.
+
+    :param gtfs_zip_path: str - The path to the GTFS zip file.
+    :returns: dict[str, pl.DataFrame] - A dictionary where keys are file names and values are DataFrames.
+    :raises Exception: If an expected file is not found in the zip file.
     """
     dfs = {}
 
@@ -54,15 +64,25 @@ def read_dfs(gtfs_zip_path: str) -> dict[str, pl.DataFrame]:
 
 
 def read_file(zip_ref: zipfile.ZipFile, file: str) -> pl.DataFrame:
+    """
+    Reads a single file from the GTFS zip and returns it as a DataFrame.
+
+    :param zip_ref: zipfile.ZipFile - The reference to the opened zip file.
+    :param file: str - The name of the file to read from the zip.
+    :returns: pl.DataFrame - The DataFrame containing the data from the file.
+    """
     with zip_ref.open(file) as f:
         rlog.debug(f"Reading {file}")
-        df = pl.read_csv(f, dtype=dtypes.GTFS_DTYPES)  # type: ignore
+        df = pl.read_csv(f)  # type: ignore
         return df
 
 
 def write_dfs(dfs: dict[str, pl.DataFrame], output: str):
     """
     Writes a dictionary of dataframes to a GTFS zip file.
+
+    :param dfs: dict[str, pl.DataFrame] - The dictionary of DataFrames to write.
+    :param output: str - The path where the output zip file will be saved.
     """
     os.makedirs(os.path.dirname(output), exist_ok=True)
     with zipfile.ZipFile(output, "w") as zip_ref:
@@ -72,5 +92,12 @@ def write_dfs(dfs: dict[str, pl.DataFrame], output: str):
 
 
 def write_file(zip_ref: zipfile.ZipFile, file: str, df: pl.DataFrame):
+    """
+    Writes a DataFrame to a file within the GTFS zip.
+
+    :param zip_ref: zipfile.ZipFile - The reference to the opened zip file.
+    :param file: str - The name of the file to write to the zip.
+    :param df: pl.DataFrame - The DataFrame to write to the file.
+    """
     with zip_ref.open(file, "w") as f:
         df.write_csv(f)

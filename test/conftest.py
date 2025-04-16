@@ -8,8 +8,9 @@ from mcr_py.package.structs.build import (
     create_trip_ids_by_route_sorted_by_departure,
 )
 import os
+import shapely
 
-import pandas as pd
+import polars as pl
 import pytest
 from mcr_py.package.gtfs.clean import (
     add_first_stop_info,
@@ -17,15 +18,7 @@ from mcr_py.package.gtfs.clean import (
     split_routes,
     split_routes_by_direction,
 )
-
-import tempfile
-
-
-@pytest.fixture(scope="session")
-def test_directory():
-    """Fixture to create a temporary directory for tests."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        yield tmpdir
+from mcr_py.package.utils.geometa import GeoMeta
 
 
 @pytest.fixture(scope="session")
@@ -100,82 +93,96 @@ ROUTES = {
 }
 
 
-@pytest.fixture
-def trips_df() -> pd.DataFrame:
+@pytest.fixture(scope="session")
+def trips_df() -> pl.DataFrame:
     # route_id, trip_id, direction_id
     trips = ROUTES[ROUTE1_ID]
-    return pd.DataFrame(
-        [[ROUTE1_ID, trip_id, trips[trip_id]["direction"]] for trip_id in trips],
-        columns=["route_id", "trip_id", "direction_id"],
+    return pl.DataFrame(
+        [
+            {
+                "route_id": ROUTE1_ID,
+                "trip_id": trip_id,
+                "direction_id": trips[trip_id]["direction"],
+            }
+            for trip_id in trips
+        ]
     )
 
 
 @pytest.fixture
-def stop_times_df() -> pd.DataFrame:
+def stop_times_df() -> pl.DataFrame:
     # trip_id, departure_time, arrival_time, stop_id, stop_sequence
     trips = ROUTES[ROUTE1_ID]
     stop_times = []
     for trip_id in trips:
         stop_times.extend(
             [
-                [
-                    trip_id,
-                    trips[trip_id]["stop_times"][stop_id]["departure_time"],
-                    trips[trip_id]["stop_times"][stop_id]["arrival_time"],
-                    stop_id,
-                    trips[trip_id]["stop_times"][stop_id]["stop_sequence"],
-                ]
+                {
+                    "trip_id": trip_id,
+                    "departure_time": trips[trip_id]["stop_times"][stop_id][
+                        "departure_time"
+                    ],
+                    "arrival_time": trips[trip_id]["stop_times"][stop_id][
+                        "arrival_time"
+                    ],
+                    "stop_id": stop_id,
+                    "stop_sequence": trips[trip_id]["stop_times"][stop_id][
+                        "stop_sequence"
+                    ],
+                }
                 for stop_id in trips[trip_id]["stop_times"]
             ]
         )
-    return pd.DataFrame(
-        stop_times,
-        columns=[
-            "trip_id",
-            "departure_time",
-            "arrival_time",
-            "stop_id",
-            "stop_sequence",
-        ],
-    )
+    return pl.DataFrame(stop_times)
 
 
 @pytest.fixture
-def paths_df(trips_df: pd.DataFrame, stop_times_df: pd.DataFrame) -> pd.DataFrame:
+def paths_df(trips_df: pl.DataFrame, stop_times_df: pl.DataFrame) -> pl.DataFrame:
     split_routes_by_direction(trips_df)
     return create_paths_df(trips_df, stop_times_df)
 
 
 @pytest.fixture
-def stops_df() -> pd.DataFrame:
+def stops_df() -> pl.DataFrame:
     # stop_id
-    return pd.DataFrame(
-        [["stop1"], ["stop2"], ["stop3"], ["stop4"], ["stop5"]], columns=["stop_id"]
-    )
+    return pl.DataFrame({"stop_id": ["stop1", "stop2", "stop3", "stop4", "stop5"]})
 
 
 @pytest.fixture
-def routes_df() -> pd.DataFrame:
+def routes_df() -> pl.DataFrame:
     # route_id, direction_id
-    return pd.DataFrame([[ROUTE1_ID]], columns=["route_id"])
+    return pl.DataFrame({"route_id": [ROUTE1_ID]})
+
+
+# Sample data for testing
+@pytest.fixture
+def sample_polygon():
+    return shapely.geometry.Polygon([(0, 0), (1, 0), (1, 1), (0, 1)])
+
+
+@pytest.fixture
+def geo_meta(sample_polygon):
+    return GeoMeta.create(
+        boundary=sample_polygon, crs="EPSG:4326", crs_target="EPSG:3857"
+    )
 
 
 @pytest.fixture()
 def cleaned_trips_df(
-    trips_df: pd.DataFrame, stop_times_df: pd.DataFrame, routes_df: pd.DataFrame
-) -> pd.DataFrame:
+    trips_df: pl.DataFrame, stop_times_df: pl.DataFrame, routes_df: pl.DataFrame
+) -> pl.DataFrame:
     trips_df, routes_df = split_routes(trips_df, stop_times_df, routes_df)
     trips_df = add_first_stop_info(trips_df, stop_times_df)
     return trips_df
 
 
 @pytest.fixture
-def trip_ids_by_route(cleaned_trips_df: pd.DataFrame) -> dict[str, list[str]]:
+def trip_ids_by_route(cleaned_trips_df: pl.DataFrame) -> dict[str, list[str]]:
     return create_trip_ids_by_route_sorted_by_departure(cleaned_trips_df)
 
 
 @pytest.fixture
-def stop_times_by_trip(stop_times_df: pd.DataFrame) -> dict[str, list[dict[str, str]]]:
+def stop_times_by_trip(stop_times_df: pl.DataFrame) -> dict[str, list[dict[str, str]]]:
     return create_stop_times_by_trip(stop_times_df)
 
 
@@ -210,6 +217,6 @@ def times_by_stop_by_trip(
 
 @pytest.fixture
 def test_create_id_sets(
-    trips_df: pd.DataFrame, routes_by_stop: dict[str, set[str]]
+    trips_df: pl.DataFrame, routes_by_stop: dict[str, set[str]]
 ) -> tuple[set[str], set[str], set[str]]:
     return create_id_sets(trips_df, routes_by_stop)

@@ -1,7 +1,7 @@
 import shutil
 
 from mcr_py.package.utils import strtime
-from pandas.compat import os
+import os.path
 
 from mcr_py.command.raptor import raptor
 from mcr_py.package.utils import storage
@@ -42,9 +42,7 @@ def test_raptor(testdata_path: str):
         os.path.join(testdata_path, "gtfs.zip"),
     )
 
-    arrival_times = storage.read_df(
-        os.path.join(output_dir, "arrival_times.csv")
-    ).set_index("stop_id")
+    arrival_times = storage.read_df(os.path.join(output_dir, "arrival_times.csv"))
 
     # all stops are reachable
     assert (arrival_times.arrival_time == "--:--:--").sum() == 0

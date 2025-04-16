@@ -6,19 +6,6 @@ from mcr_py.package.utils import cache
 from mcr_py.package.utils.geometa import GeoMeta
 
 
-# Sample data for testing
-@pytest.fixture
-def sample_polygon():
-    return shapely.geometry.Polygon([(0, 0), (1, 0), (1, 1), (0, 1)])
-
-
-@pytest.fixture
-def geo_meta(sample_polygon):
-    return GeoMeta.create(
-        boundary=sample_polygon, crs="EPSG:4326", crs_target="EPSG:3857"
-    )
-
-
 def test_initialization(geo_meta):
     assert geo_meta.crs == "EPSG:4326"
     assert geo_meta.crs_target == "EPSG:3857"

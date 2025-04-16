@@ -1,7 +1,6 @@
 import pytest
 import polars as pl
 from mcr_py.package.structs.build import (
-    build_structures,
     create_stop_times_by_trip,
     create_trip_ids_by_route_sorted_by_departure,
     create_stops_by_route_ordered,
@@ -12,107 +11,15 @@ from mcr_py.package.structs.build import (
     validate_structs_dict,
     unpack_structs,
 )
+from mcr_py.package.utils import strtime
 
 
-@pytest.fixture
-def trips_df():
-    # Create a sample DataFrame for trips
-    return pl.DataFrame(
-        {
-            "trip_id": ["trip1", "trip2", "trip3"],
-            "route_id": ["route1", "route1", "route2"],
-            "trip_departure_time": ["08:00:00", "09:00:00", "10:00:00"],
-        }
-    )
-
-
-@pytest.fixture
-def stop_times_df():
-    # Create a sample DataFrame for stop times
-    return pl.DataFrame(
-        {
-            "trip_id": ["trip1", "trip1", "trip2", "trip2", "trip3"],
-            "arrival_time": [
-                "08:00:00",
-                "08:05:00",
-                "09:00:00",
-                "09:10:00",
-                "10:00:00",
-            ],
-            "departure_time": [
-                "08:00:00",
-                "08:05:00",
-                "09:00:00",
-                "09:10:00",
-                "10:00:00",
-            ],
-            "stop_id": ["stop1", "stop2", "stop1", "stop3", "stop2"],
-            "stop_sequence": [1, 2, 1, 2, 1],
-        }
-    )
-
-
-def test_create_stop_times_by_trip(stop_times_df):
-    result = create_stop_times_by_trip(stop_times_df)
-    assert isinstance(result, dict)
-    assert len(result) == 3  # Expecting 3 trips
-
-
-def test_create_trip_ids_by_route_sorted_by_departure(trips_df):
-    result = create_trip_ids_by_route_sorted_by_departure(trips_df)
-    assert isinstance(result, dict)
-    assert len(result) == 2  # Expecting 2 routes
-
-
-def test_create_stops_by_route_ordered(trips_df, stop_times_df):
-    trip_ids_by_route = create_trip_ids_by_route_sorted_by_departure(trips_df)
+def test_create_stops_by_route_ordered(cleaned_trips_df, stop_times_df):
+    trip_ids_by_route = create_trip_ids_by_route_sorted_by_departure(cleaned_trips_df)
     stop_times_by_trip = create_stop_times_by_trip(stop_times_df)
     result = create_stops_by_route_ordered(trip_ids_by_route, stop_times_by_trip)
     assert isinstance(result, dict)
-    assert len(result) == 2  # Expecting 2 routes
-
-
-def test_create_routes_by_stop(trips_df, stop_times_df):
-    trip_ids_by_route = create_trip_ids_by_route_sorted_by_departure(trips_df)
-    stop_times_by_trip = create_stop_times_by_trip(stop_times_df)
-    stops_by_route = create_stops_by_route_ordered(
-        trip_ids_by_route, stop_times_by_trip
-    )
-    result = create_routes_by_stop(stops_by_route)
-    assert isinstance(result, dict)
-    assert len(result) == 3  # Expecting 3 stops
-
-
-def test_create_id_sets(trips_df):
-    routes_by_stop = {
-        "stop1": {"route1"},
-        "stop2": {"route1", "route2"},
-        "stop3": {"route1"},
-    }
-    result = create_id_sets(trips_df, routes_by_stop)
-    assert isinstance(result, tuple)
-    assert len(result) == 3  # Expecting 3 sets
-    assert isinstance(result[0], set)  # stop_id_set
-    assert isinstance(result[1], set)  # route_id_set
-    assert isinstance(result[2], set)  # trip_id_set
-
-
-def test_create_idx_by_stop_by_route(trips_df, stop_times_df):
-    trip_ids_by_route = create_trip_ids_by_route_sorted_by_departure(trips_df)
-    stop_times_by_trip = create_stop_times_by_trip(stop_times_df)
-    stops_by_route = create_stops_by_route_ordered(
-        trip_ids_by_route, stop_times_by_trip
-    )
-    result = create_idx_by_stop_by_route(stops_by_route)
-    assert isinstance(result, dict)
-    assert len(result) == 2  # Expecting 2 routes
-
-
-def test_create_times_by_stop_by_trip(stop_times_df):
-    stop_times_by_trip = create_stop_times_by_trip(stop_times_df)
-    result = create_times_by_stop_by_trip(stop_times_by_trip)
-    assert isinstance(result, dict)
-    assert len(result) == 3  # Expecting 3 trips
+    assert len(result) == 3
 
 
 def test_validate_structs_dict():
@@ -152,3 +59,205 @@ def test_unpack_structs():
     }
     result = unpack_structs(structs)
     assert len(result) == 6
+
+
+def test_create_stop_times_by_trip(stop_times_df: pl.DataFrame):
+    expected_stop_times_by_trip = {
+        "trip1": [
+            {
+                "departure_time": "00:00:00",
+                "arrival_time": "00:00:00",
+                "stop_id": "stop1",
+                "stop_sequence": 1,
+            },
+            {
+                "departure_time": "00:10:00",
+                "arrival_time": "00:10:00",
+                "stop_id": "stop2",
+                "stop_sequence": 2,
+            },
+            {
+                "departure_time": "00:20:00",
+                "arrival_time": "00:20:00",
+                "stop_id": "stop3",
+                "stop_sequence": 3,
+            },
+        ],
+        "trip2": [
+            {
+                "departure_time": "01:00:00",
+                "arrival_time": "01:00:00",
+                "stop_id": "stop1",
+                "stop_sequence": 1,
+            },
+            {
+                "departure_time": "01:10:00",
+                "arrival_time": "01:10:00",
+                "stop_id": "stop4",
+                "stop_sequence": 2,
+            },
+            {
+                "departure_time": "01:20:00",
+                "arrival_time": "01:20:00",
+                "stop_id": "stop3",
+                "stop_sequence": 3,
+            },
+        ],
+        "trip3": [
+            {
+                "departure_time": "02:00:00",
+                "arrival_time": "02:00:00",
+                "stop_id": "stop3",
+                "stop_sequence": 1,
+            },
+            {
+                "departure_time": "02:10:00",
+                "arrival_time": "02:10:00",
+                "stop_id": "stop2",
+                "stop_sequence": 2,
+            },
+            {
+                "departure_time": "02:20:00",
+                "arrival_time": "02:20:00",
+                "stop_id": "stop1",
+                "stop_sequence": 3,
+            },
+        ],
+    }
+
+    stop_times_by_trip = create_stop_times_by_trip(stop_times_df)
+    assert stop_times_by_trip == expected_stop_times_by_trip
+
+
+def test_create_trip_ids_by_route_sorted_by_departure(cleaned_trips_df: pl.DataFrame):
+    expected_trip_ids_by_route = {
+        "route1_1": ["trip1"],
+        "route1_2": ["trip2"],
+        "route1_3": ["trip3"],
+    }
+    trip_ids_by_route = create_trip_ids_by_route_sorted_by_departure(cleaned_trips_df)
+    assert trip_ids_by_route == expected_trip_ids_by_route
+
+
+def test_create_stops_by_route(
+    trip_ids_by_route: dict[str, list[str]],
+    stop_times_by_trip: dict[str, list[dict[str, str]]],
+):
+    stops_by_route = create_stops_by_route_ordered(
+        trip_ids_by_route, stop_times_by_trip
+    )
+
+    expected_stops_by_route = {
+        "route1_1": ["stop1", "stop2", "stop3"],
+        "route1_2": ["stop1", "stop4", "stop3"],
+        "route1_3": ["stop3", "stop2", "stop1"],
+    }
+    assert stops_by_route == expected_stops_by_route
+
+
+def test_create_routes_by_stop(stops_by_route: dict[str, list[str]]):
+    routes_by_stop = create_routes_by_stop(stops_by_route)
+
+    expected_routes_by_stop = {
+        "stop1": set(["route1_3", "route1_1", "route1_2"]),
+        "stop2": set(["route1_3", "route1_1"]),
+        "stop3": set(["route1_3", "route1_1", "route1_2"]),
+        "stop4": set(["route1_2"]),
+    }
+    print(routes_by_stop)
+
+    assert routes_by_stop == expected_routes_by_stop
+
+
+def test_create_id_sets(
+    cleaned_trips_df: pl.DataFrame, routes_by_stop: dict[str, set[str]]
+):
+    stop_id_set, route_id_set, trip_id_set = create_id_sets(
+        cleaned_trips_df, routes_by_stop
+    )
+
+    stop_id_set_expected = set(["stop1", "stop2", "stop3", "stop4"])
+    route_id_set_expected = set(["route1_1", "route1_2", "route1_3"])
+    trip_id_set_expected = set(["trip1", "trip2", "trip3"])
+
+    assert stop_id_set == stop_id_set_expected
+    assert route_id_set == route_id_set_expected
+    assert trip_id_set == trip_id_set_expected
+
+
+def test_create_idx_by_stop_by_route(
+    stops_by_route: dict[str, list[str]],
+):
+    idx_by_stop_by_route = create_idx_by_stop_by_route(stops_by_route)
+
+    expected_idx_by_stop_by_route = {
+        "route1_1": {
+            "stop1": 0,
+            "stop2": 1,
+            "stop3": 2,
+        },
+        "route1_2": {
+            "stop1": 0,
+            "stop4": 1,
+            "stop3": 2,
+        },
+        "route1_3": {
+            "stop3": 0,
+            "stop2": 1,
+            "stop1": 2,
+        },
+    }
+    assert idx_by_stop_by_route == expected_idx_by_stop_by_route
+
+
+def test_create_times_by_stop_by_trip(
+    stop_times_by_trip: dict[str, list[dict[str, str]]],
+):
+    times_by_stop_by_trip = create_times_by_stop_by_trip(stop_times_by_trip)
+
+    expected_times_by_stop_by_trip = {
+        "trip1": {
+            "stop1": (
+                strtime.str_time_to_seconds("00:00:00"),
+                strtime.str_time_to_seconds("00:00:00"),
+            ),
+            "stop2": (
+                strtime.str_time_to_seconds("00:10:00"),
+                strtime.str_time_to_seconds("00:10:00"),
+            ),
+            "stop3": (
+                strtime.str_time_to_seconds("00:20:00"),
+                strtime.str_time_to_seconds("00:20:00"),
+            ),
+        },
+        "trip2": {
+            "stop1": (
+                strtime.str_time_to_seconds("01:00:00"),
+                strtime.str_time_to_seconds("01:00:00"),
+            ),
+            "stop4": (
+                strtime.str_time_to_seconds("01:10:00"),
+                strtime.str_time_to_seconds("01:10:00"),
+            ),
+            "stop3": (
+                strtime.str_time_to_seconds("01:20:00"),
+                strtime.str_time_to_seconds("01:20:00"),
+            ),
+        },
+        "trip3": {
+            "stop3": (
+                strtime.str_time_to_seconds("02:00:00"),
+                strtime.str_time_to_seconds("02:00:00"),
+            ),
+            "stop2": (
+                strtime.str_time_to_seconds("02:10:00"),
+                strtime.str_time_to_seconds("02:10:00"),
+            ),
+            "stop1": (
+                strtime.str_time_to_seconds("02:20:00"),
+                strtime.str_time_to_seconds("02:20:00"),
+            ),
+        },
+    }
+
+    assert times_by_stop_by_trip == expected_times_by_stop_by_trip
