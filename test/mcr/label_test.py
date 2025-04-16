@@ -1,4 +1,4 @@
-from mcr_py.package.mcr.label import IntermediateLabel, merge_intermediate_bags
+from mcr_py.mcr.label import IntermediateLabel, merge_intermediate_bags
 
 
 def test_merge_intermediate_bags():

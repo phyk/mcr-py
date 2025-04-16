@@ -3,7 +3,7 @@ import os
 import polars as pl
 from unittest.mock import patch
 import tempfile
-import mcr_py.package.utils.storage
+import mcr_py.utils.storage
 import pickle
 
 
@@ -24,8 +24,8 @@ def test_df():
 
 
 def test_get_tmp_path():
-    assert mcr_py.package.utils.storage.get_tmp_path() == "/tmp/mcr-py"
-    assert mcr_py.package.utils.storage.get_tmp_path("blabla") == "/tmp/mcr-py/blabla"
+    assert mcr_py.utils.storage.get_tmp_path() == "/tmp/mcr-py"
+    assert mcr_py.utils.storage.get_tmp_path("blabla") == "/tmp/mcr-py/blabla"
 
 
 @patch("requests.get")
@@ -34,7 +34,7 @@ def test_download_file(mock_get, tmp_path):
     path = os.path.join(tmp_path, "test.txt")
     mock_get.return_value.content = b"file content"
 
-    mcr_py.package.utils.storage.download_file(url, path)
+    mcr_py.utils.storage.download_file(url, path)
 
     assert os.path.exists(path)
     with open(path, "rb") as f:
@@ -43,15 +43,15 @@ def test_download_file(mock_get, tmp_path):
 
 def test_write_dfs_dict(tmp_path, test_df):
     dfs_dict = {"test": test_df}
-    mcr_py.package.utils.storage.write_dfs_dict(dfs_dict, tmp_path)
+    mcr_py.utils.storage.write_dfs_dict(dfs_dict, tmp_path)
 
-    filename = mcr_py.package.utils.storage.get_df_filename_for_name("test")
+    filename = mcr_py.utils.storage.get_df_filename_for_name("test")
     assert os.path.exists(os.path.join(tmp_path, filename))
 
 
 def test_write_df(tmp_path, test_df):
     output_path = os.path.join(tmp_path, "test.parquet")
-    mcr_py.package.utils.storage.write_df(test_df, output_path)
+    mcr_py.utils.storage.write_df(test_df, output_path)
 
     assert os.path.exists(output_path)
 
@@ -59,21 +59,19 @@ def test_write_df(tmp_path, test_df):
 def test_get_df_filename_for_name():
     name = "test"
     expected_filename = "test.parquet"
-    assert (
-        mcr_py.package.utils.storage.get_df_filename_for_name(name) == expected_filename
-    )
+    assert mcr_py.utils.storage.get_df_filename_for_name(name) == expected_filename
 
 
 def test_read_df(tmp_path, test_df):
     path = os.path.join(tmp_path, "test.parquet")
     test_df.write_parquet(path)
 
-    _ = mcr_py.package.utils.storage.read_df(path)
+    _ = mcr_py.utils.storage.read_df(path)
 
 
 def test_write_any_dict(tmp_path, test_dict):
     output_path = os.path.join(tmp_path, "test.pkl")
-    mcr_py.package.utils.storage.write_any_dict(test_dict, output_path)
+    mcr_py.utils.storage.write_any_dict(test_dict, output_path)
 
     assert os.path.exists(output_path)
 
@@ -83,5 +81,5 @@ def test_read_any_dict(tmp_path, test_dict):
     with open(output_path, "wb") as f:
         pickle.dump(test_dict, f)
 
-    result = mcr_py.package.utils.storage.read_any_dict(output_path)
+    result = mcr_py.utils.storage.read_any_dict(output_path)
     assert result == test_dict

@@ -6,7 +6,7 @@ import tracemalloc
 from datetime import datetime
 from functools import partial
 
-from mcr_py.package.utils import storage
+from mcr_py.utils import storage
 import psutil
 
 sys.path.append("../src/")
@@ -17,11 +17,11 @@ from command.step_config import (
     get_public_transport_only_config_with_data,
     get_walking_only_config_with_data,
 )
-from mcr_py.package.utils import key
-from mcr_py.package.utils.geometa import GeoMeta
-from mcr_py.package.utils.logger import rlog, setup
-from mcr_py.package.mcr.data import NetworkType, OSMData
-from mcr_py.package.mcr5.mcr5 import MCR5
+from mcr_py.utils import key
+from mcr_py.utils.geometa import GeoMeta
+from mcr_py.utils.logger import rlog, setup
+from mcr_py.mcr.data import NetworkType, OSMData
+from mcr_py.mcr5.mcr5 import MCR5
 
 setup("INFO")
 

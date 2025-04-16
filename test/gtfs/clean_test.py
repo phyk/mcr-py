@@ -1,6 +1,6 @@
 import polars as pl
 
-from mcr_py.package.gtfs.clean import (
+from mcr_py.gtfs.clean import (
     add_first_stop_info,
     add_unique_route_ids,
     create_paths_df,

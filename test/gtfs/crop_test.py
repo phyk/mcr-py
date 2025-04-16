@@ -3,7 +3,7 @@ import pytest
 import polars as pl
 from datetime import datetime
 from unittest.mock import patch
-from mcr_py.package.gtfs.crop import (
+from mcr_py.gtfs.crop import (
     crop,
     reconcile_trips_and_stop_times_with_stops,
     crop_trips,
@@ -55,7 +55,7 @@ def mock_data(tmp_path):
     }
 
 
-@patch("mcr_py.package.gtfs.archive.read_dfs")
+@patch("mcr_py.gtfs.archive.read_dfs")
 def test_crop(mock_read_dfs, mock_data, geo_meta, tmp_path):
     # Mock the read_dfs function to return the mock data
     mock_read_dfs.return_value = {

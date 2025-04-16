@@ -1,5 +1,5 @@
 # import pytest
-# from mcr_py.package.raptor.bag import Bag, Label, RouteBag
+# from mcr_py.raptor.bag import Bag, Label, RouteBag
 #
 #
 # @pytest.fixture

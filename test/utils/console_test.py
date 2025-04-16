@@ -1,5 +1,5 @@
 import pytest
-from mcr_py.package.utils.console import (
+from mcr_py.utils.console import (
     print_tree_from_any,
 )  # Replace 'your_module' with the actual module name
 

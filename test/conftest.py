@@ -1,4 +1,4 @@
-from mcr_py.package.structs.build import (
+from mcr_py.structs.build import (
     create_id_sets,
     create_idx_by_stop_by_route,
     create_routes_by_stop,
@@ -12,13 +12,13 @@ import shapely
 
 import polars as pl
 import pytest
-from mcr_py.package.gtfs.clean import (
+from mcr_py.gtfs.clean import (
     add_first_stop_info,
     create_paths_df,
     split_routes,
     split_routes_by_direction,
 )
-from mcr_py.package.utils.geometa import GeoMeta
+from mcr_py.utils.geometa import GeoMeta
 
 
 @pytest.fixture(scope="session")

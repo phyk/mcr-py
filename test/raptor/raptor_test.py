@@ -1,12 +1,12 @@
 import shutil
 
-from mcr_py.package.utils import strtime
+from mcr_py.utils import strtime
 import os.path
 
 from mcr_py.command.raptor import raptor
-from mcr_py.package.utils import storage
-from mcr_py.package.utils.output import enrich_raptor_trace_results
-from mcr_py.package.tracer.tracer import (
+from mcr_py.utils import storage
+from mcr_py.utils.output import enrich_raptor_trace_results
+from mcr_py.tracer.tracer import (
     EnrichedTraceFootpath,
     EnrichedTraceStart,
     EnrichedTraceTrip,

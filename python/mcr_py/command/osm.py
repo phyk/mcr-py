@@ -1,8 +1,8 @@
 import typer
-from mcr_py.package.utils import key
-from mcr_py.package.osm import osm
+from mcr_py.utils import key
+from mcr_py.osm import osm
 from typing_extensions import Annotated
-from mcr_py.package.utils.geometa import GeoMeta
+from mcr_py.utils.geometa import GeoMeta
 
 app = typer.Typer()
 

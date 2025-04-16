@@ -2,13 +2,13 @@ import os
 from typing import Annotated
 
 import typer
-from mcr_py.package.utils import storage
-from mcr_py.package.utils.key import (
+from mcr_py.utils import storage
+from mcr_py.utils.key import (
     STOP_TIMES_KEY,
     TRIPS_KEY,
 )
-from mcr_py.package.utils.logger import Timed
-from mcr_py.package.structs.build import build_structures as build_structures_direct
+from mcr_py.utils.logger import Timed
+from mcr_py.structs.build import build_structures as build_structures_direct
 
 
 def build_structures(

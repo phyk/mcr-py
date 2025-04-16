@@ -1,15 +1,15 @@
 from datetime import datetime
 from typing import Optional
 
-from mcr_py.package.utils import storage
+from mcr_py.utils import storage
 import typer
 from shapely.geometry import Polygon
 from typing_extensions import Annotated
 
-from mcr_py.package.utils import key
-from mcr_py.package.utils.geometa import GeoMeta
-from mcr_py.package.gtfs import catalog, clean, crop
-from mcr_py.package.utils.logger import Timed
+from mcr_py.utils import key
+from mcr_py.utils.geometa import GeoMeta
+from mcr_py.gtfs import catalog, clean, crop
+from mcr_py.utils.logger import Timed
 
 app = typer.Typer()
 

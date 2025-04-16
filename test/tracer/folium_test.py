@@ -1,8 +1,8 @@
 import pytest
 import folium
 import polars as pl
-from mcr_py.package.tracer.tracer import TraceStart, TraceFootpath, TraceTrip
-from mcr_py.package.tracer.folium import add_tracer_list_to_folium_map
+from mcr_py.tracer.tracer import TraceStart, TraceFootpath, TraceTrip
+from mcr_py.tracer.folium import add_tracer_list_to_folium_map
 
 
 @pytest.fixture

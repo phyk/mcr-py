@@ -1,7 +1,7 @@
 import pathlib
 import polars as pl
 from unittest.mock import patch
-from mcr_py.package.gtfs.catalog import (
+from mcr_py.gtfs.catalog import (
     CATALOG_PATH,
     list_catalog,
     get_catalog,
@@ -55,8 +55,8 @@ def test_list_catalog(capsys):
     assert "Total: 651" in captured.out  # Expecting 2 entries for US
 
 
-@patch("mcr_py.package.utils.storage.download_file")
-@patch("mcr_py.package.gtfs.catalog.get_catalog")
+@patch("mcr_py.utils.storage.download_file")
+@patch("mcr_py.gtfs.catalog.get_catalog")
 def test_download(mock_get_catalog, mock_download_file, capsys):
     mock_catalog = pl.DataFrame(
         {"index": [0], "urls.direct_download": ["http://example.com/feed_a"]}

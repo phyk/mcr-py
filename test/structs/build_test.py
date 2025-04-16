@@ -1,6 +1,6 @@
 import pytest
 import polars as pl
-from mcr_py.package.structs.build import (
+from mcr_py.structs.build import (
     create_stop_times_by_trip,
     create_trip_ids_by_route_sorted_by_departure,
     create_stops_by_route_ordered,
@@ -11,7 +11,7 @@ from mcr_py.package.structs.build import (
     validate_structs_dict,
     unpack_structs,
 )
-from mcr_py.package.utils import strtime
+from mcr_py.utils import strtime
 
 
 def test_create_stops_by_route_ordered(cleaned_trips_df, stop_times_df):

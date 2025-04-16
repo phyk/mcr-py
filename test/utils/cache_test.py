@@ -3,7 +3,7 @@ import pytest
 import polars_st as st
 import polars as pl
 from shapely.geometry import Polygon
-from mcr_py.package.utils.cache import (  # Replace 'your_module' with the actual module name
+from mcr_py.utils.cache import (  # Replace 'your_module' with the actual module name
     overwrite_tempdir,
     hash_df,
     hash_str,

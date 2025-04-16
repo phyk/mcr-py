@@ -2,8 +2,8 @@ import pytest
 import shapely.geometry
 import polars as pl
 import polars_st as st
-from mcr_py.package.utils import cache
-from mcr_py.package.utils.geometa import GeoMeta
+from mcr_py.utils import cache
+from mcr_py.utils.geometa import GeoMeta
 
 
 def test_initialization(geo_meta):

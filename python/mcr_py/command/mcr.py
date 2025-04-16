@@ -1,8 +1,8 @@
 import typer
-from mcr_py.package.utils.logger import Timed
-from mcr_py.package.mcr import mcr
-from mcr_py.package.mcr.config import MCRConfig
-from mcr_py.package.mcr.output import OutputFormat
+from mcr_py.utils.logger import Timed
+from mcr_py.mcr import mcr
+from mcr_py.mcr.config import MCRConfig
+from mcr_py.mcr.output import OutputFormat
 from typing_extensions import Annotated
 
 from mcr_py.command.footpaths import CITY_ID_HELP, OSM_HELP, STOPS_HELP

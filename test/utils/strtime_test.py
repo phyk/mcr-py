@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from mcr_py.package.utils.strtime import seconds_to_str_time, str_time_to_seconds
+from mcr_py.utils.strtime import seconds_to_str_time, str_time_to_seconds
 
 
 def test_str_time_to_seconds():

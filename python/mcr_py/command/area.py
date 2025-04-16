@@ -1,7 +1,7 @@
-import mcr_py.package.utils.geometa
+import mcr_py.utils.geometa
 from typing_extensions import Annotated
 import typer
-import mcr_py.package.overpass.query
+import mcr_py.overpass.query
 
 
 def create_area(
@@ -17,8 +17,8 @@ def create_area(
     ] = "data/",
 ):
     crs = "EPSG:4326"
-    boundary_polygon = mcr_py.package.overpass.query.fetch_boundary_polygon(
+    boundary_polygon = mcr_py.overpass.query.fetch_boundary_polygon(
         city_name_german, admin_level
     )
-    geometa = mcr_py.package.utils.geometa.GeoMeta(boundary_polygon, crs, crs_target)
+    geometa = mcr_py.utils.geometa.GeoMeta(boundary_polygon, crs, crs_target)
     geometa.save(geometa_path)

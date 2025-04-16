@@ -1,14 +1,14 @@
 import shutil
 
-from mcr_py.package.utils import storage
-from mcr_py.package.raptor.example_labels import ArrivalTimeLabel
-from mcr_py.package.raptor.mcraptor import McRaptor
-from mcr_py.package.tracer.tracer import (
+from mcr_py.utils import storage
+from mcr_py.raptor.example_labels import ArrivalTimeLabel
+from mcr_py.raptor.mcraptor import McRaptor
+from mcr_py.tracer.tracer import (
     TraceFootpath,
     TraceStart,
     TraceTrip,
 )
-from mcr_py.package.utils import strtime
+from mcr_py.utils import strtime
 from pandas.compat import os
 
 NESSELRODE_STR_STOP_ID = "818"

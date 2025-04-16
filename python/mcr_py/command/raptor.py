@@ -1,16 +1,16 @@
 from typing import Optional
 import os
-from mcr_py.package.utils import storage
+from mcr_py.utils import storage
 import typer
 import polars as pl
-from mcr_py.package.utils import key
-from mcr_py.package.utils.key import (
+from mcr_py.utils import key
+from mcr_py.utils.key import (
     BUILD_STRUCTURES_COMMAND_NAME,
     FOOTPATHS_COMMAND_NAME,
 )
-from mcr_py.package.utils.logger import Timed
-from mcr_py.package.raptor.raptor import Raptor
-from mcr_py.package.structs import build
+from mcr_py.utils.logger import Timed
+from mcr_py.raptor.raptor import Raptor
+from mcr_py.structs import build
 from typing_extensions import Annotated
 
 FOOTPATHS_HELP = f"""

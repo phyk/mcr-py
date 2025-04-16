@@ -1,7 +1,7 @@
 import logging
 from unittest.mock import patch, MagicMock
 from io import StringIO
-from mcr_py.package.utils.logger import (
+from mcr_py.utils.logger import (
     setup,
     Timer,
     Timed,

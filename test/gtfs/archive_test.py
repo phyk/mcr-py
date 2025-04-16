@@ -2,7 +2,7 @@ import os
 import zipfile
 import pytest
 import polars as pl
-from mcr_py.package.gtfs.archive import read_dfs, write_dfs, get_gtfs_filename
+from mcr_py.gtfs.archive import read_dfs, write_dfs, get_gtfs_filename
 
 
 @pytest.fixture
@@ -36,17 +36,17 @@ def test_read_dfs(gtfs_zip):
     assert isinstance(dfs["routes"], pl.DataFrame)
 
 
-def test_read_dfs_missing_file(gtfs_zip):
+def test_read_dfs_missing_file(gtfs_zip, tmp_path):
     # Create a zip file with a missing expected file for testing
     with zipfile.ZipFile(gtfs_zip, "r") as zip_ref:
         # Create a temporary zip file without one of the expected files
-        with zipfile.ZipFile("test_missing.zip", "w") as temp_zip:
+        with zipfile.ZipFile(tmp_path / "test_missing.zip", "w") as temp_zip:
             for file in zip_ref.namelist():
                 if file != "stops.txt":  # Intentionally omit the stops file
                     temp_zip.writestr(file, zip_ref.read(file))
 
     with pytest.raises(Exception, match="Expected file stops.txt not in zip file"):
-        read_dfs("test_missing.zip")
+        read_dfs(tmp_path / "test_missing.zip")
 
 
 def test_write_dfs(gtfs_zip, tmp_path):

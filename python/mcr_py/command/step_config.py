@@ -1,11 +1,11 @@
-from mcr_py.package.utils.geometa import GeoMeta
-from mcr_py.package.utils.logger import Timed
-from mcr_py.package.mcr.data import NetworkType, OSMData
-from mcr_py.package.mcr.steps.bicycle import BicycleStepBuilder
-from mcr_py.package.mcr.steps.car import PersonalCarStepBuilder
-from mcr_py.package.mcr.steps.public_transport import PublicTransportStepBuilder
-from mcr_py.package.mcr.steps.walking import WalkingStepBuilder
-from mcr_py.package.minute_city import minute_city
+from mcr_py.utils.geometa import GeoMeta
+from mcr_py.utils.logger import Timed
+from mcr_py.mcr.data import NetworkType, OSMData
+from mcr_py.mcr.steps.bicycle import BicycleStepBuilder
+from mcr_py.mcr.steps.car import PersonalCarStepBuilder
+from mcr_py.mcr.steps.public_transport import PublicTransportStepBuilder
+from mcr_py.mcr.steps.walking import WalkingStepBuilder
+from mcr_py.minute_city import minute_city
 
 CAR_CONFIG = "car"
 BICYCLE_AND_PUBLIC_TRANSPORT_CONFIG = "bicycle_public_transport"

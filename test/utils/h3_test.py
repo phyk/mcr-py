@@ -1,7 +1,7 @@
 import polars as pl
 import folium
 from unittest.mock import patch
-from mcr_py.package.utils.h3 import (
+from mcr_py.utils.h3 import (
     add_h3_cell_id_to_df,
     plot_h3_cells_discrete_colors_on_folium,
     add_legend_to_map,

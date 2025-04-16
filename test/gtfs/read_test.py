@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import patch
 import polars as pl
-from mcr_py.package.utils import key
-from mcr_py.package.gtfs.read import (
+from mcr_py.utils import key
+from mcr_py.gtfs.read import (
     print_stops,
     get_stops_df,
     print_dataframe,
@@ -20,13 +20,13 @@ sample_df = pl.DataFrame(
 )
 
 
-@patch("mcr_py.package.gtfs.archive.read_dfs", return_value={key.STOPS_KEY: sample_df})
+@patch("mcr_py.gtfs.archive.read_dfs", return_value={key.STOPS_KEY: sample_df})
 def test_get_stops_df_zip(mock_read_dfs):
     _ = get_stops_df("test.zip")
     mock_read_dfs.assert_called_once_with("test.zip")
 
 
-@patch("mcr_py.package.gtfs.archive.read_dfs", return_value={"stops": sample_df})
+@patch("mcr_py.gtfs.archive.read_dfs", return_value={"stops": sample_df})
 def test_get_stops_df_directory(mock_read_df):
     _ = get_stops_df("test_directory.zip")
     mock_read_df.assert_called_once_with("test_directory.zip")
@@ -37,7 +37,7 @@ def test_get_stops_df_invalid_path():
         get_stops_df("invalid_path")
 
 
-@patch("mcr_py.package.gtfs.read.get_stops_df", return_value=sample_df)
+@patch("mcr_py.gtfs.read.get_stops_df", return_value=sample_df)
 def test_print_stops(mock_get_stops_df):
     print_stops("test.zip")
     mock_get_stops_df.assert_called_once_with("test.zip")

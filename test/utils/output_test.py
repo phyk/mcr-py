@@ -1,8 +1,8 @@
 import pytest
 import polars as pl
 from unittest.mock import patch
-from mcr_py.package.utils import key
-from mcr_py.package.tracer.tracer import (
+from mcr_py.utils import key
+from mcr_py.tracer.tracer import (
     TraceStart,
     TraceTrip,
     TraceFootpath,
@@ -11,7 +11,7 @@ from mcr_py.package.tracer.tracer import (
     EnrichedTraceFootpath,
     TracerMap,
 )
-from mcr_py.package.utils.output import TraceEnricher, enrich_raptor_trace_results
+from mcr_py.utils.output import TraceEnricher, enrich_raptor_trace_results
 
 # Sample data for testing
 stops_data = {"stop_id": ["1", "2", "3"], "stop_name": ["Stop A", "Stop B", "Stop C"]}
@@ -60,8 +60,8 @@ def test_enrich_trace_footpath(trace_enricher):
     assert enriched_trace.end_stop_name == "Stop C"
 
 
-@patch("mcr_py.package.utils.storage.read_any_dict")
-@patch("mcr_py.package.gtfs.archive.read_dfs")
+@patch("mcr_py.utils.storage.read_any_dict")
+@patch("mcr_py.gtfs.archive.read_dfs")
 def test_enrich_raptor_trace_results(mock_read_dfs, mock_read_any_dict):
     mock_read_dfs.return_value = {
         key.STOPS_KEY: stops_df,
