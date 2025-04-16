@@ -1,11 +1,11 @@
 import os
 from enum import Enum
 
-import geopandas as gpd
+import polars_st as st
 
-from mcr_py.package import storage
-from mcr_py.package.geometa import GeoMeta
-from mcr_py.package.logger import Timed, rlog
+from mcr_py.package.utils import storage
+from mcr_py.package.utils.geometa import GeoMeta
+from mcr_py.package.utils.logger import Timed, rlog
 from mcr_py.package.osm import graph, igraph, osm
 
 
@@ -96,7 +96,7 @@ def generate(
 
 
 def create_nearby_stops_map(
-    stops_df: gpd.GeoDataFrame,
+    stops_df: st.GeoDataFrame,
     avg_walking_speed: float,
     max_walking_duration: int,
 ) -> dict[str, list[str]]:

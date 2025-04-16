@@ -3,8 +3,12 @@ import sys
 
 def str_time_to_seconds(str_time: str) -> int:
     """
-    Converts a str of format HH:MM:SS to seconds since midnight.
+    Converts a string representing time in the format HH:MM:SS to seconds since midnight.
     Can handle times that go past midnight.
+
+    :param str_time: str - A time string formatted as HH:MM:SS.
+    :returns: int - The total number of seconds since midnight.
+    :raises ValueError: If the time format is invalid (e.g., minutes or seconds are 60 or more).
     """
     hours, minutes, seconds = map(int, str_time.split(":"))
 
@@ -17,8 +21,11 @@ def str_time_to_seconds(str_time: str) -> int:
 
 def seconds_to_str_time(seconds: int) -> str:
     """
-    Converts seconds since midnight to a str of format HH:MM:SS.
+    Converts seconds since midnight to a string formatted as HH:MM:SS.
     Can handle times that go past midnight.
+
+    :param seconds: int - The number of seconds since midnight.
+    :returns: str - A time string formatted as HH:MM:SS. Returns '--:--:--' if seconds is sys.maxsize.
     """
     if seconds == sys.maxsize:
         return "--:--:--"

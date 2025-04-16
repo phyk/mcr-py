@@ -3,7 +3,7 @@ from typing import Generic, Optional, TypeVar
 
 from typing_extensions import Self
 
-from mcr_py.package.key import S, T
+from mcr_py.package.utils.key import S, T
 from mcr_py.package.raptor.data import DataQuerier, ExpandedDataQuerier
 from mcr_py.package.tracer.tracer import TraceFootpath, TraceStart, TraceTrip
 

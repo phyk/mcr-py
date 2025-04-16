@@ -1,9 +1,10 @@
+from .package.utils import logger
 import typer
 from typing_extensions import Annotated
 
 from .command import build, footpaths, mcr, osm, raptor
 from .command.gtfs import gtfs
-from .package import key, logger
+from .package.utils import key
 from .command import area
 
 app = typer.Typer(pretty_exceptions_show_locals=False)

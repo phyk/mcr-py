@@ -1,14 +1,15 @@
 from datetime import datetime
 from typing import Optional
 
+from mcr_py.package.utils import storage
 import typer
 from shapely.geometry import Polygon
 from typing_extensions import Annotated
 
-from mcr_py.package import key, storage
-from mcr_py.package.geometa import GeoMeta
+from mcr_py.package.utils import key
+from mcr_py.package.utils.geometa import GeoMeta
 from mcr_py.package.gtfs import catalog, clean, crop
-from mcr_py.package.logger import Timed
+from mcr_py.package.utils.logger import Timed
 
 app = typer.Typer()
 
@@ -18,12 +19,9 @@ app = typer.Typer()
     help="List all available GTFS feeds (https://database.mobilitydata.org/).",
 )
 def list_command(
-    country_code: Annotated[str, typer.Option(
-        help="Country code used to filter")] = "",
-    subdivision: Annotated[str, typer.Option(
-        help="Subdivision used to filter")] = "",
-    municipality: Annotated[str, typer.Option(
-        help="Municipality used to filter")] = "",
+    country_code: Annotated[str, typer.Option(help="Country code used to filter")] = "",
+    subdivision: Annotated[str, typer.Option(help="Subdivision used to filter")] = "",
+    municipality: Annotated[str, typer.Option(help="Municipality used to filter")] = "",
 ):
     catalog.list_catalog(country_code, subdivision, municipality)
 
@@ -112,8 +110,7 @@ def crop_command(
     if geometa_path is None and (
         lat_min is None or lat_max is None or lon_min is None or lon_max is None
     ):
-        raise ValueError(
-            "Either a GeoMeta file or a bounding box must be provided")
+        raise ValueError("Either a GeoMeta file or a bounding box must be provided")
 
     if (
         geometa_path is not None

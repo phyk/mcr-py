@@ -3,7 +3,7 @@ from multiprocessing import Pool
 
 import pandas as pd
 
-from mcr_py.package import key
+from mcr_py.package.utils import key
 
 
 def process_file(path, nodes):

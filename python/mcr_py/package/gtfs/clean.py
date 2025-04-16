@@ -1,12 +1,12 @@
-import geopandas as gpd
-import pandas as pd
+import polars_st as st
+import polars as pl
 
-from mcr_py.package import key
+from mcr_py.package.utils import key
 from mcr_py.package.gtfs import archive
-from mcr_py.package.logger import Timed
+from mcr_py.package.utils.logger import Timed
 
 
-def clean(gtfs_zip_path: str) -> dict[str, pd.DataFrame]:
+def clean(gtfs_zip_path: str) -> dict[str, pl.DataFrame]:
     """
     Cleans the GTFS data and writes the cleaned data to the output path.
     The resulting files are `trips.csv` and `stop_times.csv`, other files are
@@ -40,9 +40,9 @@ def clean(gtfs_zip_path: str) -> dict[str, pd.DataFrame]:
 
 
 def remove_circular_trips(
-    trips_df: pd.DataFrame,
-    stop_times_df: pd.DataFrame,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+    trips_df: pl.DataFrame,
+    stop_times_df: pl.DataFrame,
+) -> tuple[pl.DataFrame, pl.DataFrame]:
     """
     Removes trips that have circular paths.
 
@@ -57,13 +57,13 @@ def remove_circular_trips(
     return trips_df, stop_times_df
 
 
-def is_circular_trip(stop_times_df: pd.DataFrame) -> bool:
+def is_circular_trip(stop_times_df: pl.DataFrame) -> bool:
     return stop_times_df["stop_id"].nunique() != len(stop_times_df)
 
 
 def split_routes(
-    trips_df: pd.DataFrame, stop_times_df: pd.DataFrame, routes_df: pd.DataFrame
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+    trips_df: pl.DataFrame, stop_times_df: pl.DataFrame, routes_df: pl.DataFrame
+) -> tuple[pl.DataFrame, pl.DataFrame]:
     """
     Splits routes into one route per actual path.
 
@@ -78,26 +78,26 @@ def split_routes(
     split_routes_by_direction(trips_df)
     paths_df = create_paths_df(trips_df, stop_times_df)
     paths_df = add_unique_route_ids(paths_df)
-    trips_df = update_route_ids(trips_df, paths_df)
+    trips_df = uplate_route_ids(trips_df, paths_df)
     routes_df = insert_new_routes(routes_df, trips_df)
 
     return trips_df, routes_df
 
 
-def split_routes_by_direction(trips_df: pd.DataFrame):
+def split_routes_by_direction(trips_df: pl.DataFrame):
     trips_df["route_id"] = (
         trips_df["route_id"] + "_" + trips_df["direction_id"].astype(str)
     )
 
 
 def create_paths_df(
-    trips_df: pd.DataFrame, stop_times_df: pd.DataFrame
-) -> pd.DataFrame:
+    trips_df: pl.DataFrame, stop_times_df: pl.DataFrame
+) -> pl.DataFrame:
     """
     Creates a dataframe route_id, trip_id, and path, where path is a string
     representation of the stops on the route in order.
     """
-    trips_stop_times_df = pd.merge(trips_df, stop_times_df, on="trip_id")
+    trips_stop_times_df = pl.merge(trips_df, stop_times_df, on="trip_id")
     paths_df = (
         trips_stop_times_df.sort_values(["route_id", "trip_id", "stop_sequence"])
         .groupby(["route_id", "trip_id"])["stop_id"]
@@ -109,7 +109,7 @@ def create_paths_df(
     return paths_df
 
 
-def add_unique_route_ids(paths_df: pd.DataFrame) -> pd.DataFrame:
+def add_unique_route_ids(paths_df: pl.DataFrame) -> pl.DataFrame:
     """
     Adds a new column `new_route_id` to the dataframe, which is a unique route_id
     for each path.
@@ -145,14 +145,14 @@ def add_unique_route_ids(paths_df: pd.DataFrame) -> pd.DataFrame:
     return paths_df.drop(columns=["path"])  # we don't need the path column anymore
 
 
-def update_route_ids(trips_df: pd.DataFrame, paths_df: pd.DataFrame) -> pd.DataFrame:
+def uplate_route_ids(trips_df: pl.DataFrame, paths_df: pl.DataFrame) -> pl.DataFrame:
     trips_df = trips_df.merge(paths_df, on=["route_id", "trip_id"])
     trips_df["route_id"] = trips_df["new_route_id"]
     trips_df = trips_df.drop(columns=["new_route_id"])
     return trips_df
 
 
-def insert_new_routes(routes_df: pd.DataFrame, trips_df: pd.DataFrame) -> pd.DataFrame:
+def insert_new_routes(routes_df: pl.DataFrame, trips_df: pl.DataFrame) -> pl.DataFrame:
     """
     Reads the old and new route names of each trip and inserts the new routes into
     the routes_df by copying the old routes.
@@ -165,18 +165,18 @@ def insert_new_routes(routes_df: pd.DataFrame, trips_df: pd.DataFrame) -> pd.Dat
         # Find the corresponding row in the routes_df based on old_route_id
         old_route_row = routes_df[routes_df["route_id"] == old_route_id].iloc[0]
 
-        # Create a new row by copying the old route row and update the route_id
+        # Create a new row by copying the old route row and uplate the route_id
         new_route_row = old_route_row.copy()
         new_route_row["route_id"] = route_id
 
         new_rows.append(new_route_row)
 
-    return pd.DataFrame(new_rows)
+    return pl.DataFrame(new_rows)
 
 
 def add_first_stop_info(
-    trips_df: pd.DataFrame, stop_times_df: pd.DataFrame
-) -> pd.DataFrame:
+    trips_df: pl.DataFrame, stop_times_df: pl.DataFrame
+) -> pl.DataFrame:
     # add first stop id to trips
     first_stop_times = (
         stop_times_df.sort_values(["trip_id", "stop_sequence"])
@@ -196,14 +196,14 @@ def add_first_stop_info(
 
 
 def remove_unused_stops(
-    stop_times_df: pd.DataFrame, stops_df: pd.DataFrame
-) -> pd.DataFrame:
+    stop_times_df: pl.DataFrame, stops_df: pl.DataFrame
+) -> pl.DataFrame:
     stops_df = stops_df[stops_df["stop_id"].isin(stop_times_df["stop_id"])]
     return stops_df
 
 
-def add_geometry(stops_df: pd.DataFrame) -> pd.DataFrame:
-    return gpd.GeoDataFrame(
+def add_geometry(stops_df: pl.DataFrame) -> pl.DataFrame:
+    return st.GeoDataFrame(
         stops_df,
-        geometry=gpd.points_from_xy(stops_df.stop_lon, stops_df.stop_lat),
+        geometry=st.points_from_xy(stops_df.stop_lon, stops_df.stop_lat),
     )

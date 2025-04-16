@@ -29,7 +29,7 @@ def crop_graph_to_largest_component(
     rlog.debug(
         f"Removed {n_nodes_before - len(nodes)} nodes and "
         + f" {n_edges_before - len(edges)} edges from OSM network to ensure"
-        + f" connectivity ({(n_nodes_before-len(nodes))/n_nodes_before*100:.2f}%)"
+        + f" connectivity ({(n_nodes_before - len(nodes)) / n_nodes_before * 100:.2f}%)"
     )
     return graph, nodes, edges
 

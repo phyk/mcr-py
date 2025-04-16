@@ -1,15 +1,15 @@
 import os
 import zipfile
 
-import pandas as pd
+import polars as pl
 
 from mcr_py.package.gtfs import dtypes
-from mcr_py.package.key import (
+from mcr_py.package.utils.key import (
     STOP_TIMES_KEY,
     STOPS_KEY,
     TRIPS_KEY,
 )
-from mcr_py.package.logger import rlog
+from mcr_py.package.utils.logger import rlog
 
 
 def get_gtfs_filename(name: str) -> str:
@@ -32,7 +32,7 @@ EXPECTED_FILES = [
 ]
 
 
-def read_dfs(gtfs_zip_path: str) -> dict[str, pd.DataFrame]:
+def read_dfs(gtfs_zip_path: str) -> dict[str, pl.DataFrame]:
     """
     Reads GTFS zip file and returns a dictionary of dataframes.
     """
@@ -43,8 +43,7 @@ def read_dfs(gtfs_zip_path: str) -> dict[str, pd.DataFrame]:
 
         for expected_file in EXPECTED_FILES:
             if expected_file not in contained:
-                raise Exception(
-                    f"Expected file {expected_file} not in zip file")
+                raise Exception(f"Expected file {expected_file} not in zip file")
 
         for file in EXPECTED_FILES:
             df = read_file(zip_ref, file)
@@ -54,14 +53,14 @@ def read_dfs(gtfs_zip_path: str) -> dict[str, pd.DataFrame]:
     return dfs
 
 
-def read_file(zip_ref: zipfile.ZipFile, file: str) -> pd.DataFrame:
+def read_file(zip_ref: zipfile.ZipFile, file: str) -> pl.DataFrame:
     with zip_ref.open(file) as f:
         rlog.debug(f"Reading {file}")
-        df = pd.read_csv(f, dtype=dtypes.GTFS_DTYPES)  # type: ignore
+        df = pl.read_csv(f, dtype=dtypes.GTFS_DTYPES)  # type: ignore
         return df
 
 
-def write_dfs(dfs: dict[str, pd.DataFrame], output: str):
+def write_dfs(dfs: dict[str, pl.DataFrame], output: str):
     """
     Writes a dictionary of dataframes to a GTFS zip file.
     """
@@ -72,6 +71,6 @@ def write_dfs(dfs: dict[str, pd.DataFrame], output: str):
             write_file(zip_ref, file, df)
 
 
-def write_file(zip_ref: zipfile.ZipFile, file: str, df: pd.DataFrame):
+def write_file(zip_ref: zipfile.ZipFile, file: str, df: pl.DataFrame):
     with zip_ref.open(file, "w") as f:
-        df.to_csv(f, index=False)
+        df.write_csv(f)

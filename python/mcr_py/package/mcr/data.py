@@ -6,8 +6,8 @@ import pandas as pd
 import polars as pl
 
 from mcr_py._mcr_py import load_osm_walking
-from mcr_py.package.geometa import GeoMeta
-from mcr_py.package.logger import rlog
+from mcr_py.package.utils.geometa import GeoMeta
+from mcr_py.package.utils.logger import rlog
 from mcr_py.package.osm import graph, osm
 
 ACCURACY = 1

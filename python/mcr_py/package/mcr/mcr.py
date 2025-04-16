@@ -1,9 +1,10 @@
 from typing import Any, Optional
 
+from mcr_py.package.utils import strtime
 import pandas as pd
 from typing_extensions import Sequence
 
-from mcr_py.package import storage, strtime
+from mcr_py.package.utils import storage
 from mcr_py.package.mcr.bag import IntermediateBags
 from mcr_py.package.mcr.config import MCRConfig
 from mcr_py.package.mcr.label import (

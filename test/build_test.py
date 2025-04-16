@@ -1,6 +1,6 @@
 import pandas as pd
 
-from mcr_py.package import strtime
+from mcr_py.package.utils import strtime
 from mcr_py.package.structs.build import (
     create_id_sets,
     create_idx_by_stop_by_route,

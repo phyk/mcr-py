@@ -1,6 +1,10 @@
 from typing import Callable
 
-from mcr_py.package.mcr.label import IntermediateLabel, McRAPTORLabel, McRAPTORLabelWithPath
+from mcr_py.package.mcr.label import (
+    IntermediateLabel,
+    McRAPTORLabel,
+    McRAPTORLabelWithPath,
+)
 from mcr_py.package.raptor.bag import Bag
 
 from mcr_py import PyLabel

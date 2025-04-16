@@ -1,14 +1,15 @@
-from mcr_py.package import key
+from mcr_py.package.utils import key
+import polars as pl
 
 GTFS_DTYPES = {
-    key.TRIP_ID_KEY: "string",
-    key.STOP_ID_KEY: "string",
-    key.ROUTE_ID_KEY: "string",
-    key.SERVICE_ID_KEY: "string",
-    key.STOP_TIME_ARRIVAL_TIME_KEY: "string",
-    key.STOP_TIME_DEPARTURE_TIME_KEY: "string",
-    key.STOP_SEQUENCE_KEY: "int64",
-    key.STOP_HEADSIGN_KEY: "string",
-    key.STOP_LAT_KEY: "float64",
-    key.STOP_LON_KEY: "float64",
+    key.TRIP_ID_KEY: pl.String,
+    key.STOP_ID_KEY: pl.String,
+    key.ROUTE_ID_KEY: pl.String,
+    key.SERVICE_ID_KEY: pl.String,
+    key.STOP_TIME_ARRIVAL_TIME_KEY: pl.String,
+    key.STOP_TIME_DEPARTURE_TIME_KEY: pl.String,
+    key.STOP_SEQUENCE_KEY: pl.Int64,
+    key.STOP_HEADSIGN_KEY: pl.String,
+    key.STOP_LAT_KEY: pl.Float64,
+    key.STOP_LON_KEY: pl.Float64,
 }

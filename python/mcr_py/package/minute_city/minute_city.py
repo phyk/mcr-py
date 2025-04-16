@@ -2,20 +2,20 @@ import multiprocessing
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-import geopandas as gpd
-import pandas as pd
+import polars_st as st
+import polars as pl
 from tqdm.auto import tqdm
 
-from mcr_py.package.logger import Timed
+from mcr_py.package.utils.logger import Timed
 from mcr_py.package.minute_city import profile
 
 
-def add_pois_to_labels(labels: pd.DataFrame, pois: gpd.GeoDataFrame) -> pd.DataFrame:
+def add_pois_to_labels(labels: pl.DataFrame, pois: st.GeoDataFrame) -> pl.DataFrame:
     poi_types = list(pois["type"].unique())
     for t in poi_types:
         pois[t] = (pois["type"] == t).astype(int)
 
-    labels = labels.merge(
+    labels = labels.join(
         pois[["nearest_osm_node_id"] + poi_types],
         left_on="target_id_osm",
         right_on="nearest_osm_node_id",
@@ -25,11 +25,11 @@ def add_pois_to_labels(labels: pd.DataFrame, pois: gpd.GeoDataFrame) -> pd.DataF
 
 
 def get_profiles_df(
-    labels_with_pois: gpd.GeoDataFrame,
+    labels_with_pois: st.GeoDataFrame,
     types: list[str],
     disable_tqdm: bool = False,
     leave_tqdm: bool = True,
-) -> pd.DataFrame:
+) -> pl.DataFrame:
     """
     Calculates the profiles for the given labels.
     """

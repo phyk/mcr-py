@@ -84,7 +84,7 @@ def get_graph_for_city_cropped_to_boundary(
         )
         n_nodes_after = len(nodes)
         rlog.info(
-            f"Removed {n_nodes_before - n_nodes_after} nodes from OSM network to ensure connectivity ({(n_nodes_before-n_nodes_after)/n_nodes_before*100:.2f}%)"
+            f"Removed {n_nodes_before - n_nodes_after} nodes from OSM network to ensure connectivity ({(n_nodes_before - n_nodes_after) / n_nodes_before * 100:.2f}%)"
         )
 
     with Timed.info("Caching OSM network"):
@@ -133,10 +133,10 @@ def crop_to_stops(
     nodes = nodes.loc[nodes.geometry.within(zone_of_interest), :]
     edges = edges.loc[edges.u.isin(nodes.id) & edges.v.isin(nodes.id), :]
     rlog.info(
-        f"{len(nodes)}/{n_nodes_before} ({len(nodes)/n_nodes_before*100:.2f}%) nodes remaining"
+        f"{len(nodes)}/{n_nodes_before} ({len(nodes) / n_nodes_before * 100:.2f}%) nodes remaining"
     )
     rlog.info(
-        f"{len(edges)}/{n_edges_before} ({len(edges)/n_edges_before*100:.2f}%) edges remaining"
+        f"{len(edges)}/{n_edges_before} ({len(edges) / n_edges_before * 100:.2f}%) edges remaining"
     )
 
     return nodes, edges
@@ -221,8 +221,8 @@ def add_nearest_osm_node_id(
 
 
 def list_column_to_osm_nodes(
-    osm_nodes_df: pd.DataFrame, df: pd.DataFrame, column: str
-) -> pd.DataFrame:
+    osm_nodes_df: pl.DataFrame, df: pl.DataFrame, column: str
+) -> pl.DataFrame:
     """
     Assigns each entry in df to a node in osm_nodes_df and lists all the values of column
     for each node.
@@ -231,11 +231,11 @@ def list_column_to_osm_nodes(
         df: The dataframe to assign to osm_nodes_df. Must contain columns "nearest_osm_node_id" and column.
         osm_nodes_df: The dataframe to assign df to. The index must be the osm node ids.
     """
-    grouped: pd.Series = df.groupby("osm_id")[column].agg(lambda x: list(set(x)))  # type: ignore
+    grouped: pl.Series = df.groupby("osm_id")[column].agg(lambda x: list(set(x)))  # type: ignore
     # drop column if it already exists to make this function idempotent
     if column in osm_nodes_df.columns:
-        osm_nodes_df = osm_nodes_df.drop(columns=[column])
-    osm_nodes_df = osm_nodes_df.merge(
+        osm_nodes_df = osm_nodes_df.drop(column)
+    osm_nodes_df = osm_nodes_df.join(
         grouped, left_index=True, right_index=True, how="left"
     )
     osm_nodes_df[column] = osm_nodes_df[column].apply(

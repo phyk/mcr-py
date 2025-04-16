@@ -1,5 +1,5 @@
 import typer
-from mcr_py.package.logger import Timed
+from mcr_py.package.utils.logger import Timed
 from mcr_py.package.mcr import mcr
 from mcr_py.package.mcr.config import MCRConfig
 from mcr_py.package.mcr.output import OutputFormat

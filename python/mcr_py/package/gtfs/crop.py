@@ -1,12 +1,12 @@
 from datetime import datetime
 from typing import Tuple
 
-from geopandas import pd
+import polars as pl
 
-from mcr_py.package import key
-from mcr_py.package.geometa import GeoMeta
+from mcr_py.package.utils import key
+from mcr_py.package.utils.geometa import GeoMeta
 from mcr_py.package.gtfs import archive
-from mcr_py.package.logger import Timed, rlog
+from mcr_py.package.utils.logger import Timed, rlog
 
 
 def crop(
@@ -90,10 +90,10 @@ def crop(
 
 
 def reconcile_trips_and_stop_times_with_stops(
-    trips_df: pd.DataFrame,
-    stop_times_df: pd.DataFrame,
-    stops_df: pd.DataFrame,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    trips_df: pl.DataFrame,
+    stop_times_df: pl.DataFrame,
+    stops_df: pl.DataFrame,
+) -> Tuple[pl.DataFrame, pl.DataFrame]:
     """
     Crop trips and stop times to the given stops.
     """
@@ -107,20 +107,20 @@ def reconcile_trips_and_stop_times_with_stops(
 
 
 def crop_trips(
-    trips_df: pd.DataFrame,
-    calendar_df: pd.DataFrame,
+    trips_df: pl.DataFrame,
+    calendar_df: pl.DataFrame,
     time_start: datetime,
     time_end: datetime,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> Tuple[pl.DataFrame, pl.DataFrame]:
     """
     Crop trips to those that occur within the given time range.
     """
     parsed_calendar_df = calendar_df.copy()
-    parsed_calendar_df[key.CALENDAR_START_DATE_KEY] = pd.to_datetime(
+    parsed_calendar_df[key.CALENDAR_START_DATE_KEY] = pl.to_datetime(
         parsed_calendar_df[key.CALENDAR_START_DATE_KEY],
         format=key.CALENDAR_DATE_TIME_FORMAT,
     )
-    parsed_calendar_df[key.CALENDAR_END_DATE_KEY] = pd.to_datetime(
+    parsed_calendar_df[key.CALENDAR_END_DATE_KEY] = pl.to_datetime(
         parsed_calendar_df[key.CALENDAR_END_DATE_KEY],
         format=key.CALENDAR_DATE_TIME_FORMAT,
     )
@@ -138,9 +138,9 @@ def crop_trips(
 
 
 def reconcile_stop_times_with_trips(
-    stop_times_df: pd.DataFrame,
-    trips_df: pd.DataFrame,
-) -> pd.DataFrame:
+    stop_times_df: pl.DataFrame,
+    trips_df: pl.DataFrame,
+) -> pl.DataFrame:
     """
     Crop stop times to those that occur within the given trips.
     """
@@ -151,9 +151,9 @@ def reconcile_stop_times_with_trips(
 
 
 def reconcile_stops_with_stop_times(
-    stops_df: pd.DataFrame,
-    stop_times_df: pd.DataFrame,
-) -> pd.DataFrame:
+    stops_df: pl.DataFrame,
+    stop_times_df: pl.DataFrame,
+) -> pl.DataFrame:
     """
     Crop stops to those that occur within the given stop times.
     """

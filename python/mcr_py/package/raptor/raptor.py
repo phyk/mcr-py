@@ -3,8 +3,8 @@ from typing import Optional
 
 from typing_extensions import Self
 
-from mcr_py.package import strtime
-from mcr_py.package.logger import rlog
+from mcr_py.package.utils import strtime
+from mcr_py.package.utils.logger import rlog
 from mcr_py.package.raptor.data import DataQuerier
 from mcr_py.package.tracer.tracer import (
     TraceFootpath,

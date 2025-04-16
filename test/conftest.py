@@ -18,6 +18,15 @@ from mcr_py.package.gtfs.clean import (
     split_routes_by_direction,
 )
 
+import tempfile
+
+
+@pytest.fixture(scope="session")
+def test_directory():
+    """Fixture to create a temporary directory for tests."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        yield tmpdir
+
 
 @pytest.fixture(scope="session")
 def testdata_path():
@@ -96,8 +105,7 @@ def trips_df() -> pd.DataFrame:
     # route_id, trip_id, direction_id
     trips = ROUTES[ROUTE1_ID]
     return pd.DataFrame(
-        [[ROUTE1_ID, trip_id, trips[trip_id]["direction"]]
-            for trip_id in trips],
+        [[ROUTE1_ID, trip_id, trips[trip_id]["direction"]] for trip_id in trips],
         columns=["route_id", "trip_id", "direction_id"],
     )
 

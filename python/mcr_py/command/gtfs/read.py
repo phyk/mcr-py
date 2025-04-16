@@ -1,7 +1,7 @@
 from typing import Annotated
 
 import typer
-from mcr_py.package import key
+from mcr_py.package.utils import key
 from mcr_py.package.gtfs import read
 
 app = typer.Typer()

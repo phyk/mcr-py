@@ -2,7 +2,7 @@ from typing import Optional
 
 from typing_extensions import Self
 
-from mcr_py.package import strtime
+from mcr_py.package.utils import strtime
 from mcr_py.package.raptor import bag
 
 

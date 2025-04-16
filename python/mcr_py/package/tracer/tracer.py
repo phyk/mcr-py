@@ -1,33 +1,69 @@
 from typing import Optional
-
-from mcr_py.package import strtime
+from mcr_py.package.utils import strtime
 
 
 class Trace:
+    """
+    Base class for all trace types.
+    """
+
     pass
 
 
 class MovingTrace(Trace):
+    """
+    Represents a moving trace between two stops.
+
+    :param start_stop_id: str - The ID of the starting stop.
+    :param end_stop_id: str - The ID of the ending stop.
+    """
+
     def __init__(self, start_stop_id: str, end_stop_id: str):
         self.start_stop_id = start_stop_id
         self.end_stop_id = end_stop_id
 
 
 class TracerMap:
+    """
+    Manages a collection of traces associated with specific stops.
+
+    :param stop_ids: set[str] - A set of stop IDs to initialize the TracerMap.
+    """
+
     def __init__(self, stop_ids: set[str]):
         self.tracers: dict[str, list[Trace]] = {stop_id: [] for stop_id in stop_ids}
         self.last_hop_on_stop_id: Optional[str] = None
         self.last_hop_on_time: Optional[int] = None
 
     def __str__(self):
+        """
+        Returns a string representation of the TracerMap.
+
+        :returns: str - A formatted string showing the traces associated with each stop.
+        """
         return "\n".join(
-            [f"{stop_id}: {tracers}" for stop_id, tracers in self.tracers.items()]
+            [
+                f"{stop_id}: {', '.join([str(trace) for trace in tracers])}"
+                for stop_id, tracers in self.tracers.items()
+            ]
         )
 
     def __getitem__(self, stop_id: str):
+        """
+        Retrieves the list of traces associated with a specific stop ID.
+
+        :param stop_id: str - The ID of the stop.
+        :returns: list[Trace] - The list of traces associated with the stop ID.
+        """
         return self.tracers[stop_id]
 
     def add(self, tracer: Trace):
+        """
+        Adds a trace to the TracerMap.
+
+        :param tracer: Trace - The trace to add. Can be a TraceStart or MovingTrace.
+        :raises ValueError: If the first tracer for a stop is not a TraceStart or if the tracer type is unknown.
+        """
         if isinstance(tracer, MovingTrace):
             end_stop_id = tracer.end_stop_id
             start_stop_id = tracer.start_stop_id
@@ -50,36 +86,84 @@ class TracerMap:
             raise ValueError(f"Unknown tracer type: {type(tracer)}")
 
     def update_last_hop(self, stop_id: str, time: int):
+        """
+        Updates the last hop information for the TracerMap.
+
+        :param stop_id: str - The ID of the stop where the last hop occurred.
+        :param time: int - The time of the last hop.
+        """
         self.last_hop_on_stop_id = stop_id
         self.last_hop_on_time = time
 
     def clear_last_hop(self):
+        """
+        Clears the last hop information from the TracerMap.
+        """
         self.last_hop_on_stop_id = None
         self.last_hop_on_time = None
 
     def get_last_hop(self):
+        """
+        Retrieves the last hop information.
+
+        :returns: tuple[Optional[str], Optional[int]] - The stop ID and time of the last hop.
+        """
         return self.last_hop_on_stop_id, self.last_hop_on_time
 
 
 class TraceStart(Trace):
+    """
+    Represents the starting point of a trace.
+
+    :param start_stop_id: str - The ID of the starting stop.
+    :param start_time: int - The time at which the trace starts.
+    """
+
     def __init__(self, start_stop_id: str, start_time: int):
         self.start_stop_id = start_stop_id
         self.start_time = start_time
 
     def __str__(self):
+        """
+        Returns a string representation of the TraceStart.
+
+        :returns: str - A formatted string indicating the start stop and time.
+        """
         return f"Start at {self.start_stop_id} at {strtime.seconds_to_str_time(self.start_time)}"
 
 
 class EnrichedTraceStart(TraceStart):
+    """
+    Represents an enriched starting point of a trace with additional stop name information.
+
+    :param trace_start: TraceStart - The original trace start object.
+    :param start_stop_name: str - The name of the starting stop.
+    """
+
     def __init__(self, trace_start: TraceStart, start_stop_name: str):
         super().__init__(trace_start.start_stop_id, trace_start.start_time)
         self.start_stop_name = start_stop_name
 
     def __str__(self):
+        """
+        Returns a string representation of the EnrichedTraceStart.
+
+        :returns: str - A formatted string indicating the enriched start stop and time.
+        """
         return f"Start at {self.start_stop_name} ({self.start_stop_id}) at {strtime.seconds_to_str_time(self.start_time)}"
 
 
 class TraceTrip(MovingTrace):
+    """
+    Represents a trip between two stops.
+
+    :param start_stop_id: str - The ID of the starting stop.
+    :param departure_time: int - The time of departure from the starting stop.
+    :param end_stop_id: str - The ID of the ending stop.
+    :param arrival_time: int - The time of arrival at the ending stop.
+    :param trip_id: str - The unique identifier for the trip.
+    """
+
     def __init__(
         self,
         start_stop_id: str,
@@ -94,6 +178,11 @@ class TraceTrip(MovingTrace):
         self.trip_id = trip_id
 
     def __str__(self):
+        """
+        Returns a string representation of the TraceTrip.
+
+        :returns: str - A formatted string indicating the trip details.
+        """
         return (
             f"Trip {self.trip_id} from {self.start_stop_id}@"
             + f"{strtime.seconds_to_str_time(self.departure_time)} to "
@@ -102,6 +191,15 @@ class TraceTrip(MovingTrace):
 
 
 class EnrichedTraceTrip(TraceTrip):
+    """
+    Represents an enriched trip with additional stop name information.
+
+    :param trace_trip: TraceTrip - The original trace trip object.
+    :param trip_name: str - The name of the trip.
+    :param start_stop_name: str - The name of the starting stop.
+    :param end_stop_name: str - The name of the ending stop.
+    """
+
     def __init__(
         self,
         trace_trip: TraceTrip,
@@ -121,6 +219,11 @@ class EnrichedTraceTrip(TraceTrip):
         self.end_stop_name = end_stop_name
 
     def __str__(self):
+        """
+        Returns a string representation of the EnrichedTraceTrip.
+
+        :returns: str - A formatted string indicating the enriched trip details.
+        """
         return (
             f"Trip {self.trip_name} from {self.start_stop_name}@{strtime.seconds_to_str_time(self.departure_time)} to "
             + f"{self.end_stop_name}@{strtime.seconds_to_str_time(self.arrival_time)}"
@@ -128,15 +231,36 @@ class EnrichedTraceTrip(TraceTrip):
 
 
 class TraceFootpath(MovingTrace):
+    """
+    Represents a footpath between two stops.
+
+    :param start_stop_id: str - The ID of the starting stop.
+    :param end_stop_id: str - The ID of the ending stop.
+    :param walking_time: int - The time taken to walk from the start to the end stop.
+    """
+
     def __init__(self, start_stop_id: str, end_stop_id: str, walking_time: int):
         super().__init__(start_stop_id, end_stop_id)
         self.walking_time = walking_time
 
     def __str__(self):
+        """
+        Returns a string representation of the TraceFootpath.
+
+        :returns: str - A formatted string indicating the walking details.
+        """
         return f"Walk from {self.start_stop_id} to {self.end_stop_id} in {strtime.seconds_to_str_time(self.walking_time)}"
 
 
 class EnrichedTraceFootpath(TraceFootpath):
+    """
+    Represents an enriched footpath with additional stop name information.
+
+    :param trace_footpath: TraceFootpath - The original trace footpath object.
+    :param start_stop_name: str - The name of the starting stop.
+    :param end_stop_name: str - The name of the ending stop.
+    """
+
     def __init__(
         self,
         trace_footpath: TraceFootpath,

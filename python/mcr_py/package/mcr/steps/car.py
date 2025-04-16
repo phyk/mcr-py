@@ -1,9 +1,10 @@
 from logging import Logger
 from typing import Optional
 
-import geopandas as gpd
-from mcr_py.package import storage
-from mcr_py.package.logger import Timer
+import polars as pl
+import polars_st as st
+from mcr_py.package.utils import storage
+from mcr_py.package.utils.logger import Timer
 from mcr_py.package.mcr.bag import IntermediateBags
 from mcr_py.package.mcr.data import (
     AVG_CAR_SPEED,
@@ -69,11 +70,11 @@ class PersonalCarStepBuilder(StepBuilder):
 
     def __init__(
         self,
-        walking_nodes: gpd.GeoDataFrame,
-        walking_edges: gpd.GeoDataFrame,
-        driving_nodes: gpd.GeoDataFrame,
-        driving_edges: gpd.GeoDataFrame,
-        pois: gpd.GeoDataFrame,
+        walking_nodes: st.GeoDataFrame,
+        walking_edges: st.GeoDataFrame,
+        driving_nodes: st.GeoDataFrame,
+        driving_edges: st.GeoDataFrame,
+        pois: st.GeoDataFrame,
     ):
         multi_modal_nodes, multi_modal_edges = create_multi_modal_graph(
             walking_nodes, walking_edges, driving_nodes, driving_edges, AVG_CAR_SPEED
@@ -100,8 +101,7 @@ class PersonalCarStepBuilder(StepBuilder):
             if v[0] == WALKING_PREFIX
         }
 
-        multi_modal_edges = add_weights(
-            multi_modal_edges, [TRAVEL_TIME_COLUMN])
+        multi_modal_edges = add_weights(multi_modal_edges, [TRAVEL_TIME_COLUMN])
         multi_modal_edges = add_weights(
             multi_modal_edges, [TRAVEL_TIME_DRIVING_COLUMN], hidden=True
         )
@@ -134,8 +134,7 @@ class PersonalCarStepBuilder(StepBuilder):
         Args:
             pois: A dataframe containing POIs. Must have the columns "nearest_osm_node_id" and "type".
         """
-        self.osm_nodes = osm.list_column_to_osm_nodes(
-            self.osm_nodes, pois, "type")
+        self.osm_nodes = osm.list_column_to_osm_nodes(self.osm_nodes, pois, "type")
         self.type_map: dict[str, int] = {}
         for t in pois["type"].unique():
             self.type_map[t] = len(self.type_map)
@@ -143,8 +142,7 @@ class PersonalCarStepBuilder(StepBuilder):
         self.osm_nodes["type_internal"] = self.osm_nodes["type"].map(
             lambda x: list(map(self.type_map.get, x))
         )
-        self.osm_nodes["mm_walking_node_id"] = "W" + \
-            self.osm_nodes["id"].astype(str)
+        self.osm_nodes["mm_walking_node_id"] = "W" + self.osm_nodes["id"].astype(str)
         self.osm_nodes["resetted_mm_walking_node_id"] = self.osm_nodes[
             "mm_walking_node_id"
         ].map(
@@ -157,5 +155,4 @@ class PersonalCarStepBuilder(StepBuilder):
             )["type_internal"]
         ).to_dict()
 
-        self.mm_graph_cache.set_node_weights(
-            resetted_mm_walking_node_id_to_type_map)
+        self.mm_graph_cache.set_node_weights(resetted_mm_walking_node_id_to_type_map)

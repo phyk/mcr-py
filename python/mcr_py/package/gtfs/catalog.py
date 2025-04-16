@@ -1,15 +1,16 @@
 import os
 from re import IGNORECASE
 
+from mcr_py.package.utils import storage
 import requests
-from geopandas import pd
+import polars as pl
 from rich import print
 from rich.console import Console
 from rich.table import Table
 from typing_extensions import Any
 
-from mcr_py.package import key, storage
-from mcr_py.package.logger import Timed, rlog
+from mcr_py.package.utils import key
+from mcr_py.package.utils.logger import Timed, rlog
 
 CATALOG_PATH = storage.get_tmp_path(
     key.TMP_GTFS_DIR_NAME, key.TMP_GTFS_CATALOG_FILE_NAME
@@ -40,8 +41,7 @@ ID_COLOR = "magenta"
 def list_catalog(country_code: str, subdivision_name: str, municipality: str):
     """List all available GTFS feeds."""
     catalog = get_catalog()
-    catalog = filter_catalog(catalog, country_code,
-                             subdivision_name, municipality)
+    catalog = filter_catalog(catalog, country_code, subdivision_name, municipality)
 
     print_catalog(catalog)
     print(f"Total: [bold]{len(catalog)}[/bold]\n")
@@ -50,12 +50,12 @@ def list_catalog(country_code: str, subdivision_name: str, municipality: str):
     )
 
 
-def get_catalog() -> pd.DataFrame:
+def get_catalog() -> pl.DataFrame:
     if not os.path.exists(CATALOG_PATH):
         rlog.info("Downloading GTFS catalog...")
         download_catalog()
 
-    catalog = pd.read_csv(CATALOG_PATH)
+    catalog = pl.read_csv(CATALOG_PATH)
     catalog = catalog[RELEVANT_COLUMNS]
     catalog = pre_filter_catalog(catalog)
     catalog = catalog.fillna("")
@@ -69,20 +69,18 @@ def download_catalog():
         f.write(request.content)
 
 
-def pre_filter_catalog(catalog: pd.DataFrame) -> pd.DataFrame:
+def pre_filter_catalog(catalog: pl.DataFrame) -> pl.DataFrame:
     catalog = catalog[catalog[COL_DATA_TYPE] == "gtfs"]
-    catalog = catalog[(catalog[COL_AUTH_TYPE] != 1) &
-                      (catalog[COL_AUTH_TYPE] != 2)]
+    catalog = catalog[(catalog[COL_AUTH_TYPE] != 1) & (catalog[COL_AUTH_TYPE] != 2)]
     return catalog
 
 
 def filter_catalog(
-    catalog: pd.DataFrame, country_code: str, subdivision_name: str, municipality: str
-) -> pd.DataFrame:
+    catalog: pl.DataFrame, country_code: str, subdivision_name: str, municipality: str
+) -> pl.DataFrame:
     if country_code:
         catalog = catalog[
-            catalog[COL_COUNTRY_CODE].str.contains(
-                country_code, flags=IGNORECASE)
+            catalog[COL_COUNTRY_CODE].str.contains(country_code, flags=IGNORECASE)
         ]
     if subdivision_name:
         catalog = catalog[
@@ -92,21 +90,19 @@ def filter_catalog(
         ]
     if municipality:
         catalog = catalog[
-            catalog[COL_MUNICIPALITY].str.contains(
-                municipality, flags=IGNORECASE)
+            catalog[COL_MUNICIPALITY].str.contains(municipality, flags=IGNORECASE)
         ]
     return catalog
 
 
-def print_catalog(catalog: pd.DataFrame):
+def print_catalog(catalog: pl.DataFrame):
     if len(catalog) == 0:
         print("[i] No GTFS feeds found.[/i]")
         return
 
     table = Table(title="GTFS Catalog", show_lines=True)
 
-    index_max_length = max(
-        int(catalog.index.astype(str).str.len().max()), len("ID"))
+    index_max_length = max(int(catalog.index.astype(str).str.len().max()), len("ID"))
     country_code_max_length = max(
         int(catalog[COL_COUNTRY_CODE].str.len().max()), len("Code")
     )

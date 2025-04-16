@@ -1,4 +1,3 @@
-
 import overpy
 from shapely.geometry import Polygon
 
@@ -43,7 +42,6 @@ def fetch_boundary_polygon(city_name_german: str, admin_level: int):
 
     result = api.query(query)
     boundary_coords = order_ways_and_nodes(result)
-    boundary_polygon = Polygon([(lon, lat)
-                                for lat, lon in boundary_coords])
+    boundary_polygon = Polygon([(lon, lat) for lat, lon in boundary_coords])
 
     return boundary_polygon

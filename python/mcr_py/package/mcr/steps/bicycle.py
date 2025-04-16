@@ -1,11 +1,11 @@
 from logging import Logger
 from typing import Optional
 
-import geopandas as gpd
+import polars_st as st
 import numpy as np
-from mcr_py.package import storage
-from mcr_py.package.geometa import GeoMeta
-from mcr_py.package.logger import Timer, rlog
+from mcr_py.package.utils import storage
+from mcr_py.package.utils.geometa import GeoMeta
+from mcr_py.package.utils.logger import Timer, rlog
 from mcr_py.package.mcr.bag import IntermediateBags
 from mcr_py.package.mcr.data import (
     AVG_BIKING_SPEED,
@@ -75,18 +75,18 @@ class BicycleStepBuilder(StepBuilder):
         update_label_func: str,
         bicycle_location_path: str,
         geo_meta: GeoMeta,
-        walking_nodes: gpd.GeoDataFrame,
-        walking_edges: gpd.GeoDataFrame,
-        cycling_nodes: gpd.GeoDataFrame,
-        cycling_edges: gpd.GeoDataFrame,
-        pois: gpd.GeoDataFrame,
+        walking_nodes: st.GeoDataFrame,
+        walking_edges: st.GeoDataFrame,
+        cycling_nodes: st.GeoDataFrame,
+        cycling_edges: st.GeoDataFrame,
+        pois: st.GeoDataFrame,
     ):
         bicycle_locations = None
         if bicycle_location_path != "":
             bicycle_locations = storage.read_df(bicycle_location_path)
-            bicycle_locations = gpd.GeoDataFrame(
+            bicycle_locations = st.GeoDataFrame(
                 bicycle_locations,
-                geometry=gpd.points_from_xy(
+                geometry=st.points_from_xy(
                     bicycle_locations.lon,
                     bicycle_locations.lat,
                 ),
@@ -132,8 +132,7 @@ class BicycleStepBuilder(StepBuilder):
             if v[0] == WALKING_PREFIX
         }
 
-        multi_modal_edges = add_weights(
-            multi_modal_edges, [TRAVEL_TIME_COLUMN])
+        multi_modal_edges = add_weights(multi_modal_edges, [TRAVEL_TIME_COLUMN])
         multi_modal_edges = add_weights(
             multi_modal_edges, [TRAVEL_TIME_DRIVING_COLUMN], hidden=True
         )
@@ -159,8 +158,7 @@ class BicycleStepBuilder(StepBuilder):
         Args:
             pois: A dataframe containing POIs. Must have the columns "nearest_osm_node_id" and "type".
         """
-        self.osm_nodes = osm.list_column_to_osm_nodes(
-            self.osm_nodes, pois, "type")
+        self.osm_nodes = osm.list_column_to_osm_nodes(self.osm_nodes, pois, "type")
         self.type_map: dict[str, int] = {}
         for t in pois["type"].unique():
             self.type_map[t] = len(self.type_map)
@@ -168,8 +166,7 @@ class BicycleStepBuilder(StepBuilder):
         self.osm_nodes["type_internal"] = self.osm_nodes["type"].map(
             lambda x: list(map(self.type_map.get, x))
         )
-        self.osm_nodes["mm_walking_node_id"] = "W" + \
-            self.osm_nodes["id"].astype(str)
+        self.osm_nodes["mm_walking_node_id"] = "W" + self.osm_nodes["id"].astype(str)
         self.osm_nodes["resetted_mm_walking_node_id"] = self.osm_nodes[
             "mm_walking_node_id"
         ].map(
@@ -182,14 +179,13 @@ class BicycleStepBuilder(StepBuilder):
             )["type_internal"]
         ).to_dict()
 
-        self.mm_graph_cache.set_node_weights(
-            resetted_mm_walking_node_id_to_type_map)
+        self.mm_graph_cache.set_node_weights(resetted_mm_walking_node_id_to_type_map)
 
 
 def mark_bicycles(
-    nodes: gpd.GeoDataFrame,
-    bicycle_locations: gpd.GeoDataFrame,
-) -> gpd.GeoDataFrame:
+    nodes: st.GeoDataFrame,
+    bicycle_locations: st.GeoDataFrame,
+) -> st.GeoDataFrame:
     nodes["has_bicycle"] = False
 
     nodes.loc[bicycle_locations["nearest_osm_node_id"], "has_bicycle"] = True
@@ -197,7 +193,7 @@ def mark_bicycles(
     return nodes
 
 
-def mark_bicycles_random(nodes: gpd.GeoDataFrame, n: int) -> gpd.GeoDataFrame:
+def mark_bicycles_random(nodes: st.GeoDataFrame, n: int) -> st.GeoDataFrame:
     nodes["has_bicycle"] = False
 
     nodes.loc[nodes.sample(n).index, "has_bicycle"] = True

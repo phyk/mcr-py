@@ -1,9 +1,13 @@
 import typer
-from mcr_py.package import storage
-from mcr_py.package.footpaths import GenerationMethod
-from mcr_py.package.footpaths import generate as direct_generate
-from mcr_py.package.key import COMPLETE_GTFS_CLEAN_COMMAND_NAME, FOOTPATHS_KEY, STOPS_KEY
-from mcr_py.package.logger import Timed
+from mcr_py.package.utils import storage
+from mcr_py.package.utils.footpaths import GenerationMethod
+from mcr_py.package.utils.footpaths import generate as direct_generate
+from mcr_py.package.utils.key import (
+    COMPLETE_GTFS_CLEAN_COMMAND_NAME,
+    FOOTPATHS_KEY,
+    STOPS_KEY,
+)
+from mcr_py.package.utils.logger import Timed
 from pyrosm.data import os
 from typing_extensions import Annotated
 

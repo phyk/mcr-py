@@ -1,13 +1,16 @@
 from typing import Optional
 
+from mcr_py.package.utils import storage
 import typer
-from geopandas import pd
-from mcr_py.package import key, storage
-from mcr_py.package.key import BUILD_STRUCTURES_COMMAND_NAME, FOOTPATHS_COMMAND_NAME
-from mcr_py.package.logger import Timed
+import polars as pl
+from mcr_py.package.utils import key
+from mcr_py.package.utils.key import (
+    BUILD_STRUCTURES_COMMAND_NAME,
+    FOOTPATHS_COMMAND_NAME,
+)
+from mcr_py.package.utils.logger import Timed
 from mcr_py.package.raptor.raptor import Raptor
 from mcr_py.package.structs import build
-from pyrosm.data import os
 from typing_extensions import Annotated
 
 FOOTPATHS_HELP = f"""
@@ -65,7 +68,7 @@ def raptor(
             start_time,
         )
 
-    arrival_times_df = pd.DataFrame.from_dict(
+    arrival_times_df = pl.DataFrame.from_dict(
         arrival_times, orient="index", columns=["arrival_time"]
     ).reset_index(names="stop_id")
     storage.write_df(

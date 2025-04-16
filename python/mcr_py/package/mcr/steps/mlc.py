@@ -1,7 +1,7 @@
 from logging import Logger
 from typing import Callable, Collection, Optional
 
-from mcr_py.package.logger import Timer
+from mcr_py.package.utils.logger import Timer
 from mcr_py.package.mcr.bag import (
     IntermediateBags,
     convert_mlc_bags_to_intermediate_bags,

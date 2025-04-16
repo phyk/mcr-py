@@ -3,7 +3,7 @@ from typing import Generic, Optional
 
 from typing_extensions import Self
 
-from mcr_py.package.key import S, T
+from mcr_py.package.utils.key import S, T
 from mcr_py.package.structs import build
 
 

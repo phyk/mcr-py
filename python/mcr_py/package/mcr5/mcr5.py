@@ -8,8 +8,8 @@ import pandas as pd
 import psutil
 from tqdm.auto import tqdm
 
-from mcr_py.package import key
-from mcr_py.package.logger import (
+from mcr_py.package.utils import key
+from mcr_py.package.utils.logger import (
     copy_settings_to_root_logger,
     make_string_stream_logger,
     rlog,

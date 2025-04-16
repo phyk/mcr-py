@@ -1,5 +1,5 @@
-from mcr_py.package.geometa import GeoMeta
-from mcr_py.package.logger import Timed
+from mcr_py.package.utils.geometa import GeoMeta
+from mcr_py.package.utils.logger import Timed
 from mcr_py.package.mcr.data import NetworkType, OSMData
 from mcr_py.package.mcr.steps.bicycle import BicycleStepBuilder
 from mcr_py.package.mcr.steps.car import PersonalCarStepBuilder
@@ -24,8 +24,7 @@ ALL_CONFIGS = [
 
 def get_car_only_config_with_data(geo_meta, geo_data):
     with Timed.info("Fetching POI for runtime optimization"):
-        pois = minute_city.fetch_pois_for_area(
-            geo_meta.boundary, geo_data.osm_nodes)  # type: ignore
+        pois = minute_city.fetch_pois_for_area(geo_meta.boundary, geo_data.osm_nodes)  # type: ignore
 
     driving_nodes, driving_edges, _ = geo_data.additional_networks[NetworkType.DRIVING]
     car_step = PersonalCarStepBuilder(
@@ -50,8 +49,7 @@ def get_bicycle_public_transport_config_with_data(
     stops_path: str,
 ):
     with Timed.info("Fetching POI for runtime optimization"):
-        pois = minute_city.fetch_pois_for_area(
-            geo_meta.boundary, geo_data.osm_nodes)  # type: ignore
+        pois = minute_city.fetch_pois_for_area(geo_meta.boundary, geo_data.osm_nodes)  # type: ignore
 
     cycling_nodes, cycling_edges, _ = geo_data.additional_networks[NetworkType.CYCLING]
     bicycle_step = BicycleStepBuilder(
@@ -93,8 +91,7 @@ def get_bicycle_only_config_with_data(
     bicycle_location_path: str,
 ):
     with Timed.info("Fetching POI for runtime optimization"):
-        pois = minute_city.fetch_pois_for_area(
-            geo_meta.boundary, geo_data.osm_nodes)  # type: ignore
+        pois = minute_city.fetch_pois_for_area(geo_meta.boundary, geo_data.osm_nodes)  # type: ignore
 
     cycling_nodes, cycling_edges, _ = geo_data.additional_networks[NetworkType.CYCLING]
     bicycle_step = BicycleStepBuilder(
@@ -143,8 +140,7 @@ def get_public_transport_only_config_with_data(
     stops_path: str,
 ):
     with Timed.info("Fetching POI for runtime optimization"):
-        pois = minute_city.fetch_pois_for_area(
-            geo_meta.boundary, geo_data.osm_nodes)  # type: ignore
+        pois = minute_city.fetch_pois_for_area(geo_meta.boundary, geo_data.osm_nodes)  # type: ignore
 
     walking_step = WalkingStepBuilder(
         geo_data.osm_nodes,

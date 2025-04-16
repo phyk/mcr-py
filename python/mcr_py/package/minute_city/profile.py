@@ -1,6 +1,6 @@
 import pandas as pd
 
-from mcr_py.package import strtime
+from mcr_py.package.utils import strtime
 
 PROFILE_MAX_TIME = strtime.str_time_to_seconds("48:00:00")
 
