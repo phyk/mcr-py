@@ -92,6 +92,10 @@ class BicycleStepBuilder(StepBuilder):
                 ),
             )
             bicycle_locations = geo_meta.crop_gdf(bicycle_locations)
+            # TODO implement in osmtools
+            # also implement direction column add in osmtools
+            raise NotImplementedError()
+            # max distance = 1000,
             bicycle_locations = osm.add_nearest_osm_node_id(
                 bicycle_locations, cycling_nodes
             )

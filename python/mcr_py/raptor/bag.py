@@ -85,7 +85,7 @@ class Bag:
             is_any_added = is_any_added or is_added
         return is_any_added
 
-    def create_bag_with_timeoffset(self: Self, time: int) -> Self:
+    def create_bag_with_timeoffset(self: Self, time: int):
         bag = self.copy()
         bag.add_arrival_time_to_all(time)
         return bag

@@ -12,28 +12,15 @@ def mock_overpass_response():
     """Fixture to create a mock response for the Overpass API."""
     # Create a mock response for the Overpass API
     mock_response = MagicMock()
+    node1 = MagicMock(lat=50.9375, lon=6.9603)
+    node2 = MagicMock(lat=50.9376, lon=6.9604)
+    node3 = MagicMock(lat=50.9377, lon=6.9605)
+    node4 = MagicMock(lat=50.938, lon=6.9605)
     mock_response.ways = [
-        MagicMock(
-            id=1,
-            nodes=[
-                MagicMock(lat=50.9375, lon=6.9603),
-                MagicMock(lat=50.9376, lon=6.9604),
-            ],
-        ),
-        MagicMock(
-            id=2,
-            nodes=[
-                MagicMock(lat=50.9376, lon=6.9604),
-                MagicMock(lat=50.9377, lon=6.9605),
-            ],
-        ),
-        MagicMock(
-            id=3,
-            nodes=[
-                MagicMock(lat=50.9377, lon=6.9605),
-                MagicMock(lat=50.9378, lon=6.9606),
-            ],
-        ),
+        MagicMock(id=1, nodes=[node1, node2]),
+        MagicMock(id=2, nodes=[node2, node3]),
+        MagicMock(id=3, nodes=[node3, node4]),
+        MagicMock(id=4, nodes=[node4, node1]),
     ]
     return mock_response
 
@@ -43,10 +30,11 @@ def test_order_ways_and_nodes(mock_overpass_response):
     ordered_nodes = order_ways_and_nodes(mock_overpass_response)
 
     expected_ordered_nodes = [
-        (50.9375, 6.9603),  # First way
-        (50.9376, 6.9604),  # Second way
-        (50.9377, 6.9605),  # Third way
-        (50.9378, 6.9606),  # Last node
+        (50.938, 6.9605),
+        (50.9375, 6.9603),
+        (50.9376, 6.9604),
+        (50.9377, 6.9605),
+        (50.938, 6.9605),
     ]
 
     assert ordered_nodes == expected_ordered_nodes
@@ -65,9 +53,11 @@ def test_fetch_boundary_polygon(mock_query, mock_overpass_response):
 
     # Check the coordinates of the polygon
     expected_coords = [
-        (6.9603, 50.9375),  # First way
-        (6.9604, 50.9376),  # Second way
-        (6.9605, 50.9377),  # Third way
-        (6.9606, 50.9378),  # Last node
+        (6.9605, 50.938),
+        (6.9603, 50.9375),
+        (6.9604, 50.9376),
+        (6.9605, 50.9377),
+        (6.9605, 50.938),
     ]
+    print(list(boundary_polygon.exterior.coords))
     assert list(boundary_polygon.exterior.coords) == expected_coords

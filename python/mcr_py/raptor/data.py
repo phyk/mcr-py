@@ -40,7 +40,7 @@ class DataQuerier:
         assert stop_id is not None
 
         arrival_time = self.times_by_stop_by_trip[trip_id][stop_id][0]
-        assert type(arrival_time) == int
+        assert isinstance(arrival_time, int)
         return arrival_time
 
     def get_departure_time(self, trip_id: Optional[str], stop_id: str) -> int:
@@ -50,7 +50,7 @@ class DataQuerier:
             return sys.maxsize
 
         departure_time = self.times_by_stop_by_trip[trip_id][stop_id][1]
-        assert type(departure_time) == int
+        assert isinstance(departure_time, int)
         return departure_time
 
     def earliest_trip(
@@ -63,7 +63,7 @@ class DataQuerier:
                 return trip_id, departure_time
 
     def iterate_footpaths_from_stop(self, stop_id: str):
-        if self.footpaths == None:
+        if self.footpaths is None:
             raise Exception(
                 "footpaths has to be defined when calling iterate_footpaths_from_stop"
             )

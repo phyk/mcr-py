@@ -1,16 +1,28 @@
-import geopandas as gpd
+import polars as pl
 import networkx as nx
-import pyrosm
+import rustworkx as rx
 
-from mcr_py.logger import rlog
+from mcr_py.utils.logger import rlog
 
 
 def create_nx_graph(
-    osm: pyrosm.OSM, nodes: gpd.GeoDataFrame, edges: gpd.GeoDataFrame, network_type: str
+    nodes: pl.DataFrame, edges: pl.DataFrame, network_type: str
 ) -> nx.Graph:
+    # network_type only parameter
+    # Can use rustworx directly
+    # Need to check igraph vs rustworkx
+    # Likely to be relevant
     graph: nx.Graph = osm.to_graph(
         nodes, edges, graph_type="networkx", network_type=network_type
     )  # type: ignore
+
+    # Flow:
+    #  - generate directed edges (might need to duplicate direction based on )
+    # Insert directed edges and nodes as well as crs into MultiDiGraph
+    # from networkx
+
+    # Requirements for networkx
+    # - implements weakl_connected_components to only select the largest connected component
 
     return graph
 
@@ -37,6 +49,11 @@ def crop_graph_to_largest_component(
 def add_nearest_node_to_stops(
     stops_df: gpd.GeoDataFrame, nx_graph: nx.Graph
 ) -> gpd.GeoDataFrame:
+    # osmnx nearest_nodes add -> uses some nx feature
+    # Uses a ckdtree internally
+    # might be good to also do this in osmtools, as the feature is implemented there anyways
+    # -> give a polars dataframe, add columns nearest_node and nearest_node_dist
+    # -> Later, might be important to do this after osm node id reset or before, depending on how the logic is easier
     nodes, dists = ox.nearest_nodes(
         nx_graph,
         stops_df.stop_lon.astype(float),  # TODO: improve this

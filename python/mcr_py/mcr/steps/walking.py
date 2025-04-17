@@ -1,5 +1,4 @@
-import pandas as pd
-
+import polars as pl
 from mcr_py import GraphCache
 from mcr_py.mcr.data import (
     TRAVEL_TIME_COLUMN,
@@ -25,9 +24,9 @@ class WalkingStepBuilder(StepBuilder):
 
     def __init__(
         self,
-        osm_nodes: pd.DataFrame,
-        osm_edges: pd.DataFrame,
-        pois: pd.DataFrame,
+        osm_nodes: pl.DataFrame,
+        osm_edges: pl.DataFrame,
+        pois: pl.DataFrame,
     ):
         walking_nodes, walking_edges = create_walking_graph(osm_nodes, osm_edges)
 
@@ -57,7 +56,7 @@ class WalkingStepBuilder(StepBuilder):
             "from_internal": self.resetted_to_walking_node_map,
         }
 
-    def add_pois_to_walking_graph(self, pois: pd.DataFrame) -> None:
+    def add_pois_to_walking_graph(self, pois: pl.DataFrame) -> None:
         """
         Adds POIs to the walking graph cache.
 

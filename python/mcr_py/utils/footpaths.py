@@ -33,22 +33,12 @@ def generate(
     max_walking_duration: int,
     method: GenerationMethod = GenerationMethod.IGRAPH,
 ) -> dict[str, dict[str, int]]:
-    osm_path = osm_path if osm_path else osm.get_osm_path_from_city_id(city_id)
-
     with Timed.info("Reading stops and geo meta"):
-        stops_df = storage.read_gdf(stops_path)
-        geo_meta = GeoMeta.load(geo_meta_path)
+        stops_df = storage.read_df(stops_path)
 
-    if not os.path.exists(osm_path) and city_id:
-        rlog.info("Downloading OSM data")
-        osm.download_city(city_id, osm_path)
-    else:
-        rlog.info("Using existing OSM data")
-
-    osm_reader = osm.new_osm_reader(osm_path)
-
-    with Timed.info("Getting OSM graph"):
-        nodes, edges = osm.get_graph_for_city_cropped_to_boundary(osm_reader, geo_meta)
+    # Check wthether walking network exists at cache location
+    # If not, call osmtools via _mcr_py interface
+    # Then read in network at cache location
 
     with Timed.info("Creating networkx graph"):
         nx_graph = graph.create_nx_graph(osm_reader, nodes, edges)
@@ -75,6 +65,7 @@ def generate(
         ]
         for stop_id, nearby_stops in nearby_stops_map.items()
     }
+    # If this boils down to having all distances between stops, then rustworkx floyd_warshall_numpy might be the same or faster
 
     with Timed.info(f"Calculating distances between nearby stops using {method.name}"):
         if method == GenerationMethod.IGRAPH:
