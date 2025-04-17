@@ -12,6 +12,7 @@ def create_nx_graph(
     # Can use rustworx directly
     # Need to check igraph vs rustworkx
     # Likely to be relevant
+
     graph: nx.Graph = osm.to_graph(
         nodes, edges, graph_type="networkx", network_type=network_type
     )  # type: ignore
@@ -28,8 +29,8 @@ def create_nx_graph(
 
 
 def crop_graph_to_largest_component(
-    graph: nx.Graph, nodes: gpd.GeoDataFrame, edges: gpd.GeoDataFrame
-) -> tuple[nx.Graph, gpd.GeoDataFrame, gpd.GeoDataFrame]:
+    graph: nx.Graph, nodes: pl.DataFrame, edges: pl.DataFrame
+) -> tuple[nx.Graph, pl.DataFrame, pl.DataFrame]:
     weakly_connected_components = nx.weakly_connected_components(graph)
     largest_component = max(weakly_connected_components, key=len)
 
@@ -47,8 +48,8 @@ def crop_graph_to_largest_component(
 
 
 def add_nearest_node_to_stops(
-    stops_df: gpd.GeoDataFrame, nx_graph: nx.Graph
-) -> gpd.GeoDataFrame:
+    stops_df: pl.DataFrame, nx_graph: nx.Graph
+) -> pl.DataFrame:
     # osmnx nearest_nodes add -> uses some nx feature
     # Uses a ckdtree internally
     # might be good to also do this in osmtools, as the feature is implemented there anyways
