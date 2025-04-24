@@ -1,10 +1,19 @@
 use osmtools::download::download;
+use osmtools::utils::nearest_node::add_nearest_node_to_geo_df;
 use pyo3_polars::PyDataFrame;
 use polars::prelude::DataFrame;
 use osmtools::extractor::{
     _load_osm_cycling, _load_osm_driving, _load_osm_pois, _load_osm_walking,
 };
 use pyo3::prelude::*;
+
+#[pyfunction]
+pub fn add_nearest_node_to_df(py: Python, geo_df: PyDataFrame, nodes_to_match: PyDataFrame, target_crs: &str) -> PyDataFrame {
+    let result = py.allow_threads(|| {
+        add_nearest_node_to_geo_df(geo_df.into(), nodes_to_match.into(), target_crs)
+    })
+    PyDataFrame(result)
+}
 
 #[pyfunction]
 pub fn download_osm_data(py: Python, city_name: &str, archive_path: &str) -> String {

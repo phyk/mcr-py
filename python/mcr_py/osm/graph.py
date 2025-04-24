@@ -2,45 +2,41 @@ import polars as pl
 import numpy as np
 import rustworkx as rx
 import os
-
+from typing import Tuple
 from mcr_py.utils.logger import rlog
 
 
 def create_rx_graph(
-    nodes: pl.DataFrame, edges: pl.DataFrame, network_type: str
-) -> rx.PyDiGraph:
-    # network_type only parameter
-    # Can use rustworx directly
-    # Need to check igraph vs rustworkx
-    # Likely to be relevant
+    nodes: pl.DataFrame, edges: pl.DataFrame
+) -> Tuple[pl.DataFrame, pl.DataFrame, rx.PyDiGraph]:
     graph = rx.PyDiGraph()
 
     nodes = nodes.with_columns(
         pl.Series(
             name="rx_node_id",
-            values=np.array(graph.add_nodes_from(nodes.get_column("id").to_numpy())),
+            values=np.array(
+                graph.add_nodes_from(nodes.get_column("osm_id").to_numpy())
+            ),
         )
     )
     edges = edges.join(
         nodes.select(pl.col("osm_id"), pl.col("rx_node_id").alias("source_rx_node_id")),
         left_on="source_osm",
+        right_on="osm_id",
     ).join(
         nodes.select(pl.col("osm_id"), pl.col("rx_node_id").alias("dest_rx_node_id")),
         left_on="dest_osm",
+        right_on="osm_id",
     )
 
-    graph.add_nodes_from(
+    graph.add_edges_from(
         zip(
-            nodes["source_rx_node_id"].to_numpy(),
-            nodes["dest_rx_node_id"].to_numpy(),
-            nodes["length"].to_numpy(),
+            edges["source_rx_node_id"].to_numpy(),
+            edges["dest_rx_node_id"].to_numpy(),
+            edges["length"].to_numpy(),
         )
     )
-
-    # Flow:
-    #  - generate directed edges (might need to duplicate direction based on network type)
-
-    return graph
+    return (nodes, edges, graph)
 
 
 def crop_graph_to_largest_component(
