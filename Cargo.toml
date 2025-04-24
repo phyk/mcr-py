@@ -20,4 +20,4 @@ reqwest = { version = "0.12.12", features = ["blocking"] }
 pyo3 = "0.23"
 pyo3-log = "0.12.3"
 pyo3-polars = "0.20.0"
-polars = "0.46.0"
+polars = { version = "0.46.0", features = ["lazy"] }

@@ -1,5 +1,5 @@
 use osmtools::download::download;
-use osmtools::utils::nearest_node::add_nearest_node_to_geo_df;
+use osmtools::nearest_node::add_nearest_node_to_geo_df;
 use pyo3_polars::PyDataFrame;
 use polars::prelude::DataFrame;
 use osmtools::extractor::{
@@ -10,8 +10,8 @@ use pyo3::prelude::*;
 #[pyfunction]
 pub fn add_nearest_node_to_df(py: Python, geo_df: PyDataFrame, nodes_to_match: PyDataFrame, target_crs: &str) -> PyDataFrame {
     let result = py.allow_threads(|| {
-        add_nearest_node_to_geo_df(geo_df.into(), nodes_to_match.into(), target_crs)
-    })
+        add_nearest_node_to_geo_df(geo_df.into(), &nodes_to_match.into(), target_crs)
+    });
     PyDataFrame(result)
 }
 

@@ -67,3 +67,8 @@ def load_osm_pois(
     nodes_to_match_df: Optional[str],
     nodes_to_match_path: Optional[str],
 ) -> pl.DataFrame: ...
+def add_nearest_node_to_df(
+    geo_df: pl.DataFrame,
+    nodes_to_match: pl.DataFrame,
+    target_crs: str,
+) -> pl.DataFrame: ...
