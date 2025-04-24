@@ -4,6 +4,7 @@ use mlc::read::MLCGraph;
 use petgraph::{graph::NodeIndex, Directed, Graph};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
+use pyo3::pybacked::PyBackedStr;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -19,7 +20,7 @@ impl GraphCache {
         GraphCache { graph: None }
     }
 
-    fn set_graph(&mut self, raw_edges: Vec<HashMap<&str, &PyAny>>) {
+    fn set_graph(&mut self, raw_edges: Vec<HashMap<PyBackedStr, &PyAny>>) {
         let graph = parse_graph(raw_edges);
         self.graph = Some(Arc::new(graph));
     }
@@ -86,7 +87,7 @@ impl GraphCache {
     }
 }
 
-fn parse_graph(raw_edges: Vec<HashMap<&str, &PyAny>>) -> MLCGraph<u8> {
+fn parse_graph(raw_edges: Vec<HashMap<PyBackedStr, &PyAny>>) -> MLCGraph<u8> {
     Graph::<Vec<u8>, WeightsTuple, Directed>::from_edges(raw_edges.iter().map(|edge| {
         let u = edge.get("u").unwrap().extract::<usize>().unwrap();
         let v = edge.get("v").unwrap().extract::<usize>().unwrap();

@@ -1,10 +1,11 @@
-use std::collections::{HashMap, HashSet};
+use std::{collections::{HashMap, HashSet}, hash::{Hasher, RandomState}};
 
 use mlc::{
     bag::{Bag, Label},
     mlc::{Bags, MLC},
 };
 use pyo3::{prelude::*, types::PyList};
+use pyo3::types::{PyDict};
 
 use super::{
     graph_cache::GraphCache,
@@ -115,6 +116,7 @@ impl UpdateLabelFunc {
 }
 
 #[pyfunction]
+#[pyo3(signature = (graph_cache, bags, update_label_func=None, disable_paths=None, enable_limit=None))]
 pub fn run_mlc_with_bags(
     _py: Python,
     graph_cache: &GraphCache,

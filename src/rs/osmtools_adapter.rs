@@ -1,4 +1,6 @@
 use osmtools::download::download;
+use pyo3_polars::PyDataFrame;
+use polars::prelude::DataFrame;
 use osmtools::extractor::{
     _load_osm_cycling, _load_osm_driving, _load_osm_pois, _load_osm_walking,
 };
@@ -25,10 +27,11 @@ pub fn load_osm_cycling(
     archive_path: &str,
     outpath: &str,
     download: bool,
-) {
-    py.allow_threads(|| {
-        _load_osm_cycling(city_name, geometry_vec, &reverse_edges, archive_path, outpath, download);
-    })
+) -> (PyDataFrame, PyDataFrame, PyDataFrame) {
+    let result = py.allow_threads(|| {
+        _load_osm_cycling(city_name, geometry_vec, &reverse_edges, archive_path, outpath, download)
+    });
+    (PyDataFrame(result.0), PyDataFrame(result.1), PyDataFrame(result.2))
 }
 
 #[pyfunction]
@@ -39,10 +42,11 @@ pub fn load_osm_driving(
     archive_path: &str,
     outpath: &str,
     download: bool,
-) {
-    py.allow_threads(|| {
-        _load_osm_driving(city_name, geometry_vec, archive_path, outpath, download);
-    })
+) -> (PyDataFrame, PyDataFrame, PyDataFrame) {
+    let result = py.allow_threads(|| {
+        _load_osm_driving(city_name, geometry_vec, archive_path, outpath, download)
+    });
+    (PyDataFrame(result.0), PyDataFrame(result.1), PyDataFrame(result.2))
 }
 
 #[pyfunction]
@@ -53,30 +57,43 @@ pub fn load_osm_walking(
     archive_path: &str,
     outpath: &str,
     download: bool,
-) {
-    py.allow_threads(|| {
-        _load_osm_walking(city_name, geometry_vec, archive_path, outpath, download);
-    })
+) -> (PyDataFrame, PyDataFrame, PyDataFrame) {
+    let result = py.allow_threads(|| {
+        _load_osm_walking(city_name, geometry_vec, archive_path, outpath, download)
+    });
+    (PyDataFrame(result.0), PyDataFrame(result.1), PyDataFrame(result.2))
 }
 
 #[pyfunction]
+#[pyo3(signature = (city_name, geometry_vec, archive_path, outpath, download, nodes_to_match_df=None, nodes_to_match_path=None))]
 pub fn load_osm_pois(
     py: Python,
     city_name: &str,
     geometry_vec: Vec<(f64, f64)>,
     archive_path: &str,
-    nodes_to_match_path: &str,
     outpath: &str,
     download: bool,
-) {
-    py.allow_threads(|| {
+    nodes_to_match_df: Option<PyDataFrame>,
+    nodes_to_match_path: Option<&str>,
+) -> PyDataFrame {
+    let result = py.allow_threads(|| {
+        let val_df: DataFrame;
+        let df: Option<&DataFrame> = match nodes_to_match_df {
+            Some(val) => {
+                val_df = val.into();
+                Some(&val_df)
+            },
+            None => None,
+        };
         _load_osm_pois(
             city_name,
             geometry_vec,
             archive_path,
             nodes_to_match_path,
+            df,
             outpath,
             download,
-        );
-    })
+        )
+    });
+    PyDataFrame(result)
 }
