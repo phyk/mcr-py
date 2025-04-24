@@ -40,8 +40,8 @@ def generate(
     # If not, call osmtools via _mcr_py interface
     # Then read in network at cache location
 
-    with Timed.info("Creating networkx graph"):
-        nx_graph = graph.create_nx_graph(osm_reader, nodes, edges)
+    with Timed.info("Creating rustworkx graph"):
+        nx_graph = graph.create_rx_graph(osm_reader, nodes, edges)
 
     with Timed.info("Adding nearest network node to each stop"):
         stops_df = graph.add_nearest_node_to_stops(stops_df, nx_graph)

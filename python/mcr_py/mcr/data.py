@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Tuple, TypeVar
 
-import networkx as nx
+import rustworkx as rx
 import pandas as pd
 import polars as pl
 
@@ -45,7 +45,7 @@ class OSMData:
         self.osm_nodes, self.osm_edges, self.nxgraph = self.read_walking(redownload)
 
         self.additional_networks: dict[
-            NetworkType, tuple[pd.DataFrame, pd.DataFrame, nx.Graph]
+            NetworkType, tuple[pd.DataFrame, pd.DataFrame, rx.PyDiGraph]
         ] = {}
 
         raise NotImplementedError()
@@ -76,7 +76,7 @@ class OSMData:
             f"{self.cache_path}/{self.city_id.lower()}_walking_edges.csv"
         )
 
-        nxgraph = graph.create_nx_graph()
+        nxgraph = graph.create_rx_graph(nodes, edges, "walking")
 
         # Filter nodes and edges
         return nodes, edges, nxgraph
@@ -84,7 +84,7 @@ class OSMData:
     def read_network(
         self,
         network_type: str,
-    ) -> tuple[pd.DataFrame, pd.DataFrame, nx.Graph]:
+    ) -> tuple[pd.DataFrame, pd.DataFrame, rx.PyDiGraph]:
         raise NotImplementedError()
         osm_reader = osm.get_osm_reader_for_city_id_or_osm_path(
             self.city_id, self.osm_path
@@ -95,7 +95,7 @@ class OSMData:
         ) = osm.get_graph_for_city_cropped_to_boundary(
             osm_reader, self.geo_meta, network_type
         )
-        nxgraph = graph.create_nx_graph(osm_reader, osm_nodes, osm_edges, network_type)
+        nxgraph = graph.create_rx_graph(osm_nodes, osm_edges, network_type)
 
         osm_nodes = osm_nodes.set_index("id")
         osm_nodes["id"] = osm_nodes.index

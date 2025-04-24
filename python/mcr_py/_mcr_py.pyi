@@ -36,6 +36,7 @@ def run_mlc_with_bags(
 def load_osm_cycling(
     city_name: str,
     bounding_box: List[Tuple[float, float]],
+    reverse_edges: bool,
     archive_path: str,
     outpath: str,
     download: bool,

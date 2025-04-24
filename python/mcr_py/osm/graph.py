@@ -1,44 +1,61 @@
 import polars as pl
-import networkx as nx
+import numpy as np
 import rustworkx as rx
+import os
 
 from mcr_py.utils.logger import rlog
 
 
-def create_nx_graph(
+def create_rx_graph(
     nodes: pl.DataFrame, edges: pl.DataFrame, network_type: str
-) -> nx.Graph:
+) -> rx.PyDiGraph:
     # network_type only parameter
     # Can use rustworx directly
     # Need to check igraph vs rustworkx
     # Likely to be relevant
+    graph = rx.PyDiGraph()
 
-    graph: nx.Graph = osm.to_graph(
-        nodes, edges, graph_type="networkx", network_type=network_type
-    )  # type: ignore
+    nodes = nodes.with_columns(
+        pl.Series(
+            name="rx_node_id",
+            values=np.array(graph.add_nodes_from(nodes.get_column("id").to_numpy())),
+        )
+    )
+    edges = edges.join(
+        nodes.select(pl.col("osm_id"), pl.col("rx_node_id").alias("source_rx_node_id")),
+        left_on="source_osm",
+    ).join(
+        nodes.select(pl.col("osm_id"), pl.col("rx_node_id").alias("dest_rx_node_id")),
+        left_on="dest_osm",
+    )
+
+    graph.add_nodes_from(
+        zip(
+            nodes["source_rx_node_id"].to_numpy(),
+            nodes["dest_rx_node_id"].to_numpy(),
+            nodes["length"].to_numpy(),
+        )
+    )
 
     # Flow:
-    #  - generate directed edges (might need to duplicate direction based on )
-    # Insert directed edges and nodes as well as crs into MultiDiGraph
-    # from networkx
-
-    # Requirements for networkx
-    # - implements weakl_connected_components to only select the largest connected component
+    #  - generate directed edges (might need to duplicate direction based on network type)
 
     return graph
 
 
 def crop_graph_to_largest_component(
-    graph: nx.Graph, nodes: pl.DataFrame, edges: pl.DataFrame
-) -> tuple[nx.Graph, pl.DataFrame, pl.DataFrame]:
-    weakly_connected_components = nx.weakly_connected_components(graph)
+    graph: rx.PyDiGraph, nodes: pl.DataFrame, edges: pl.DataFrame
+) -> tuple[rx.PyDiGraph, pl.DataFrame, pl.DataFrame]:
+    weakly_connected_components = rx.weakly_connected_components(graph)
     largest_component = max(weakly_connected_components, key=len)
-
-    graph = graph.subgraph(largest_component).copy()
+    graph = graph.subgraph(list(largest_component))
 
     n_nodes_before, n_edges_before = len(nodes), len(edges)
-    nodes = nodes[nodes["id"].isin(graph.nodes)]  # type: ignore
-    edges = edges[edges["u"].isin(graph.nodes) & edges["v"].isin(graph.nodes)]  # type: ignore
+    nodes = nodes.filter(pl.col("rx_node_id").is_in(largest_component))
+    edges = edges.filter(
+        (pl.col("source_rx_node_id").is_in(largest_component))
+        & (pl.col("dest_rx_node_id").is_in(largest_component))
+    )
     rlog.debug(
         f"Removed {n_nodes_before - len(nodes)} nodes and "
         + f" {n_edges_before - len(edges)} edges from OSM network to ensure"
@@ -47,8 +64,15 @@ def crop_graph_to_largest_component(
     return graph, nodes, edges
 
 
+def shortest_paths(graph: rx.PyDiGraph, num_threads=4) -> rx.AllPairsPathLengthMapping:
+    os.environ["RAYON_NUM_THREADS"] = str(num_threads)
+    return rx.all_pairs_bellman_ford_path_lengths(
+        graph, edge_cost_fn=lambda length: length
+    )
+
+
 def add_nearest_node_to_stops(
-    stops_df: pl.DataFrame, nx_graph: nx.Graph
+    stops_df: pl.DataFrame, nx_graph: rx.PyDiGraph
 ) -> pl.DataFrame:
     # osmnx nearest_nodes add -> uses some nx feature
     # Uses a ckdtree internally

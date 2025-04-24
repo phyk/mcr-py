@@ -1,6 +1,15 @@
 # mcr-py
 
-## Todos
+## Todo
+Removing pandas and geopandas
+Testing functionality of all code
+- Raptor
+- OSM
+- minute_city
+- mcr5
+- mcr
+
+
 - [ ] cleanup unused functions in python mcr5
 - [ ] go through mcr5 preps and streamline/reduce coding
 

@@ -1,7 +1,7 @@
 from logging import Logger
 from typing import Optional
 
-import networkx as nx
+import rustworkx as rx
 
 from mcr_py.utils import storage
 from mcr_py.utils.logger import Timed, Timer
@@ -143,13 +143,13 @@ class PublicTransportStepBuilder(StepBuilder):
         self,
         structs_path: str,
         stops_path: str,
-        nxgraph: nx.Graph,
+        rxgraph: rx.PyDiGraph,
     ):
         structs_dict = storage.read_any_dict(structs_path)
         with Timed.info("Reading stops"):
             self.stops_df = storage.read_gdf(stops_path)
 
-        stops_df = graph.add_nearest_node_to_stops(self.stops_df, nxgraph)
+        stops_df = graph.add_nearest_node_to_stops(self.stops_df, rxgraph)
 
         stop_to_osm_node_map: dict[str, int] = stops_df.set_index("stop_id")[
             "nearest_node"

@@ -1,19 +1,11 @@
-import geopandas as gpd
-import igraph as ig
-import pyrosm
-from tqdm.contrib.concurrent import process_map
-
-from mcr_py import key
-from mcr_py.logger import Timed
+from mcr_py.utils import key
+from mcr_py.utils.logger import Timed
 
 
 # retrieves a dictionary, where the keys are source and the values are a list of targets
 # returns a dictionary, where the keys are source and the values are a dictionary of targets and distances
 def query_multiple_one_to_many(
     source_target_nodes_map: dict[int, list[int]],
-    osm_reader: pyrosm.OSM,
-    nodes: gpd.GeoDataFrame,
-    edges: gpd.GeoDataFrame,
 ) -> dict[int, dict[int, float]]:
     global i_graph  # will be used during multiprocessing
     # TODO: we could probably use a class to avoid this global variable
@@ -56,9 +48,7 @@ def query_multiple_one_to_many(
     return source_target_nodes_distance_map
 
 
-def get_conversion_maps(
-    igraph: ig.Graph,
-) -> tuple[dict[int, int], dict[int, int]]:
+def get_conversion_maps() -> tuple[dict[int, int], dict[int, int]]:
     node_id_to_g_igraph_node_id_map = {
         node.attributes()["id"]: node.attributes()["node_id"]
         for node in list(igraph.vs)
@@ -70,9 +60,7 @@ def get_conversion_maps(
     return node_id_to_g_igraph_node_id_map, igraph_node_id_to_node_id_map
 
 
-def create_i_graph(
-    osm: pyrosm.OSM, nodes: gpd.GeoDataFrame, edges: gpd.GeoDataFrame
-) -> ig.Graph:
+def create_i_graph():
     return osm.to_graph(nodes, edges, graph_type="igraph", network_type="walking")  # type: ignore
 
 

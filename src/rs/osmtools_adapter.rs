@@ -21,12 +21,13 @@ pub fn load_osm_cycling(
     py: Python,
     city_name: &str,
     geometry_vec: Vec<(f64, f64)>,
+    reverse_edges: bool,
     archive_path: &str,
     outpath: &str,
     download: bool,
 ) {
     py.allow_threads(|| {
-        _load_osm_cycling(city_name, geometry_vec, archive_path, outpath, download);
+        _load_osm_cycling(city_name, geometry_vec, &reverse_edges, archive_path, outpath, download);
     })
 }
 
