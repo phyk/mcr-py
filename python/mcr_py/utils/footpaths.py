@@ -7,6 +7,7 @@ from mcr_py.utils import storage
 from mcr_py.utils.geometa import GeoMeta
 from mcr_py.utils.logger import Timed, rlog
 from mcr_py.osm import graph, osm
+from mcr_py import add_nearest_node_to_df
 
 
 class GenerationMethod(Enum):
@@ -25,25 +26,23 @@ class GenerationMethod(Enum):
 
 
 def generate(
-    cache_path,
+    city_name: str,
+    cache_path: str,
     stops_path: str,
-    geo_meta_path: str,
     avg_walking_speed: float,
     max_walking_duration: int,
     method: GenerationMethod = GenerationMethod.RUSTWORKX,
 ) -> dict[str, dict[str, int]]:
+    nodes = storage.read_df(f"{cache_path}/{city_name}_walking_nodes.parquet")
+    edges = storage.read_df(f"{cache_path}/{city_name}_walking_edges.parquet")
     with Timed.info("Reading stops and geo meta"):
         stops_df = storage.read_df(stops_path)
 
-    # Check wthether walking network exists at cache location
-    # If not, call osmtools via _mcr_py interface
-    # Then read in network at cache location
-
     with Timed.info("Creating rustworkx graph"):
-        nx_graph = graph.create_rx_graph(osm_reader, nodes, edges)
+        (nodes, edges, rx_graph) = graph.create_rx_graph(nodes, edges)
 
     with Timed.info("Adding nearest network node to each stop"):
-        stops_df = graph.add_nearest_node_to_stops(stops_df, nx_graph)
+        stops_df = add_nearest_node_to_df(stops_df, nodes, "EPSG:4839")
 
     with Timed.info("Finding potential nearby stops for each stop"):
         nearby_stops_map = create_nearby_stops_map(
@@ -68,9 +67,7 @@ def generate(
 
     with Timed.info(f"Calculating distances between nearby stops using {method.name}"):
         if method == GenerationMethod.RUSTWORKX:
-            source_targets_distance_map = igraph.query_multiple_one_to_many(
-                source_targets_map, osm_reader, nodes, edges
-            )
+            source_targets_distance_map = graph.shortest_paths(rx_graph, num_threads=6)
         elif method == GenerationMethod.FAST_PATH:
             raise NotImplementedError()
 

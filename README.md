@@ -4,7 +4,6 @@
 Removing pandas and geopandas
 Testing functionality of all code
 - Raptor
-- OSM
 - minute_city
 - mcr5
 - mcr

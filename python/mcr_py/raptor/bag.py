@@ -30,8 +30,8 @@ class BaseLabel:
     def update_before_stop_bag_merge(self, stop_id: str):
         pass
 
-    def to_human_readable(self):
-        pass
+    def to_human_readable(self) -> dict:
+        return {}
 
     def copy(self: Self) -> Self:
         return deepcopy(self)
