@@ -83,7 +83,7 @@ RAPTOR_TRACE_FILE_NAME = "tracer_map.pkl"
 
 
 # urls
-GTFS_CATALOG_URL = "https://bit.ly/catalogs-csv"  # https://database.mobilitydata.org/
+GTFS_CATALOG_URL = "https://api.mobilitydatabase.org/v1/gtfs-feeds"
 
 
 DATE_TIME_FORMAT = "%d.%m.%Y-%H:%M:%S"

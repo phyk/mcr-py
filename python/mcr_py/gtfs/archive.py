@@ -3,7 +3,6 @@ import zipfile
 
 import polars as pl
 
-from mcr_py.gtfs import dtypes
 from mcr_py.utils.key import (
     STOP_TIMES_KEY,
     STOPS_KEY,
@@ -73,7 +72,7 @@ def read_file(zip_ref: zipfile.ZipFile, file: str) -> pl.DataFrame:
     """
     with zip_ref.open(file) as f:
         rlog.debug(f"Reading {file}")
-        df = pl.read_csv(f)  # type: ignore
+        df = pl.read_csv(f, infer_schema_length=10000)  # type: ignore
         return df
 
 

@@ -6,11 +6,11 @@ import polars_st as st
 from mcr_py.utils import storage
 from mcr_py.utils.geometa import GeoMeta
 from mcr_py.utils.logger import Timed, rlog
-from mcr_py.osm import graph, igraph, osm
+from mcr_py.osm import graph, osm
 
 
 class GenerationMethod(Enum):
-    IGRAPH = "igraph"
+    RUSTWORKX = "rustworkx"
     FAST_PATH = "fast_path"
 
     @classmethod
@@ -25,13 +25,12 @@ class GenerationMethod(Enum):
 
 
 def generate(
-    city_id: str,
-    osm_path: str,
+    cache_path,
     stops_path: str,
     geo_meta_path: str,
     avg_walking_speed: float,
     max_walking_duration: int,
-    method: GenerationMethod = GenerationMethod.IGRAPH,
+    method: GenerationMethod = GenerationMethod.RUSTWORKX,
 ) -> dict[str, dict[str, int]]:
     with Timed.info("Reading stops and geo meta"):
         stops_df = storage.read_df(stops_path)
@@ -68,7 +67,7 @@ def generate(
     # If this boils down to having all distances between stops, then rustworkx floyd_warshall_numpy might be the same or faster
 
     with Timed.info(f"Calculating distances between nearby stops using {method.name}"):
-        if method == GenerationMethod.IGRAPH:
+        if method == GenerationMethod.RUSTWORKX:
             source_targets_distance_map = igraph.query_multiple_one_to_many(
                 source_targets_map, osm_reader, nodes, edges
             )

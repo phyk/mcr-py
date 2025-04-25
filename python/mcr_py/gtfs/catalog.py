@@ -14,6 +14,7 @@ CATALOG_PATH = storage.get_tmp_path(
     key.TMP_GTFS_DIR_NAME, key.TMP_GTFS_CATALOG_FILE_NAME
 )
 
+COL_ID = "mdb_source_id"
 COL_DATA_TYPE = "data_type"
 COL_COUNTRY_CODE = "location.country_code"
 COL_SUBDIVISION_NAME = "location.subdivision_name"
@@ -24,6 +25,7 @@ COL_DOWNLOAD_URL = "urls.direct_download"
 COL_AUTH_TYPE = "urls.authentication_type"
 
 RELEVANT_COLUMNS = [
+    COL_ID,
     COL_DATA_TYPE,
     COL_COUNTRY_CODE,
     COL_SUBDIVISION_NAME,
@@ -63,6 +65,7 @@ def get_catalog() -> pl.DataFrame:
     if not os.path.exists(CATALOG_PATH):
         rlog.info("Downloading GTFS catalog...")
         download_catalog()
+    print(CATALOG_PATH)
     catalog = pl.read_csv(CATALOG_PATH)
     catalog = catalog.select(RELEVANT_COLUMNS).with_columns(
         pl.Series("index", range(0, len(catalog)))

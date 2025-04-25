@@ -9,26 +9,11 @@ Testing functionality of all code
 - mcr5
 - mcr
 
-
-- [ ] cleanup unused functions in python mcr5
 - [ ] go through mcr5 preps and streamline/reduce coding
 
 ## Installation
 
-Recommendation: Use mamba to create the environment faster.
 
-```
-conda config --add channels conda-forge
-conda config --set channel_priority strict
-conda install mamba
-```
-
-Setup environment:
-
-```
-mamba env create -f environment.yaml
-conda activate mcr-py
-```
 
 ### Running Analysis for Cologne
 

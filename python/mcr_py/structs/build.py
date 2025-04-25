@@ -39,6 +39,7 @@ def build_structures(
     """
     with Timed.info("Creating `stop_times_by_trip`"):
         stop_times_by_trip = create_stop_times_by_trip(stop_times_df)
+    # print(stop_times_by_trip[])
     with Timed.info("Creating `trip_ids_by_route`"):
         trip_ids_by_route = create_trip_ids_by_route_sorted_by_departure(trips_df)
     with Timed.info("Creating `stops_by_route`"):
@@ -81,10 +82,10 @@ def create_stop_times_by_trip(stop_times_df: pl.DataFrame) -> dict:
     with Timed.debug("creating stop_times_by_trip dictionary from dataframe"):
         stop_times_by_trip = (
             stop_times_df.select(
-                pl.col("trip_id"),
+                pl.col("trip_id").cast(pl.String),
                 pl.col("arrival_time"),
                 pl.col("departure_time"),
-                pl.col("stop_id"),
+                pl.col("stop_id").cast(pl.String),
                 pl.col("stop_sequence"),
             )
             .sort(by=["trip_id", "stop_sequence"])
@@ -105,7 +106,7 @@ def create_trip_ids_by_route_sorted_by_departure(
     return {
         k: v
         for k, (v,) in trips_df.sort(by=["trip_departure_time"])
-        .select(pl.col("route_id"), pl.col("trip_id"))
+        .select(pl.col("route_id"), pl.col("trip_id").cast(pl.String))
         .group_by("route_id", maintain_order=True)
         .agg(pl.col("trip_id"))
         .rows_by_key(key="route_id", unique=True)
@@ -131,7 +132,6 @@ def create_stops_by_route_ordered(
         stops = set()
         for trip_id in trip_ids:
             trip_stop_times = stop_times_by_trip[trip_id]
-
             for stop_time in trip_stop_times:
                 stop = stop_time["stop_id"]
                 if stop not in stops:
@@ -156,7 +156,6 @@ def create_routes_by_stop(stops_by_route: dict[str, list[str]]) -> dict[str, set
             routes = routes_by_stop.get(stop_id, set())
             routes.add(route_id)
             routes_by_stop[stop_id] = routes
-
     assert isinstance(list(routes_by_stop.keys())[0], str)
 
     return routes_by_stop

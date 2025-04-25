@@ -3,7 +3,6 @@ import pickle
 
 import polars as pl
 import requests
-from mcr_py.gtfs import dtypes
 from typing_extensions import Any
 
 from mcr_py.utils import key
@@ -51,7 +50,7 @@ def read_df(path: str) -> pl.DataFrame:
     :param path: str - The file path to the Parquet file.
     :returns: pl.DataFrame - The DataFrame read from the Parquet file.
     """
-    return pl.read_parquet(path, schema=dtypes.GTFS_DTYPES, allow_missing_columns=True)  # type: ignore
+    return pl.read_parquet(path)  # type: ignore
 
 
 def write_any_dict(data: dict[str, Any], output_path: str):

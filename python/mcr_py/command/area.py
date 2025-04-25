@@ -20,5 +20,5 @@ def create_area(
     boundary_polygon = mcr_py.overpass.query.fetch_boundary_polygon(
         city_name_german, admin_level
     )
-    geometa = mcr_py.utils.geometa.GeoMeta(boundary_polygon, crs, crs_target)
+    geometa = mcr_py.utils.geometa.GeoMeta.create(boundary_polygon, crs, crs_target)
     geometa.save(geometa_path)

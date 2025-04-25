@@ -64,7 +64,7 @@ def load_osm_pois(
     archive_path: str,
     outpath: str,
     download: bool,
-    nodes_to_match_df: Optional[str],
+    nodes_to_match_df: Optional[pl.DataFrame],
     nodes_to_match_path: Optional[str],
 ) -> pl.DataFrame: ...
 def add_nearest_node_to_df(

@@ -1,29 +1,5 @@
 import polars as pl
 
-from mcr_py.utils.geometa import GeoMeta
-from mcr_py.utils.logger import Timed, rlog
-
-
-def get_graph_for_city_cropped_to_boundary(
-    osm_reader, geo_meta: GeoMeta, network_type: str
-):
-    # TODO remove
-    raise NotImplementedError()
-    with Timed.info("Ensuring graph is connected"):
-        nxgraph = mcr_py.osm.graph.create_nx_graph(
-            osm_reader, nodes, edges, network_type
-        )
-        n_nodes_before = len(nodes)
-        nxgraph, nodes, edges = graph.crop_graph_to_largest_component(
-            nxgraph, nodes, edges
-        )
-        n_nodes_after = len(nodes)
-        rlog.info(
-            f"Removed {n_nodes_before - n_nodes_after} nodes from OSM network to ensure connectivity ({(n_nodes_before - n_nodes_after) / n_nodes_before * 100:.2f}%)"
-        )
-
-    return nodes, edges
-
 
 def list_column_to_osm_nodes(
     osm_nodes_df: pl.DataFrame, df: pl.DataFrame, column: str

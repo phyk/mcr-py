@@ -55,9 +55,10 @@ def remove_circular_trips(
     :param stop_times_df: pl.DataFrame - The DataFrame containing stop times information.
     :returns: tuple[pl.DataFrame, pl.DataFrame] - A tuple containing the filtered trips DataFrame and stop times DataFrame.
     """
-    stop_times_df = stop_times_df.filter(
-        -pl.col("stop_id").is_duplicated().over("trip_id").any().over("trip_id")
+    stop_times_df = stop_times_df.with_columns(
+        pl.col("stop_id").is_duplicated().over("trip_id").alias("duplicated")
     )
+    stop_times_df = stop_times_df.filter(~pl.col("duplicated").any().over("trip_id"))
     trips_df = trips_df.filter(
         pl.col("trip_id").is_in(stop_times_df.get_column("trip_id"))
     )
@@ -98,9 +99,12 @@ def split_routes_by_direction(trips_df: pl.DataFrame) -> pl.DataFrame:
     :param trips_df: pl.DataFrame - The DataFrame containing trip information.
     :returns: pl.DataFrame - The updated trips DataFrame with split route IDs.
     """
-    return trips_df.with_columns(
-        pl.col("route_id") + pl.lit("_") + pl.col("direction_id").cast(pl.String)
-    )
+    if "direction_id" in trips_df.columns:
+        return trips_df.with_columns(
+            pl.col("route_id") + pl.lit("_") + pl.col("direction_id").cast(pl.String)
+        )
+    else:
+        return trips_df
 
 
 def create_paths_df(
@@ -132,11 +136,12 @@ def add_unique_route_ids(paths_df: pl.DataFrame) -> pl.DataFrame:
     :param paths_df: pl.DataFrame - The DataFrame containing paths to be processed.
     :returns: pl.DataFrame - The updated DataFrame with the new unique route_id column.
     """
+
     return (
         paths_df.sort(["route_id", "trip_id"])
         .with_columns(
             (
-                pl.col("route_id")
+                pl.col("route_id").cast(pl.String)
                 + "_"
                 + pl.col("path").cum_count().over("route_id").cast(pl.String)
             ).alias("new_route_id")
