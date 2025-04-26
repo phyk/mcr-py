@@ -46,10 +46,10 @@ class GeoMeta:
     crs_target: str
     boundary_wkt: str
     unbuffered_boundary_wkt: str
-    BUFFER: int = 10000  # roughly 5km
+    buffer: int = 10000  # roughly 5km
 
     @staticmethod
-    def create(boundary: Polygon, crs: str, crs_target: str):
+    def create(boundary: Polygon, crs: str, crs_target: str, buffer: int = 10000):
         """
         Initialize the GeoMeta object with a boundary, source CRS, and target CRS.
 
@@ -58,7 +58,7 @@ class GeoMeta:
         crs_target: The target CRS as a string.
         """
         buffered_boundary = convert_to_crs(boundary, crs, crs_target)
-        buffered_boundary = buffered_boundary.buffer(GeoMeta.BUFFER)
+        buffered_boundary = buffered_boundary.buffer(buffer)
         boundary_wkt = convert_to_crs(buffered_boundary, crs_target, crs).wkt
         return GeoMeta(
             crs,

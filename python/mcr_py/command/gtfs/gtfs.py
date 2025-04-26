@@ -132,9 +132,9 @@ def crop_command(
                 (lon_min, lat_max),
                 (lon_max, lat_max),
                 (lon_max, lat_min),
-            ]
+            ]  # type: ignore
         )
-        geometa = GeoMeta(boundary)
+        geometa = GeoMeta.create(boundary, "EPSG:4326", "EPSG:4839")
 
     with Timed.info("Cropping GTFS data"):
         crop.crop(
