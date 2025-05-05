@@ -24,6 +24,18 @@ class McRaptor(Generic[L, S, T]):
         additional_trip_information: dict[str, T],
         label_class: type[L],
     ):
+        """
+        Initializes the McRaptor algorithm with structured data, footpaths, transfer limits,
+        and additional information for stops and trips.
+
+        :param structs_dict: dict - A dictionary containing structured data for the algorithm.
+        :param footpaths: dict - A dictionary mapping stop IDs to footpath information.
+        :param max_transfers: int - The maximum number of transfers allowed.
+        :param default_transfer_time: int - The default time to transfer between stops.
+        :param additional_stop_information: dict[str, S] - A dictionary mapping stop IDs to additional information.
+        :param additional_trip_information: dict[str, T] - A dictionary mapping trip IDs to additional information.
+        :param label_class: type[L] - The class type for labels used in the algorithm.
+        """
         self.dq = ExpandedDataQuerier(
             structs_dict,
             footpaths,
@@ -36,10 +48,18 @@ class McRaptor(Generic[L, S, T]):
 
         self.label_class = label_class
 
-    # TODO: prune by end_stop_id
     def run(
         self, start_stop_id: str, end_stop_id: Optional[str], start_time_str: str
     ) -> dict[str, Any]:
+        """
+        Executes the McRaptor algorithm from a starting stop to an optional ending stop,
+        given a start time.
+
+        :param start_stop_id: str - The identifier of the starting stop.
+        :param end_stop_id: Optional[str] - The identifier of the ending stop (if any).
+        :param start_time_str: str - The start time in string format.
+        :returns: dict[str, Any] - A dictionary of human-readable bags after processing.
+        """
         start_time = strtime.str_time_to_seconds(start_time_str)
 
         b_i, b_best, marked_stops, tracers_map = self.init_vars(
@@ -72,6 +92,13 @@ class McRaptor(Generic[L, S, T]):
     def init_vars(
         self, start_stop_id: str, start_time: int
     ) -> tuple[dict[int, dict[str, Bag]], dict[str, Bag], set[str], TracerMap]:
+        """
+        Initializes variables for the algorithm, including bags for each stop and a tracer.
+
+        :param start_stop_id: str - The identifier of the starting stop.
+        :param start_time: int - The start time in seconds.
+        :returns: tuple[dict[int, dict[str, Bag]], dict[str, Bag], set[str], TracerMap] - A tuple containing the initialized bags, best bags, marked stops, and tracer map.
+        """
         tau_i: dict[int, dict[str, Bag]] = {
             0: {},
         }
@@ -99,6 +126,12 @@ class McRaptor(Generic[L, S, T]):
         self: Self,
         marked_stops: set[str],
     ) -> dict[str, tuple[str, int]]:
+        """
+        Collects a dictionary of routes and their corresponding stops and indices from marked stops.
+
+        :param marked_stops: set[str] - A set of stop IDs that have been marked for processing.
+        :returns: dict[str, tuple[str, int]] - A dictionary mapping route IDs to their closest stop and index.
+        """
         Q: dict[str, tuple[str, int]] = {}
         for stop_id in marked_stops:
             for route_id in self.dq.get_routes_serving_stop(stop_id):
@@ -119,6 +152,14 @@ class McRaptor(Generic[L, S, T]):
         k: int,
         b_i: dict[int, dict[str, Bag]],
     ) -> tuple[dict[int, dict[str, Bag]], set[str]]:
+        """
+        Processes the routes based on the collected data and updates the bags and marked stops.
+
+        :param Q: dict[str, tuple[str, int]] - A dictionary of routes with their closest stops and indices.
+        :param k: int - The current iteration count.
+        :param b_i: dict[int, dict[str, Bag]] - A dictionary mapping iteration counts to bags.
+        :returns: tuple[dict[int, dict[str, Bag]], set[str]] - A tuple containing updated bags and marked stops.
+        """
         marked_stops = set()
         for route_id, (stop_id, idx) in Q.items():
             route_bag = RouteBag[L, S, T](
@@ -145,6 +186,17 @@ class McRaptor(Generic[L, S, T]):
         route_bag: RouteBag,
         marked_stops: set[str],
     ) -> tuple[dict[int, dict[str, Bag]], set[str], RouteBag]:
+        """
+        Processes a specific route by updating arrival times and merging bags.
+
+        :param route_id: str - The identifier of the route.
+        :param stop_id: str - The identifier of the stop.
+        :param k: int - The current iteration count.
+        :param b_i: dict[int, dict[str, Bag]] - A dictionary mapping iteration counts to bags.
+        :param route_bag: RouteBag - The route bag to be updated.
+        :param marked_stops: set[str] - A set of marked stops to be updated.
+        :returns: tuple[dict[int, dict[str, Bag]], set[str], RouteBag] - A tuple containing updated bags, marked stops, and the route bag.
+        """
         # first step - update arrival times in route bag
         route_bag.update_along_trip(stop_id)
 
@@ -163,7 +215,6 @@ class McRaptor(Generic[L, S, T]):
         )
         return b_i, marked_stops, route_bag
 
-    # TODO: should this be moved into RouteBag?
     def merge_bag_into_route_bag(
         self,
         route_bag: RouteBag,
@@ -171,6 +222,14 @@ class McRaptor(Generic[L, S, T]):
         route_id: str,
         stop_id: str,
     ):
+        """
+        Merges a bag into the route bag by finding the earliest trip for each label.
+
+        :param route_bag: RouteBag - The route bag to which the labels will be merged.
+        :param bag: Bag - The bag containing labels to be merged.
+        :param route_id: str - The identifier of the route.
+        :param stop_id: str - The identifier of the stop.
+        """
         for label in bag:
             res = self.dq.earliest_trip(
                 route_id,
@@ -190,9 +249,19 @@ class McRaptor(Generic[L, S, T]):
         k: int,
         b_i: dict[int, dict[str, Bag]],
     ) -> tuple[dict[int, dict[str, Bag]], set[str]]:
+        """
+        Processes footpaths from marked stops and updates the bags accordingly.
+
+        :param marked_stops: set[str] - A set of stop IDs that have been marked for processing.
+        :param k: int - The current iteration count.
+        :param b_i: dict[int, dict[str, Bag]] - A dictionary mapping iteration counts to bags.
+        :returns: tuple[dict[int, dict[str, Bag]], set[str]] - A tuple containing updated bags and additional marked stops.
+        """
         additional_marked_stops = set()
         for stop_id in marked_stops:
-            for nearby_stop_id, walking_time in self.dq.footpaths[stop_id].items():
+            for nearby_stop_id, walking_time in self.dq.get_footpaths()[
+                stop_id
+            ].items():
                 start_bag = b_i[k][stop_id]
                 footpath_bag = start_bag.create_footpath_bag(
                     walking_time,
@@ -209,4 +278,10 @@ class McRaptor(Generic[L, S, T]):
 
 
 def bags_to_human_readable(bags: dict[str, Bag]) -> dict[str, Any]:
+    """
+    Converts a dictionary of bags to a human-readable format.
+
+    :param bags: dict[str, Bag] - A dictionary mapping stop IDs to their corresponding bags.
+    :returns: dict[str, Any] - A dictionary mapping stop IDs to their human-readable bag representations.
+    """
     return {stop_id: bag.to_human_readable() for stop_id, bag in bags.items()}
