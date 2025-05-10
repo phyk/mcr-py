@@ -2,6 +2,7 @@ import shutil
 
 from mcr_py.utils import strtime
 import os.path
+import polars as pl
 
 from mcr_py.command.raptor import raptor
 from mcr_py.utils import storage
@@ -42,11 +43,17 @@ def test_raptor(testdata_path: str):
         os.path.join(testdata_path, "gtfs.zip"),
     )
 
-    arrival_times = storage.read_df(os.path.join(output_dir, "arrival_times.csv"))
+    arrival_times = storage.read_df(os.path.join(output_dir, "arrival_times.parquet"))
+    print(arrival_times.head())
 
     # all stops are reachable
-    assert (arrival_times.arrival_time == "--:--:--").sum() == 0
-    assert arrival_times.loc[EHRENFELD_BF_STOP_ID, "arrival_time"] == "15:27:27"
+    assert len(arrival_times.filter(pl.col("arrival_time") == "--:--:--")) == 0
+    assert (
+        arrival_times.row(
+            by_predicate=pl.col("stop_id") == EHRENFELD_BF_STOP_ID, named=True
+        )["arrival_time"]
+        == "15:27:27"
+    )
 
     tracers = tracer_map.tracers[EHRENFELD_BF_STOP_ID]
     assert len(tracers) == 4

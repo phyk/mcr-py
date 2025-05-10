@@ -68,9 +68,11 @@ def raptor(
             start_time,
         )
 
-    arrival_times_df = pl.DataFrame.from_dict(
-        arrival_times, orient="index", columns=["arrival_time"]
-    ).reset_index(names="stop_id")
+    arrival_times_df = (
+        pl.DataFrame(arrival_times)
+        .transpose(include_header=True, column_names=["arrival_time"])
+        .rename({"column": "stop_id"})
+    )
     storage.write_df(
         arrival_times_df, os.path.join(output_dir, key.RAPTOR_ARRIVAL_TIMES_FILE_NAME)
     )

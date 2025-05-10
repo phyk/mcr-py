@@ -78,7 +78,7 @@ TMP_GTFS_DIR_NAME = "gtfs"
 TMP_GTFS_CATALOG_FILE_NAME = "catalog.csv"
 
 ## output
-RAPTOR_ARRIVAL_TIMES_FILE_NAME = "arrival_times.csv"
+RAPTOR_ARRIVAL_TIMES_FILE_NAME = "arrival_times.parquet"
 RAPTOR_TRACE_FILE_NAME = "tracer_map.pkl"
 
 

@@ -56,6 +56,8 @@ def read_dfs(gtfs_zip_path: str) -> dict[str, pl.DataFrame]:
 
         for file in EXPECTED_FILES:
             df = read_file(zip_ref, file)
+            if "stop_id" in df.columns:
+                df = df.with_columns(pl.col("stop_id").cast(pl.String))
             name = file.split(".")[0]
             dfs[name] = df
 
