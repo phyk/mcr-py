@@ -1,10 +1,11 @@
 use std::{collections::{HashMap, HashSet}, hash::{Hasher, RandomState}};
+use std::hash::Hash;
 
 use mlc::{
     bag::{Bag, Label},
     mlc::{Bags, MLC},
 };
-use pyo3::{prelude::*, types::PyList};
+use pyo3::{prelude::*, types::{IntoPyDict, PyList}};
 use pyo3::types::{PyDict};
 
 use super::{
@@ -12,7 +13,44 @@ use super::{
     label::{next_bike_tariff, next_bike_without_tariff, personal_car},
 };
 
-pub struct PyBags(Bags<usize>);
+
+pub struct PyBags<T: Hash + Eq>(HashMap<T, Bag<T>>);
+
+impl<'py, T: Hash + Eq + IntoPyObject<'py>> IntoPyObject<'py> for PyBags<T> {
+    type Target = PyDict;
+
+    type Output = Bound<'py, PyDict>;
+
+    type Error;
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        todo!()
+    }
+}
+
+
+impl <'py> IntoPyDict<'py> for PyBags<T>
+where
+{
+    fn into_py_dict(self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        let dict = PyDict::new(py);
+        for (key, value) in self.0 {
+            let py_labels = PyList::empty(py);
+            for label in value.labels.iter() {
+                let py_label = PyLabel {
+                    values: label.values.clone(),
+                    hidden_values: label.hidden_values.clone(),
+                    path: label.path.clone(),
+                    node_id: label.node_id,
+                };
+                py_labels.append(py_label).unwrap();
+            }
+            dict.set_item(key, py_labels)?;
+        }
+        Ok(dict)
+    }
+}
+
 
 #[pyclass]
 pub struct PyLabel {
@@ -26,29 +64,29 @@ pub struct PyLabel {
     pub node_id: usize,
 }
 
-impl IntoPy<PyObject> for PyBags {
-    fn into_py(self, py: Python) -> PyObject {
-        let bags = self.0;
-        let mut py_bags = HashMap::new();
-        for (node_id, bag) in bags.iter() {
-            let py_labels = PyList::empty(py);
-            for label in bag.labels.iter() {
-                let py_label = PyLabel {
-                    values: label.values.clone(),
-                    hidden_values: label.hidden_values.clone(),
-                    path: label.path.clone(),
-                    node_id: label.node_id,
-                };
-                py_labels.append(py_label.into_py(py)).unwrap();
-            }
-            py_bags.insert(*node_id, py_labels);
-        }
-        py_bags.into_py(py)
-    }
-}
+// impl IntoPy<PyObject> for PyBags {
+//     fn into_py(self, py: Python) -> PyObject {
+//         let bags = self.0;
+//         let mut py_bags = HashMap::new();
+//         for (node_id, bag) in bags.iter() {
+//             let py_labels = PyList::empty(py);
+//             for label in bag.labels.iter() {
+//                 let py_label = PyLabel {
+//                     values: label.values.clone(),
+//                     hidden_values: label.hidden_values.clone(),
+//                     path: label.path.clone(),
+//                     node_id: label.node_id,
+//                 };
+//                 py_labels.append(py_label.into_py(py)).unwrap();
+//             }
+//             py_bags.insert(*node_id, py_labels);
+//         }
+//         py_bags.into_py(py)
+//     }
+// }
 
 #[pyfunction]
-pub fn run_mlc(_py: Python, graph_cache: &GraphCache, start_node_id: usize) -> PyBags {
+pub fn run_mlc(_py: Python, graph_cache: &GraphCache, start_node_id: usize) -> PyBags<usize> {
     let g = graph_cache.graph.as_ref().unwrap();
     let mut mlc = MLC::new(g).unwrap();
     mlc.set_start_node(start_node_id);
@@ -58,6 +96,7 @@ pub fn run_mlc(_py: Python, graph_cache: &GraphCache, start_node_id: usize) -> P
 }
 
 #[pyfunction]
+#[pyo3(signature = (graph_cache, start_node_id, time, disable_paths=None, update_label_func=None, enable_limit=None))]
 pub fn run_mlc_with_node_and_time(
     _py: Python,
     graph_cache: &GraphCache,
@@ -66,7 +105,7 @@ pub fn run_mlc_with_node_and_time(
     disable_paths: Option<bool>,
     update_label_func: Option<String>,
     enable_limit: Option<bool>,
-) -> PyBags {
+) -> PyBags<usize> {
     let g = graph_cache.graph.as_ref().unwrap();
     let mut mlc = MLC::new(g).unwrap();
     if let Some(disable_paths) = disable_paths {
@@ -185,7 +224,7 @@ pub fn run_mlc_with_bags(
     }
     mlc.set_bags(converted_bags);
 
-    let bags = mlc.run().unwrap();
+    let bags: &Bags<usize> = mlc.run().unwrap();
 
     PyBags(bags.clone())
 }

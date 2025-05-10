@@ -3,7 +3,6 @@
 ## Todo
 Removing pandas and geopandas
 Testing functionality of all code
-- Raptor
 - minute_city
 - mcr5
 - mcr
