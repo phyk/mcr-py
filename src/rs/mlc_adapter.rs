@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}, hash::{Hasher, RandomState}};
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
 use mlc::{
@@ -6,7 +6,7 @@ use mlc::{
     mlc::{Bags, MLC},
 };
 use pyo3::{prelude::*, types::{IntoPyDict, PyList}};
-use pyo3::types::{PyDict};
+use pyo3::types::PyDict;
 
 use super::{
     graph_cache::GraphCache,
@@ -16,20 +16,8 @@ use super::{
 
 pub struct PyBags<T: Hash + Eq>(HashMap<T, Bag<T>>);
 
-impl<'py, T: Hash + Eq + IntoPyObject<'py>> IntoPyObject<'py> for PyBags<T> {
-    type Target = PyDict;
 
-    type Output = Bound<'py, PyDict>;
-
-    type Error;
-
-    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
-        todo!()
-    }
-}
-
-
-impl <'py> IntoPyDict<'py> for PyBags<T>
+impl <'py> IntoPyDict<'py> for PyBags<usize>
 where
 {
     fn into_py_dict(self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
@@ -64,48 +52,27 @@ pub struct PyLabel {
     pub node_id: usize,
 }
 
-// impl IntoPy<PyObject> for PyBags {
-//     fn into_py(self, py: Python) -> PyObject {
-//         let bags = self.0;
-//         let mut py_bags = HashMap::new();
-//         for (node_id, bag) in bags.iter() {
-//             let py_labels = PyList::empty(py);
-//             for label in bag.labels.iter() {
-//                 let py_label = PyLabel {
-//                     values: label.values.clone(),
-//                     hidden_values: label.hidden_values.clone(),
-//                     path: label.path.clone(),
-//                     node_id: label.node_id,
-//                 };
-//                 py_labels.append(py_label.into_py(py)).unwrap();
-//             }
-//             py_bags.insert(*node_id, py_labels);
-//         }
-//         py_bags.into_py(py)
-//     }
-// }
-
 #[pyfunction]
-pub fn run_mlc(_py: Python, graph_cache: &GraphCache, start_node_id: usize) -> PyBags<usize> {
+pub fn run_mlc<'py>(_py: Python::<'py>, graph_cache: &GraphCache, start_node_id: usize) -> Bound<'py, PyDict> {
     let g = graph_cache.graph.as_ref().unwrap();
     let mut mlc = MLC::new(g).unwrap();
     mlc.set_start_node(start_node_id);
     let bags = mlc.run().unwrap();
 
-    PyBags(bags.clone())
+    PyBags(bags.clone()).into_py_dict(_py).unwrap()
 }
 
 #[pyfunction]
 #[pyo3(signature = (graph_cache, start_node_id, time, disable_paths=None, update_label_func=None, enable_limit=None))]
-pub fn run_mlc_with_node_and_time(
-    _py: Python,
+pub fn run_mlc_with_node_and_time<'py>(
+    _py: Python<'py>,
     graph_cache: &GraphCache,
     start_node_id: usize,
     time: usize,
     disable_paths: Option<bool>,
     update_label_func: Option<String>,
     enable_limit: Option<bool>,
-) -> PyBags<usize> {
+) -> Bound<'py, PyDict> {
     let g = graph_cache.graph.as_ref().unwrap();
     let mut mlc = MLC::new(g).unwrap();
     if let Some(disable_paths) = disable_paths {
@@ -122,7 +89,7 @@ pub fn run_mlc_with_node_and_time(
     mlc.set_start_node_with_time(start_node_id, time);
     let bags = mlc.run().unwrap();
 
-    PyBags(bags.clone())
+    PyBags(bags.clone()).into_py_dict(_py).unwrap()
 }
 
 #[derive(Debug)]
@@ -156,19 +123,19 @@ impl UpdateLabelFunc {
 
 #[pyfunction]
 #[pyo3(signature = (graph_cache, bags, update_label_func=None, disable_paths=None, enable_limit=None))]
-pub fn run_mlc_with_bags(
-    _py: Python,
+pub fn run_mlc_with_bags<'py>(
+    _py: Python<'py>,
     graph_cache: &GraphCache,
-    bags: HashMap<usize, Vec<&PyAny>>,
+    bags: Bound<'py, PyDict>,//<usize, Vec<&PyObject>>,
     update_label_func: Option<String>,
     disable_paths: Option<bool>,
     enable_limit: Option<bool>,
-) -> PyBags {
+) -> Bound<'py, PyDict> {
     // convert the PyAny's to Labels
     let mut converted_bags: Bags<usize> = HashMap::new();
     for (node_id, py_labels) in bags.iter() {
         let mut labels = HashSet::new();
-        for py_label in py_labels {
+        if let Ok(py_label) = py_labels.try_iter() {
             let values_result = py_label
                 .getattr("values")
                 .unwrap() // assuming this unwrap does not panic
@@ -206,7 +173,7 @@ pub fn run_mlc_with_bags(
             };
             labels.insert(label);
         }
-        converted_bags.insert(*node_id, Bag { labels });
+        converted_bags.insert(node_id.extract::<usize>().unwrap(), Bag { labels });
     }
 
     let g = graph_cache.graph.as_ref().unwrap();
@@ -226,5 +193,5 @@ pub fn run_mlc_with_bags(
 
     let bags: &Bags<usize> = mlc.run().unwrap();
 
-    PyBags(bags.clone())
+    PyBags(bags.clone()).into_py_dict(_py).unwrap()
 }

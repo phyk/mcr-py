@@ -4,7 +4,7 @@ use mlc::read::MLCGraph;
 use petgraph::{graph::NodeIndex, Directed, Graph};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::pybacked::PyBackedStr;
+use pyo3::types::PyList;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -20,7 +20,7 @@ impl GraphCache {
         GraphCache { graph: None }
     }
 
-    fn set_graph(&mut self, raw_edges: Vec<HashMap<PyBackedStr, &PyAny>>) {
+    fn set_graph<'py>(&mut self, raw_edges: Bound<'py, PyList>) {
         let graph = parse_graph(raw_edges);
         self.graph = Some(Arc::new(graph));
     }
@@ -87,17 +87,18 @@ impl GraphCache {
     }
 }
 
-fn parse_graph(raw_edges: Vec<HashMap<PyBackedStr, &PyAny>>) -> MLCGraph<u8> {
+fn parse_graph<'py>(raw_edges: Bound<'py, PyList>) -> MLCGraph<u8> {
+    //Vec<HashMap<PyBackedStr, &PyAny>>
     Graph::<Vec<u8>, WeightsTuple, Directed>::from_edges(raw_edges.iter().map(|edge| {
-        let u = edge.get("u").unwrap().extract::<usize>().unwrap();
-        let v = edge.get("v").unwrap().extract::<usize>().unwrap();
+        let u = edge.getattr("u").unwrap().extract::<usize>().unwrap();
+        let v = edge.getattr("v").unwrap().extract::<usize>().unwrap();
         // // wait 0.02 seconds
         // std::thread::sleep(std::time::Duration::from_millis(20));
         let weights: Vec<Weight> =
-            parse_weights(edge.get("weights").expect("weights not found")).unwrap();
+            parse_weights(edge.getattr("weights").expect("weights not found")).unwrap();
 
         let hidden_weights: Vec<Weight> = parse_weights(
-            edge.get("hidden_weights")
+            edge.getattr("hidden_weights")
                 .expect("hidden_weights not found"),
         )
         .unwrap();
@@ -117,7 +118,7 @@ fn parse_graph(raw_edges: Vec<HashMap<PyBackedStr, &PyAny>>) -> MLCGraph<u8> {
     }))
 }
 
-fn parse_weights(raw_weights: &&PyAny) -> Result<Vec<u64>, String> {
+fn parse_weights<'py>(raw_weights: Bound<'py, PyAny>) -> Result<Vec<u64>, String> {
     let raw_weights = raw_weights
         .extract::<String>()
         .map_err(|_| "Failed to extract string".to_string())?;
