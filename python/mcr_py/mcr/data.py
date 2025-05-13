@@ -1,14 +1,14 @@
 from enum import Enum
+import os
 from typing import Tuple, TypeVar
 
 import rustworkx as rx
-import pandas as pd
 import polars as pl
 
-from mcr_py._mcr_py import load_osm_walking
+from mcr_py._mcr_py import load_osm_cycling, load_osm_driving, load_osm_walking
 from mcr_py.utils.geometa import GeoMeta
 from mcr_py.utils.logger import rlog
-from mcr_py.osm import graph, osm
+from mcr_py.osm import graph
 
 ACCURACY = 1
 ACCURACY_MULTIPLIER = 10 ** (ACCURACY - 1)
@@ -42,19 +42,21 @@ class OSMData:
         self.osm_path = osm_path
         self.cache_path = cache_path
 
+        if not os.path.exists(f"{osm_path}/{city_id.lower()}.osm.pbf"):
+            redownload = True
+
         self.osm_nodes, self.osm_edges, self.nxgraph = self.read_walking(redownload)
 
         self.additional_networks: dict[
-            NetworkType, tuple[pd.DataFrame, pd.DataFrame, rx.PyDiGraph]
+            NetworkType, tuple[pl.DataFrame, pl.DataFrame, rx.PyDiGraph]
         ] = {}
 
-        raise NotImplementedError()
         for network_type in additional_network_types:
             (
                 osm_nodes,
                 osm_edges,
                 nxgraph,
-            ) = self.read_network(network_type.value)
+            ) = self.read_network(network_type.value, redownload)
             self.additional_networks[network_type] = (
                 osm_nodes,
                 osm_edges,
@@ -62,60 +64,81 @@ class OSMData:
             )
 
     def read_walking(self, redownload: bool):
-        load_osm_walking(
-            self.city_id,
-            self.geo_meta.get_bounding_box_as_coord_list(),
-            self.osm_path,
-            self.cache_path,
-            download=redownload,
-        )
-        nodes = pl.read_csv(
-            f"{self.cache_path}/{self.city_id.lower()}_walking_nodes.csv"
-        )
-        edges = pl.read_csv(
-            f"{self.cache_path}/{self.city_id.lower()}_walking_edges.csv"
+        nodes_path = f"{self.cache_path}/{self.city_id.lower()}_walking_nodes.csv"
+        edges_path = f"{self.cache_path}/{self.city_id.lower()}_walking_edges.csv"
+        if (
+            redownload
+            or not os.path.exists(nodes_path)
+            or not os.path.exists(edges_path)
+        ):
+            (nodes, edges, _) = load_osm_walking(
+                self.city_id,
+                self.geo_meta.get_bounding_box_as_coord_list(),
+                self.osm_path,
+                self.cache_path,
+                download=redownload,
+            )
+        else:
+            nodes = pl.read_csv(nodes_path)
+            edges = pl.read_csv(edges_path)
+
+        nodes, edges, rxgraph = graph.create_rx_graph(nodes, edges)
+        nodes, edges, rxgraph = graph.crop_graph_to_largest_component(
+            rxgraph, nodes, edges
         )
 
-        nxgraph = graph.create_rx_graph(nodes, edges, "walking")
-
-        # Filter nodes and edges
-        return nodes, edges, nxgraph
+        return nodes, edges, rxgraph
 
     def read_network(
-        self,
-        network_type: str,
-    ) -> tuple[pd.DataFrame, pd.DataFrame, rx.PyDiGraph]:
-        raise NotImplementedError()
-        osm_reader = osm.get_osm_reader_for_city_id_or_osm_path(
-            self.city_id, self.osm_path
+        self, network_type: str, renewed: bool
+    ) -> tuple[pl.DataFrame, pl.DataFrame, rx.PyDiGraph]:
+        nodes_path = (
+            f"{self.cache_path}/{self.city_id.lower()}_{network_type}_nodes.csv"
         )
-        (
-            osm_nodes,
-            osm_edges,
-        ) = osm.get_graph_for_city_cropped_to_boundary(
-            osm_reader, self.geo_meta, network_type
+        edges_path = (
+            f"{self.cache_path}/{self.city_id.lower()}_{network_type}_edges.csv"
         )
-        nxgraph = graph.create_rx_graph(osm_nodes, osm_edges, network_type)
+        if renewed or not os.path.exists(nodes_path) or not os.path.exists(edges_path):
+            match network_type:
+                case "cycling":
+                    (nodes, edges, _) = load_osm_cycling(
+                        city_name=self.city_id,
+                        geometry_vec=self.geo_meta.get_bounding_box_as_coord_list(),
+                        reverse_edges=True,
+                        archive_path=self.osm_path,
+                        outpath=self.cache_path,
+                        download=False,
+                    )
+                case "driving":
+                    (nodes, edges, _) = load_osm_driving(
+                        city_name=self.city_id,
+                        geometry_vec=self.geo_meta.get_bounding_box_as_coord_list(),
+                        archive_path=self.osm_path,
+                        outpath=self.cache_path,
+                        download=False,
+                    )
+                case _:
+                    raise ValueError(
+                        "{} is not a valid network type".format(network_type)
+                    )
+        else:
+            nodes = pl.read_csv(nodes_path)
+            edges = pl.read_csv(edges_path)
 
-        osm_nodes = osm_nodes.set_index("id")
-        osm_nodes["id"] = osm_nodes.index
+        nodes, edges, rxgraph = graph.create_rx_graph(nodes, edges)
+        nodes, edges, rxgraph = graph.crop_graph_to_largest_component(
+            rxgraph, nodes, edges
+        )
 
-        osm_edges: pd.DataFrame = osm_edges[["u", "v", "length"]]  # type: ignore
-
-        return osm_nodes, osm_edges, nxgraph
+        return nodes, edges, rxgraph
 
 
 def create_walking_graph(
-    osm_nodes: pd.DataFrame, osm_edges: pd.DataFrame
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    walking_nodes = osm_nodes.copy()
-    walking_edges = osm_edges.copy()
+    osm_nodes: pl.DataFrame, osm_edges: pl.DataFrame
+) -> Tuple[pl.DataFrame, pl.DataFrame]:
+    walking_edges = add_travel_time(osm_edges, AVG_WALKING_SPEED)
 
-    walking_edges = add_reverse_edges(walking_edges)
-
-    walking_edges = add_travel_time(walking_edges, AVG_WALKING_SPEED)
-
-    return walking_nodes, walking_edges
+    return osm_nodes, walking_edges
 
 
 DRIVING_PREFIX = "D"
@@ -123,42 +146,31 @@ WALKING_PREFIX = "W"
 
 
 def create_multi_modal_graph(
-    walking_osm_nodes: pd.DataFrame,
-    walking_osm_edges: pd.DataFrame,
-    driving_osm_nodes: pd.DataFrame,
-    driving_osm_edges: pd.DataFrame,
+    walking_osm_nodes: pl.DataFrame,
+    walking_osm_edges: pl.DataFrame,
+    driving_osm_nodes: pl.DataFrame,
+    driving_osm_edges: pl.DataFrame,
     avg_driving_speed: float,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    walking_osm_edges = add_reverse_edges(walking_osm_edges)
-    driving_osm_edges = add_reverse_edges(driving_osm_edges)
-
+) -> Tuple[pl.DataFrame, pl.DataFrame]:
     # bike start
-    driving_osm_nodes = driving_osm_nodes.copy()
-    driving_osm_nodes = driving_osm_nodes.copy()
-
     driving_osm_nodes = prefix_id(
-        driving_osm_nodes, DRIVING_PREFIX, "id", save_old=True
+        driving_osm_nodes, DRIVING_PREFIX, "osm_id", save_old=True
     )
-    driving_osm_edges = prefix_id(driving_osm_edges, DRIVING_PREFIX, "u")
-    driving_osm_edges = prefix_id(driving_osm_edges, DRIVING_PREFIX, "v")
+    driving_osm_edges = prefix_id(driving_osm_edges, DRIVING_PREFIX, "source_osm")
+    driving_osm_edges = prefix_id(driving_osm_edges, DRIVING_PREFIX, "dest_osm")
 
     driving_osm_edges = add_travel_time(driving_osm_edges, avg_driving_speed)
-    driving_osm_edges[TRAVEL_TIME_DRIVING_COLUMN] = driving_osm_edges[
-        TRAVEL_TIME_COLUMN
-    ]
+    driving_osm_edges = driving_osm_edges.with_columns(
+        pl.col(TRAVEL_TIME_COLUMN).alias(TRAVEL_TIME_DRIVING_COLUMN)
+    )
     # bike end
 
     # walking start
-    walking_osm_nodes = walking_osm_nodes.copy()
-    walking_osm_edges = walking_osm_edges.copy()
-
-    walking_osm_edges = add_reverse_edges(walking_osm_edges)
-
     walking_osm_nodes = prefix_id(
-        walking_osm_nodes, WALKING_PREFIX, "id", save_old=True
+        walking_osm_nodes, WALKING_PREFIX, "osm_id", save_old=True
     )
-    walking_osm_edges = prefix_id(walking_osm_edges, WALKING_PREFIX, "u")
-    walking_osm_edges = prefix_id(walking_osm_edges, WALKING_PREFIX, "v")
+    walking_osm_edges = prefix_id(walking_osm_edges, WALKING_PREFIX, "source_osm")
+    walking_osm_edges = prefix_id(walking_osm_edges, WALKING_PREFIX, "dest_osm")
 
     walking_osm_edges = add_travel_time(walking_osm_edges, AVG_WALKING_SPEED)
     # walking end
@@ -168,61 +180,31 @@ def create_multi_modal_graph(
     multi_modal_edges = combine_edges(
         walking_osm_edges, driving_osm_edges, transfer_edges
     )
-    multi_modal_nodes = pd.concat([walking_osm_nodes, driving_osm_nodes])
+    multi_modal_nodes = pl.concat([walking_osm_nodes, driving_osm_nodes])
     return multi_modal_nodes, multi_modal_edges
-
-
-def add_reverse_edges(edges: pd.DataFrame) -> pd.DataFrame:
-    reverse_edges = edges.copy()
-    reverse_edges = reverse_edges.rename(columns={"u": "v", "v": "u"})
-    return pd.concat([edges, reverse_edges])
 
 
 TRAVEL_TIME_COLUMN = "travel_time"
 TRAVEL_TIME_DRIVING_COLUMN = "travel_time_driving"
 
 
-def add_travel_time(edges: pd.DataFrame, speed: float) -> pd.DataFrame:
-    edges[TRAVEL_TIME_COLUMN] = edges.length / speed
-
+def add_travel_time(edges: pl.DataFrame, speed: float) -> pl.DataFrame:
+    edges = edges.with_columns((pl.col("length") / speed).alias(TRAVEL_TIME_COLUMN))
     return edges
 
 
 def combine_edges(
-    walking_edges: pd.DataFrame,
-    bike_edges: pd.DataFrame,
-    transfer_edges: pd.DataFrame,
-) -> pd.DataFrame:
-    edges = pd.concat([walking_edges, bike_edges, transfer_edges], ignore_index=True)
+    walking_edges: pl.DataFrame,
+    bike_edges: pl.DataFrame,
+    transfer_edges: pl.DataFrame,
+) -> pl.DataFrame:
+    edges = pl.concat([walking_edges, bike_edges, transfer_edges], how="vertical")
 
     # fill travel_time for transfer edges and
     # travel_time_bike for walking and transfer edges
-    edges = edges.fillna(0)
+    edges = edges.fill_nan(0)
 
     return edges
-
-
-def reset_node_ids(
-    nodes: pd.DataFrame, edges: pd.DataFrame
-) -> Tuple[pd.DataFrame, pd.DataFrame, dict[str, int]]:
-    node_to_resetted_map: dict[str, int] = {}
-    for i, node_id in enumerate(nodes["osm_id"].unique()):
-        node_to_resetted_map[node_id] = i
-
-    nodes["old_id"] = nodes["osm_id"]
-    nodes["osm_id"] = nodes["osm_id"].map(node_to_resetted_map)  # type: ignore
-    edges["u"] = edges["source_osm"].map(node_to_resetted_map)  # type: ignore
-    edges["v"] = edges["dest_osm"].map(node_to_resetted_map)  # type: ignore
-
-    edges_na = edges[["u", "v"]].isna().sum().sum()
-    nodes_na = nodes["osm_id"].isna().sum()
-    total_na = edges_na + nodes_na
-    if total_na > 0:
-        raise ValueError(
-            f"Found {total_na} NaNs in graph (edges: {edges_na}, nodes: {nodes_na})"
-        )
-
-    return nodes, edges, node_to_resetted_map
 
 
 A = TypeVar("A")
@@ -234,43 +216,44 @@ def get_reverse_map(d: dict[A, B]) -> dict[B, A]:
 
 
 def prefix_id(
-    gdf: pd.DataFrame, prefix: str, column: str, save_old=False
-) -> pd.DataFrame:
+    gdf: pl.DataFrame, prefix: str, column: str, save_old=False
+) -> pl.DataFrame:
     if save_old:
-        gdf[f"{column}_old"] = gdf[column]
-    gdf[column] = prefix + gdf[column].astype(str)
+        gdf = gdf.with_columns(pl.col(column).alias(f"{column}_old"))
+    gdf = gdf.select(prefix + pl.col(column).cast(pl.String))
 
     return gdf
 
 
-def create_transfer_edges(walking_nodes: pd.DataFrame, driving_nodes: pd.DataFrame):
-    intersection_node_ids = walking_nodes.index.intersection(
-        driving_nodes.index
-    ).to_series()  # type: ignore
+def create_transfer_edges(walking_nodes: pl.DataFrame, driving_nodes: pl.DataFrame):
+    intersection_node_ids = walking_nodes.select(
+        pl.col("osm_id").alias("walking_id")
+    ).join(
+        driving_nodes.select(pl.col("osm_id").alias("driving_id")),
+        left_on="walking_id",
+        right_on="driving_id",
+    )
     rlog.debug(f"Found {len(intersection_node_ids)} intersection nodes")
-
-    transfer_edges_values: pd.Series = intersection_node_ids.apply(
-        lambda x: ["D" + str(x), "W" + str(x), 0]
-    )  # type: ignore
-    transfer_edges = pd.DataFrame(
-        transfer_edges_values.tolist(), columns=["u", "v", "length"]
+    transfer_edges = intersection_node_ids.select(
+        "D" + pl.col("driving_id").alias("source_osm").cast(pl.String),
+        "W" + pl.col("walking_id").alias("dest_osm").cast(pl.String),
+        pl.lit(0).alias("length"),
     )
 
     return transfer_edges
 
 
-def add_weights(edges: pd.DataFrame, columns: list[str], hidden=False) -> pd.DataFrame:
+def add_weights(edges: pl.DataFrame, columns: list[str], hidden=False) -> pl.DataFrame:
     col_name = "hidden_weights" if hidden else "weights"
     n_padding = N_TOTAL_HIDDEN_WEIGHTS if hidden else N_TOTAL_WEIGHTS
 
     mid_seperator = "," if len(columns) > 0 and n_padding > 0 else ""
 
-    edges[col_name] = (
+    edges = edges.with_columns(
         "("
-        + (edges[columns].round(ACCURACY) * ACCURACY_MULTIPLIER)
-        .astype(int)
-        .astype(str)
-        .apply(lambda x: ",".join(x), axis=1)
+        + pl.concat_str(
+            (pl.col(columns).round(1) * 1).cast(int).cast(str), separator=","
+        ).alias(col_name)
         + mid_seperator
         + ",".join(["0"] * (n_padding - len(columns)))
         + ")"
@@ -279,6 +262,8 @@ def add_weights(edges: pd.DataFrame, columns: list[str], hidden=False) -> pd.Dat
     return edges
 
 
-def to_mlc_edges(edges: pd.DataFrame) -> list[dict]:
+def to_mlc_edges(edges: pl.DataFrame) -> list[dict]:
     # type: ignore
-    return edges[["u", "v", "weights", "hidden_weights"]].to_dict("records")
+    return edges.select(["source_osm", "dest_osm", "weights", "hidden_weights"]).rows(
+        named=True
+    )

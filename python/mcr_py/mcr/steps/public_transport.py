@@ -1,7 +1,8 @@
 from logging import Logger
 from typing import Optional
 
-import rustworkx as rx
+from mcr_py._mcr_py import add_nearest_node_to_df
+import polars as pl
 
 from mcr_py.utils import storage
 from mcr_py.utils.logger import Timed, Timer
@@ -16,7 +17,6 @@ from mcr_py.mcr.label import (
 )
 from mcr_py.mcr.path import PathManager, PathType
 from mcr_py.mcr.steps.interface import Step, StepBuilder
-from mcr_py.osm import graph
 from mcr_py.raptor.bag import Bag
 from mcr_py.raptor.mcraptor_single import McRaptorSingle
 
@@ -44,11 +44,11 @@ class PublicTransportStep(Step):
         self.osm_node_to_stop_map = osm_node_to_stop_map
         self.stop_to_osm_node_map = stop_to_osm_node_map
 
-    def run(self, input_bags: IntermediateBags, offset: int) -> IntermediateBags:
+    def run(self, input_bags: IntermediateBags, offset: int = 0) -> IntermediateBags:
         with self.timer.info("Preparing input for MCRAPTOR step"):
             prepared_input_bags = self.prepare_public_transport_step_input(input_bags)
             if len(prepared_input_bags) == 0:
-                self.logger.warn(
+                self.logger.warning(
                     "Not a single stop is reached by the previous step - aborting MCRAPTOR step"
                 )
                 return {}
@@ -71,7 +71,7 @@ class PublicTransportStep(Step):
                 f"Extracted {len(raw_public_transport_result_bags)} bags from MCRAPTOR step"
             )
             if len(raw_public_transport_result_bags) == 0:
-                self.logger.warn("No MCRAPTOR bags found")
+                self.logger.warning("No MCRAPTOR bags found")
 
         return raw_public_transport_result_bags
 
@@ -139,21 +139,18 @@ class PublicTransportStep(Step):
 class PublicTransportStepBuilder(StepBuilder):
     step = PublicTransportStep
 
-    def __init__(
-        self,
-        structs_path: str,
-        stops_path: str,
-        rxgraph: rx.PyDiGraph,
-    ):
+    def __init__(self, structs_path: str, stops_path: str, walking_nodes: pl.DataFrame):
         structs_dict = storage.read_any_dict(structs_path)
         with Timed.info("Reading stops"):
-            self.stops_df = storage.read_gdf(stops_path)
+            self.stops_df = storage.read_df(stops_path)
 
-        stops_df = graph.add_nearest_node_to_stops(self.stops_df, rxgraph)
+        self.stops_df = add_nearest_node_to_df(
+            self.stops_df, walking_nodes, "EPSG:4839"
+        )
 
-        stop_to_osm_node_map: dict[str, int] = stops_df.set_index("stop_id")[
-            "nearest_node"
-        ].to_dict()
+        stop_to_osm_node_map: dict[str, int] = self.stops_df.select(
+            pl.col("stop_id", "nearest_osm_node")
+        ).rows_by_key("nearest_osm_node", unique=True)
         osm_node_to_stop_map: dict[int, str] = {
             v: k for k, v in stop_to_osm_node_map.items()
         }

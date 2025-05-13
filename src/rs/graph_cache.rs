@@ -90,8 +90,8 @@ impl GraphCache {
 fn parse_graph<'py>(raw_edges: Bound<'py, PyList>) -> MLCGraph<u8> {
     //Vec<HashMap<PyBackedStr, &PyAny>>
     Graph::<Vec<u8>, WeightsTuple, Directed>::from_edges(raw_edges.iter().map(|edge| {
-        let u = edge.getattr("u").unwrap().extract::<usize>().unwrap();
-        let v = edge.getattr("v").unwrap().extract::<usize>().unwrap();
+        let u = edge.getattr("source_osm").unwrap().extract::<usize>().unwrap();
+        let v = edge.getattr("dest_osm").unwrap().extract::<usize>().unwrap();
         // // wait 0.02 seconds
         // std::thread::sleep(std::time::Duration::from_millis(20));
         let weights: Vec<Weight> =

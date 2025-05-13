@@ -4,8 +4,6 @@ from mcr_py.mcr.data import (
     TRAVEL_TIME_COLUMN,
     add_weights,
     create_walking_graph,
-    get_reverse_map,
-    reset_node_ids,
     to_mlc_edges,
 )
 from mcr_py.mcr.path import PathType
@@ -22,6 +20,10 @@ class WalkingStep(MLCStep):
 class WalkingStepBuilder(StepBuilder):
     step = WalkingStep
 
+    # Revert change to osm ids completely
+    # Just use osm ids, do never update them
+    # Logic behind this:
+    # synchronization of node resetting is hard to achieve across multiple modes
     def __init__(
         self,
         osm_nodes: pl.DataFrame,
@@ -30,15 +32,13 @@ class WalkingStepBuilder(StepBuilder):
     ):
         walking_nodes, walking_edges = create_walking_graph(osm_nodes, osm_edges)
 
-        (
-            walking_nodes,
-            walking_edges,
-            self.walking_node_to_resetted_map,
-        ) = reset_node_ids(walking_nodes, walking_edges)
+        # self.walking_node_to_resetted_map = walking_nodes.select(
+        #     ["osm_id", "id"]
+        # ).rows_by_key("osm_id", unique=True)
 
-        self.resetted_to_walking_node_map = get_reverse_map(
-            self.walking_node_to_resetted_map
-        )
+        # self.resetted_to_walking_node_map = get_reverse_map(
+        #     self.walking_node_to_resetted_map
+        # )
 
         self.walking_edges = add_weights(walking_edges, [TRAVEL_TIME_COLUMN])
         self.walking_edges = add_weights(walking_edges, [], hidden=True)
@@ -52,8 +52,8 @@ class WalkingStepBuilder(StepBuilder):
 
         self.kwargs = {
             "graph_cache": self.walking_graph_cache,
-            "to_internal": self.walking_node_to_resetted_map,
-            "from_internal": self.resetted_to_walking_node_map,
+            # "to_internal": self.walking_node_to_resetted_map,
+            # "from_internal": self.resetted_to_walking_node_map,
         }
 
     def add_pois_to_walking_graph(self, pois: pl.DataFrame) -> None:
@@ -65,20 +65,16 @@ class WalkingStepBuilder(StepBuilder):
         """
         osm_nodes = osm.list_column_to_osm_nodes(self.osm_nodes, pois, "poi_type")
         type_map: dict[str, int] = {}
-        for t in pois["poi_type"].unique():
+        for t in pois.get_column("poi_type").unique():
             type_map[t] = len(type_map)
 
-        osm_nodes["type_internal"] = osm_nodes["poi_type"].map(
-            lambda x: list(map(type_map.get, x))
-        )
-        osm_nodes["resetted_walking_node_id"] = osm_nodes["osm_id"].map(
-            self.walking_node_to_resetted_map  # type: ignore
+        osm_nodes = osm_nodes.with_columns(
+            pl.col("poi_type").replace(type_map).alias("type_internal")
         )
 
-        resetted_walking_node_id_to_type_map = (
-            osm_nodes[["resetted_walking_node_id", "type_internal"]].set_index(
-                "resetted_walking_node_id"
-            )["type_internal"]
-        ).to_dict()
+        resetted_walking_node_id_to_type_map = osm_nodes.select(
+            pl.col("nearest_osm_node").alias("resetted_walking_node_id"),
+            pl.col("type_internal"),
+        ).rows_by_key(key="resetted_walking_node_id", unique=True)
 
         self.walking_graph_cache.set_node_weights(resetted_walking_node_id_to_type_map)

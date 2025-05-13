@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Sequence
 
 from mcr_py.raptor.bag import BaseLabel as McRAPTORBaseLabel
 
@@ -11,14 +12,14 @@ LENGTH_SHORT_DISTANCE_TICKET = 4
 class IntermediateLabel:
     def __init__(
         self,
-        values: list[int],
-        hidden_values: list[int],
-        path: list[int | str],
+        values: Sequence[int],
+        hidden_values: Sequence[int],
+        path: Sequence[int | str],
         osm_node_id: int,
     ):
-        self.values = values
-        self.hidden_values = hidden_values
-        self.path = path
+        self.values = list(values)
+        self.hidden_values = list(hidden_values)
+        self.path = list(path)
         self.node_id = osm_node_id
 
     def __str__(self):

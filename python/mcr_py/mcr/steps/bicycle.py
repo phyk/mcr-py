@@ -1,7 +1,9 @@
 from logging import Logger
 from typing import Optional
 
+from mcr_py._mcr_py import add_nearest_node_to_df
 import polars_st as st
+import polars as pl
 import numpy as np
 from mcr_py.utils import storage
 from mcr_py.utils.geometa import GeoMeta
@@ -9,14 +11,11 @@ from mcr_py.utils.logger import Timer, rlog
 from mcr_py.mcr.bag import IntermediateBags
 from mcr_py.mcr.data import (
     AVG_BIKING_SPEED,
-    DRIVING_PREFIX,
     TRAVEL_TIME_COLUMN,
     TRAVEL_TIME_DRIVING_COLUMN,
     WALKING_PREFIX,
     add_weights,
     create_multi_modal_graph,
-    get_reverse_map,
-    reset_node_ids,
     to_mlc_edges,
 )
 from mcr_py.mcr.path import PathManager, PathType
@@ -75,66 +74,59 @@ class BicycleStepBuilder(StepBuilder):
         update_label_func: str,
         bicycle_location_path: str,
         geo_meta: GeoMeta,
-        walking_nodes: st.GeoDataFrame,
-        walking_edges: st.GeoDataFrame,
-        cycling_nodes: st.GeoDataFrame,
-        cycling_edges: st.GeoDataFrame,
-        pois: st.GeoDataFrame,
+        walking_nodes: pl.DataFrame,
+        walking_edges: pl.DataFrame,
+        cycling_nodes: pl.DataFrame,
+        cycling_edges: pl.DataFrame,
+        pois: pl.DataFrame,
     ):
         bicycle_locations = None
         if bicycle_location_path != "":
             bicycle_locations = storage.read_df(bicycle_location_path)
-            bicycle_locations = st.GeoDataFrame(
-                bicycle_locations,
-                geometry=st.points_from_xy(
-                    bicycle_locations.lon,
-                    bicycle_locations.lat,
-                ),
+            bicycle_locations = bicycle_locations.with_columns(
+                st.from_coords(pl.concat_arr(["lon", "lat"])).alias("geometry")
             )
             bicycle_locations = geo_meta.crop_gdf(bicycle_locations)
-            # TODO implement in osmtools
-            # also implement direction column add in osmtools
-            raise NotImplementedError()
             # max distance = 1000,
-            bicycle_locations = osm.add_nearest_osm_node_id(
-                bicycle_locations, cycling_nodes
+            bicycle_locations = add_nearest_node_to_df(
+                bicycle_locations, cycling_nodes, "EPSG:4839"
             )
         else:
-            rlog.warn("No bicycle locations provided - will use random locations")
+            rlog.warning("No bicycle locations provided - will use random locations")
 
         if bicycle_locations is not None:
             cycling_nodes = mark_bicycles(cycling_nodes, bicycle_locations)
         else:
             cycling_nodes = mark_bicycles_random(cycling_nodes, 100)
 
-        bicycle_transfer_osm_node_ids = cycling_nodes[
-            cycling_nodes["has_bicycle"]
-        ].id.values
+        bicycle_transfer_osm_node_ids = cycling_nodes.filter(
+            pl.col("has_bicycle")
+        ).get_column("osm_id")
 
         multi_modal_nodes, multi_modal_edges = create_multi_modal_graph(
             walking_nodes, walking_edges, cycling_nodes, cycling_edges, AVG_BIKING_SPEED
         )
 
-        (
-            multi_modal_nodes,
-            multi_modal_edges,
-            self.multi_modal_node_to_resetted_map,
-        ) = reset_node_ids(multi_modal_nodes, multi_modal_edges)
+        # (
+        #     multi_modal_nodes,
+        #     multi_modal_edges,
+        #     self.multi_modal_node_to_resetted_map,
+        # ) = reset_node_ids(multi_modal_nodes, multi_modal_edges)
 
-        self.resetted_to_multi_modal_node_map = get_reverse_map(
-            self.multi_modal_node_to_resetted_map
-        )
+        # self.resetted_to_multi_modal_node_map = get_reverse_map(
+        #     self.multi_modal_node_to_resetted_map
+        # )
 
-        self.osm_node_to_mm_bicycle_resetted_map = {
-            int(k[1:]): v
-            for k, v in self.multi_modal_node_to_resetted_map.items()
-            if k[0] == DRIVING_PREFIX
-        }
-        self.mm_walking_node_resetted_to_osm_node_map = {
-            k: int(v[1:])
-            for k, v in self.resetted_to_multi_modal_node_map.items()
-            if v[0] == WALKING_PREFIX
-        }
+        # self.osm_node_to_mm_bicycle_resetted_map = {
+        #     int(k[1:]): v
+        #     for k, v in self.multi_modal_node_to_resetted_map.items()
+        #     if k[0] == DRIVING_PREFIX
+        # }
+        # self.mm_walking_node_resetted_to_osm_node_map = {
+        #     k: int(v[1:])
+        #     for k, v in self.resetted_to_multi_modal_node_map.items()
+        #     if v[0] == WALKING_PREFIX
+        # }
 
         multi_modal_edges = add_weights(multi_modal_edges, [TRAVEL_TIME_COLUMN])
         multi_modal_edges = add_weights(
@@ -149,57 +141,56 @@ class BicycleStepBuilder(StepBuilder):
 
         self.kwargs = {
             "graph_cache": self.mm_graph_cache,
-            "to_internal": self.osm_node_to_mm_bicycle_resetted_map,
-            "from_internal": self.mm_walking_node_resetted_to_osm_node_map,
+            # "to_internal": self.osm_node_to_mm_bicycle_resetted_map,
+            # "from_internal": self.mm_walking_node_resetted_to_osm_node_map,
             "bicycle_transfer_osm_node_ids": bicycle_transfer_osm_node_ids,
             "update_label_func": update_label_func,
         }
 
-    def add_pois_to_mm_graph(self, pois):
+    def add_pois_to_mm_graph(self, pois: pl.DataFrame):
         """
         Adds POIs to the multi modal graph cache.
 
         Args:
             pois: A dataframe containing POIs. Must have the columns "nearest_osm_node_id" and "type".
         """
-        self.osm_nodes = osm.list_column_to_osm_nodes(self.osm_nodes, pois, "type")
+        self.osm_nodes = osm.list_column_to_osm_nodes(self.osm_nodes, pois, "poi_type")
         self.type_map: dict[str, int] = {}
-        for t in pois["type"].unique():
+        for t in pois.get_column("poi_type").unique():
             self.type_map[t] = len(self.type_map)
 
-        self.osm_nodes["type_internal"] = self.osm_nodes["type"].map(
-            lambda x: list(map(self.type_map.get, x))
-        )
-        self.osm_nodes["mm_walking_node_id"] = "W" + self.osm_nodes["id"].astype(str)
-        self.osm_nodes["resetted_mm_walking_node_id"] = self.osm_nodes[
-            "mm_walking_node_id"
-        ].map(
-            self.multi_modal_node_to_resetted_map  # type: ignore
+        self.osm_nodes = self.osm_nodes.with_columns(
+            pl.col("poi_type").replace(self.type_map).alias("type_internal")
         )
 
-        resetted_mm_walking_node_id_to_type_map = (
-            self.osm_nodes[["resetted_mm_walking_node_id", "type_internal"]].set_index(
+        resetted_mm_walking_node_id_to_type_map = self.osm_nodes.select(
+            (WALKING_PREFIX + pl.col("nearest_osm_node").cast(pl.String)).alias(
                 "resetted_mm_walking_node_id"
-            )["type_internal"]
-        ).to_dict()
+            ),
+            pl.col("type_internal"),
+        ).rows_by_key(key="resetted_mm_walking_node_id", unique=True)
 
         self.mm_graph_cache.set_node_weights(resetted_mm_walking_node_id_to_type_map)
 
 
 def mark_bicycles(
-    nodes: st.GeoDataFrame,
-    bicycle_locations: st.GeoDataFrame,
-) -> st.GeoDataFrame:
-    nodes["has_bicycle"] = False
-
-    nodes.loc[bicycle_locations["nearest_osm_node_id"], "has_bicycle"] = True
+    nodes: pl.DataFrame,
+    bicycle_locations: pl.DataFrame,
+) -> pl.DataFrame:
+    nodes = nodes.with_columns(
+        pl.col("osm_id")
+        .is_in(bicycle_locations.get_column("nearest_osm_node"))
+        .alias("has_bicycle")
+    )
 
     return nodes
 
 
-def mark_bicycles_random(nodes: st.GeoDataFrame, n: int) -> st.GeoDataFrame:
-    nodes["has_bicycle"] = False
-
-    nodes.loc[nodes.sample(n).index, "has_bicycle"] = True
+def mark_bicycles_random(nodes: pl.DataFrame, n: int) -> pl.DataFrame:
+    nodes = nodes.with_columns(
+        pl.col("osm_id")
+        .is_in(nodes.get_column("osm_id").sample(n))
+        .alias("has_bicycle")
+    )
 
     return nodes

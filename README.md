@@ -2,12 +2,13 @@
 
 ## Todo
 Removing pandas and geopandas
-Testing functionality of all code
 - minute_city
 - mcr5
 - mcr
 
-- [ ] go through mcr5 preps and streamline/reduce coding
+Add Tests:
+- raptor
+- mcr
 
 ## Installation
 

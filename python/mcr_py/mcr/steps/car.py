@@ -2,20 +2,16 @@ from logging import Logger
 from typing import Optional
 
 import polars as pl
-import polars_st as st
 from mcr_py.utils import storage
 from mcr_py.utils.logger import Timer
 from mcr_py.mcr.bag import IntermediateBags
 from mcr_py.mcr.data import (
     AVG_CAR_SPEED,
-    DRIVING_PREFIX,
     TRAVEL_TIME_COLUMN,
     TRAVEL_TIME_DRIVING_COLUMN,
     WALKING_PREFIX,
     add_weights,
     create_multi_modal_graph,
-    get_reverse_map,
-    reset_node_ids,
     to_mlc_edges,
 )
 from mcr_py.mcr.path import PathManager, PathType
@@ -70,36 +66,36 @@ class PersonalCarStepBuilder(StepBuilder):
 
     def __init__(
         self,
-        walking_nodes: st.GeoDataFrame,
-        walking_edges: st.GeoDataFrame,
-        driving_nodes: st.GeoDataFrame,
-        driving_edges: st.GeoDataFrame,
-        pois: st.GeoDataFrame,
+        walking_nodes: pl.DataFrame,
+        walking_edges: pl.DataFrame,
+        driving_nodes: pl.DataFrame,
+        driving_edges: pl.DataFrame,
+        pois: pl.DataFrame,
     ):
         multi_modal_nodes, multi_modal_edges = create_multi_modal_graph(
             walking_nodes, walking_edges, driving_nodes, driving_edges, AVG_CAR_SPEED
         )
 
-        (
-            multi_modal_nodes,
-            multi_modal_edges,
-            self.multi_modal_node_to_resetted_map,
-        ) = reset_node_ids(multi_modal_nodes, multi_modal_edges)
+        # (
+        #     multi_modal_nodes,
+        #     multi_modal_edges,
+        #     self.multi_modal_node_to_resetted_map,
+        # ) = reset_node_ids(multi_modal_nodes, multi_modal_edges)
 
-        self.resetted_to_multi_modal_node_map = get_reverse_map(
-            self.multi_modal_node_to_resetted_map
-        )
+        # self.resetted_to_multi_modal_node_map = get_reverse_map(
+        #     self.multi_modal_node_to_resetted_map
+        # )
 
-        self.osm_node_to_mm_car_resetted_map = {
-            int(k[1:]): v
-            for k, v in self.multi_modal_node_to_resetted_map.items()
-            if k[0] == DRIVING_PREFIX
-        }
-        self.mm_walking_node_resetted_to_osm_node_map = {
-            k: int(v[1:])
-            for k, v in self.resetted_to_multi_modal_node_map.items()
-            if v[0] == WALKING_PREFIX
-        }
+        # self.osm_node_to_mm_car_resetted_map = {
+        #     int(k[1:]): v
+        #     for k, v in self.multi_modal_node_to_resetted_map.items()
+        #     if k[0] == DRIVING_PREFIX
+        # }
+        # self.mm_walking_node_resetted_to_osm_node_map = {
+        #     k: int(v[1:])
+        #     for k, v in self.resetted_to_multi_modal_node_map.items()
+        #     if v[0] == WALKING_PREFIX
+        # }
 
         multi_modal_edges = add_weights(multi_modal_edges, [TRAVEL_TIME_COLUMN])
         multi_modal_edges = add_weights(
@@ -114,11 +110,12 @@ class PersonalCarStepBuilder(StepBuilder):
 
         self.kwargs = {
             "graph_cache": self.mm_graph_cache,
-            "to_internal": self.osm_node_to_mm_car_resetted_map,
-            "from_internal": self.mm_walking_node_resetted_to_osm_node_map,
+            # "to_internal": self.osm_node_to_mm_car_resetted_map,
+            # "from_internal": self.mm_walking_node_resetted_to_osm_node_map,
         }
 
     def save_translations(self, output_path: str):
+        return
         storage.write_any_dict(
             {
                 "resetted_to_multi_modal_node_map": self.resetted_to_multi_modal_node_map,
@@ -127,32 +124,27 @@ class PersonalCarStepBuilder(StepBuilder):
             output_path,
         )
 
-    def add_pois_to_mm_graph(self, pois):
+    def add_pois_to_mm_graph(self, pois: pl.DataFrame):
         """
         Adds POIs to the multi modal graph cache.
 
         Args:
             pois: A dataframe containing POIs. Must have the columns "nearest_osm_node_id" and "type".
         """
-        self.osm_nodes = osm.list_column_to_osm_nodes(self.osm_nodes, pois, "type")
+        self.osm_nodes = osm.list_column_to_osm_nodes(self.osm_nodes, pois, "poi_type")
         self.type_map: dict[str, int] = {}
-        for t in pois["type"].unique():
+        for t in pois.get_column("poi_type").unique():
             self.type_map[t] = len(self.type_map)
 
-        self.osm_nodes["type_internal"] = self.osm_nodes["type"].map(
-            lambda x: list(map(self.type_map.get, x))
-        )
-        self.osm_nodes["mm_walking_node_id"] = "W" + self.osm_nodes["id"].astype(str)
-        self.osm_nodes["resetted_mm_walking_node_id"] = self.osm_nodes[
-            "mm_walking_node_id"
-        ].map(
-            self.multi_modal_node_to_resetted_map  # type: ignore
+        self.osm_nodes = self.osm_nodes.with_columns(
+            pl.col("poi_type").replace(self.type_map).alias("type_internal")
         )
 
-        resetted_mm_walking_node_id_to_type_map = (
-            self.osm_nodes[["resetted_mm_walking_node_id", "type_internal"]].set_index(
+        resetted_mm_walking_node_id_to_type_map = self.osm_nodes.select(
+            (WALKING_PREFIX + pl.col("nearest_osm_node").cast(pl.String)).alias(
                 "resetted_mm_walking_node_id"
-            )["type_internal"]
-        ).to_dict()
+            ),
+            pl.col("type_internal"),
+        ).rows_by_key(key="resetted_mm_walking_node_id", unique=True)
 
         self.mm_graph_cache.set_node_weights(resetted_mm_walking_node_id_to_type_map)
