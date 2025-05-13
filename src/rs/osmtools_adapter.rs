@@ -1,14 +1,19 @@
 use osmtools::download::download;
-use osmtools::nearest_node::add_nearest_node_to_geo_df;
-use pyo3_polars::PyDataFrame;
-use polars::prelude::DataFrame;
 use osmtools::extractor::{
     _load_osm_cycling, _load_osm_driving, _load_osm_pois, _load_osm_walking,
 };
+use osmtools::nearest_node::add_nearest_node_to_geo_df;
+use polars::prelude::DataFrame;
 use pyo3::prelude::*;
+use pyo3_polars::PyDataFrame;
 
 #[pyfunction]
-pub fn add_nearest_node_to_df(py: Python, geo_df: PyDataFrame, nodes_to_match: PyDataFrame, target_crs: &str) -> PyDataFrame {
+pub fn add_nearest_node_to_df(
+    py: Python,
+    geo_df: PyDataFrame,
+    nodes_to_match: PyDataFrame,
+    target_crs: &str,
+) -> PyDataFrame {
     let result = py.allow_threads(|| {
         add_nearest_node_to_geo_df(geo_df.into(), &nodes_to_match.into(), target_crs)
     });
@@ -38,9 +43,20 @@ pub fn load_osm_cycling(
     download: bool,
 ) -> (PyDataFrame, PyDataFrame, PyDataFrame) {
     let result = py.allow_threads(|| {
-        _load_osm_cycling(city_name, geometry_vec, &reverse_edges, archive_path, outpath, download)
+        _load_osm_cycling(
+            city_name,
+            geometry_vec,
+            &reverse_edges,
+            archive_path,
+            outpath,
+            download,
+        )
     });
-    (PyDataFrame(result.0), PyDataFrame(result.1), PyDataFrame(result.2))
+    (
+        PyDataFrame(result.0),
+        PyDataFrame(result.1),
+        PyDataFrame(result.2),
+    )
 }
 
 #[pyfunction]
@@ -55,7 +71,11 @@ pub fn load_osm_driving(
     let result = py.allow_threads(|| {
         _load_osm_driving(city_name, geometry_vec, archive_path, outpath, download)
     });
-    (PyDataFrame(result.0), PyDataFrame(result.1), PyDataFrame(result.2))
+    (
+        PyDataFrame(result.0),
+        PyDataFrame(result.1),
+        PyDataFrame(result.2),
+    )
 }
 
 #[pyfunction]
@@ -70,7 +90,11 @@ pub fn load_osm_walking(
     let result = py.allow_threads(|| {
         _load_osm_walking(city_name, geometry_vec, archive_path, outpath, download)
     });
-    (PyDataFrame(result.0), PyDataFrame(result.1), PyDataFrame(result.2))
+    (
+        PyDataFrame(result.0),
+        PyDataFrame(result.1),
+        PyDataFrame(result.2),
+    )
 }
 
 #[pyfunction]
@@ -91,7 +115,7 @@ pub fn load_osm_pois(
             Some(val) => {
                 val_df = val.into();
                 Some(&val_df)
-            },
+            }
             None => None,
         };
         _load_osm_pois(

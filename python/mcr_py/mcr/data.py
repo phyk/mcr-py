@@ -215,6 +215,16 @@ def get_reverse_map(d: dict[A, B]) -> dict[B, A]:
     return {v: k for k, v in d.items()}
 
 
+def add_id_column(df: pl.DataFrame) -> pl.DataFrame:
+    return df.with_row_index(name="id")
+
+
+def reset_node_ids(df: pl.DataFrame, mapping: dict[int, int]) -> pl.DataFrame:
+    return df.with_columns(
+        pl.col("source_osm").replace(mapping), pl.col("dest_osm").replace(mapping)
+    )
+
+
 def prefix_id(
     gdf: pl.DataFrame, prefix: str, column: str, save_old=False
 ) -> pl.DataFrame:
@@ -263,8 +273,8 @@ def add_weights(edges: pl.DataFrame, columns: list[str], hidden=False) -> pl.Dat
     return edges
 
 
-def to_mlc_edges(edges: pl.DataFrame) -> list[dict]:
+def to_mlc_edges(edges: pl.DataFrame) -> list[tuple]:
     # type: ignore
-    return edges.select(["source_osm", "dest_osm", "weights", "hidden_weights"]).rows(
-        named=True
-    )
+    return edges.select(
+        pl.col("source_osm"), pl.col("dest_osm"), pl.col(["weights", "hidden_weights"])
+    ).rows()

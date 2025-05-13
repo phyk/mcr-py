@@ -4,7 +4,8 @@ use pyo3_log::{Caching, Logger};
 use rs::graph_cache::GraphCache;
 use rs::mlc_adapter::{run_mlc, run_mlc_with_bags, run_mlc_with_node_and_time, PyLabel};
 use rs::osmtools_adapter::{
-    add_nearest_node_to_df, download_osm_data, load_osm_cycling, load_osm_driving, load_osm_pois, load_osm_walking
+    add_nearest_node_to_df, download_osm_data, load_osm_cycling, load_osm_driving, load_osm_pois,
+    load_osm_walking,
 };
 
 mod rs;

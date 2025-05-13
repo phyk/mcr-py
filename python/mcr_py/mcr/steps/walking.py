@@ -2,8 +2,11 @@ import polars as pl
 from mcr_py import GraphCache
 from mcr_py.mcr.data import (
     TRAVEL_TIME_COLUMN,
+    add_id_column,
     add_weights,
     create_walking_graph,
+    get_reverse_map,
+    reset_node_ids,
     to_mlc_edges,
 )
 from mcr_py.mcr.path import PathType
@@ -33,13 +36,20 @@ class WalkingStepBuilder(StepBuilder):
     ):
         walking_nodes, walking_edges = create_walking_graph(osm_nodes, osm_edges)
 
-        # self.walking_node_to_resetted_map = walking_nodes.select(
-        #     ["osm_id", "id"]
-        # ).rows_by_key("osm_id", unique=True)
+        walking_nodes = add_id_column(walking_nodes)
+        self.walking_node_to_resetted_map = {
+            key: value[0]
+            for key, value in walking_nodes.select(["osm_id", "id"])
+            .rows_by_key("osm_id", unique=True)
+            .items()
+        }
 
-        # self.resetted_to_walking_node_map = get_reverse_map(
-        #     self.walking_node_to_resetted_map
-        # )
+        self.resetted_to_walking_node_map = get_reverse_map(
+            self.walking_node_to_resetted_map
+        )
+        self.walking_edges = reset_node_ids(
+            walking_edges, self.walking_node_to_resetted_map
+        )
 
         self.walking_edges = add_weights(walking_edges, [TRAVEL_TIME_COLUMN])
         self.walking_edges = add_weights(self.walking_edges, [], hidden=True)

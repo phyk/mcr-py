@@ -5,21 +5,20 @@ use mlc::{
     bag::{Bag, Label},
     mlc::{Bags, MLC},
 };
-use pyo3::{prelude::*, types::{IntoPyDict, PyList}};
 use pyo3::types::PyDict;
+use pyo3::{
+    prelude::*,
+    types::{IntoPyDict, PyList},
+};
 
 use super::{
     graph_cache::GraphCache,
     label::{next_bike_tariff, next_bike_without_tariff, personal_car},
 };
 
-
 pub struct PyBags<T: Hash + Eq>(HashMap<T, Bag<T>>);
 
-
-impl <'py> IntoPyDict<'py> for PyBags<usize>
-where
-{
+impl<'py> IntoPyDict<'py> for PyBags<usize> {
     fn into_py_dict(self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
         let dict = PyDict::new(py);
         for (key, value) in self.0 {
@@ -39,7 +38,6 @@ where
     }
 }
 
-
 #[pyclass]
 pub struct PyLabel {
     #[pyo3(get)]
@@ -53,7 +51,11 @@ pub struct PyLabel {
 }
 
 #[pyfunction]
-pub fn run_mlc<'py>(_py: Python::<'py>, graph_cache: &GraphCache, start_node_id: usize) -> Bound<'py, PyDict> {
+pub fn run_mlc<'py>(
+    _py: Python<'py>,
+    graph_cache: &GraphCache,
+    start_node_id: usize,
+) -> Bound<'py, PyDict> {
     let g = graph_cache.graph.as_ref().unwrap();
     let mut mlc = MLC::new(g).unwrap();
     mlc.set_start_node(start_node_id);
@@ -126,7 +128,7 @@ impl UpdateLabelFunc {
 pub fn run_mlc_with_bags<'py>(
     _py: Python<'py>,
     graph_cache: &GraphCache,
-    bags: Bound<'py, PyDict>,//<usize, Vec<&PyObject>>,
+    bags: Bound<'py, PyDict>, //<usize, Vec<&PyObject>>,
     update_label_func: Option<String>,
     disable_paths: Option<bool>,
     enable_limit: Option<bool>,
