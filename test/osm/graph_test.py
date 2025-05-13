@@ -48,7 +48,7 @@ def test_crop_graph_to_largest_component():
     nodes, edges = create_sample_data()
     nodes_df, edges_df, graph = create_rx_graph(nodes, edges)
 
-    cropped_graph, cropped_nodes, cropped_edges = crop_graph_to_largest_component(
+    cropped_nodes, cropped_edges, graph = crop_graph_to_largest_component(
         graph, nodes_df, edges_df
     )
 

@@ -48,7 +48,7 @@ def create_rx_graph(
 
 def crop_graph_to_largest_component(
     graph: rx.PyDiGraph, nodes: pl.DataFrame, edges: pl.DataFrame
-) -> tuple[rx.PyDiGraph, pl.DataFrame, pl.DataFrame]:
+) -> tuple[pl.DataFrame, pl.DataFrame, rx.PyDiGraph]:
     """
     Crops the input graph to its largest weakly connected component.
 
@@ -72,7 +72,7 @@ def crop_graph_to_largest_component(
         + f" {n_edges_before - len(edges)} edges from OSM network to ensure"
         + f" connectivity ({(n_nodes_before - len(nodes)) / n_nodes_before * 100:.2f}%)"
     )
-    return graph, nodes, edges
+    return nodes, edges, graph
 
 
 def shortest_paths(graph: rx.PyDiGraph, num_threads=4) -> rx.AllPairsPathLengthMapping:
