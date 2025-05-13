@@ -248,15 +248,16 @@ def add_weights(edges: pl.DataFrame, columns: list[str], hidden=False) -> pl.Dat
     n_padding = N_TOTAL_HIDDEN_WEIGHTS if hidden else N_TOTAL_WEIGHTS
 
     mid_seperator = "," if len(columns) > 0 and n_padding > 0 else ""
-
-    edges = edges.with_columns(
-        "("
-        + pl.concat_str(
+    expr = pl.lit("(")
+    if len(columns) > 0:
+        expr += pl.concat_str(
             (pl.col(columns).round(1) * 1).cast(int).cast(str), separator=","
         ).alias(col_name)
-        + mid_seperator
-        + ",".join(["0"] * (n_padding - len(columns)))
-        + ")"
+    edges = edges.with_columns(
+        (
+            expr
+            + pl.lit(mid_seperator + ",".join(["0"] * (n_padding - len(columns))) + ")")
+        ).alias(col_name)
     )
 
     return edges

@@ -35,7 +35,8 @@ def load_data_for_city(
     admin_level,
     gbfs_url=None,
 ):
-    timestamp = datetime.datetime.today().strftime("%Y%m%d")
+    # timestamp = datetime.datetime.today().strftime("%Y%m%d")
+    timestamp = "20250512"
     now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     start_time = "01.01.1970-00:00:00"
     end_time = "01.01.2050-00:00:00"

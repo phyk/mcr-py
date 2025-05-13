@@ -4,11 +4,13 @@
 Removing pandas and geopandas
 - minute_city
 - mcr5
-- mcr
 
 Add Tests:
 - raptor
 - mcr
+
+Meaningful Logging:
+- osmtools
 
 ## Installation
 

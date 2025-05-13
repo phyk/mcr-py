@@ -4,7 +4,7 @@ import pickle
 import time
 from multiprocessing import Process, Queue
 
-import pandas as pd
+import polars as pl
 import psutil
 from tqdm.auto import tqdm
 
@@ -34,7 +34,7 @@ class MCR5:
 
     def run(
         self,
-        location_mappings: pd.DataFrame,
+        location_mappings: pl.DataFrame,
         start_time: str,
         output_dir: str,
         max_transfers: int = 2,

@@ -4,9 +4,10 @@ use mlc::read::MLCGraph;
 use petgraph::{graph::NodeIndex, Directed, Graph};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::PyList;
+use pyo3::types::{PyDict, PyList};
 use std::collections::HashMap;
 use std::sync::Arc;
+use log::debug;
 
 #[pyclass]
 pub struct GraphCache {
@@ -21,7 +22,9 @@ impl GraphCache {
     }
 
     fn set_graph<'py>(&mut self, raw_edges: Bound<'py, PyList>) {
+        debug!("Parsing Graph from edges");
         let graph = parse_graph(raw_edges);
+        debug!("Parsing successfull");
         self.graph = Some(Arc::new(graph));
     }
 
@@ -90,16 +93,16 @@ impl GraphCache {
 fn parse_graph<'py>(raw_edges: Bound<'py, PyList>) -> MLCGraph<u8> {
     //Vec<HashMap<PyBackedStr, &PyAny>>
     Graph::<Vec<u8>, WeightsTuple, Directed>::from_edges(raw_edges.iter().map(|edge| {
-        let u = edge.getattr("source_osm").unwrap().extract::<usize>().unwrap();
-        let v = edge.getattr("dest_osm").unwrap().extract::<usize>().unwrap();
+        let edge_dict = edge.downcast::<PyDict>().unwrap();
+        let u = edge_dict.get_item("source_osm").unwrap().unwrap().extract::<usize>().unwrap();
+        let v = edge_dict.get_item("dest_osm").unwrap().unwrap().extract::<usize>().unwrap();
         // // wait 0.02 seconds
         // std::thread::sleep(std::time::Duration::from_millis(20));
         let weights: Vec<Weight> =
-            parse_weights(edge.getattr("weights").expect("weights not found")).unwrap();
+            parse_weights(edge_dict.get_item("weights").expect("weights not found").unwrap()).unwrap();
 
         let hidden_weights: Vec<Weight> = parse_weights(
-            edge.getattr("hidden_weights")
-                .expect("hidden_weights not found"),
+            edge_dict.get_item("hidden_weights").expect("weights not found").unwrap()
         )
         .unwrap();
 

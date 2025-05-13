@@ -10,6 +10,7 @@ from mcr_py.mcr.path import PathType
 from mcr_py.mcr.steps.interface import StepBuilder
 from mcr_py.mcr.steps.mlc import MLCStep
 from mcr_py.osm import osm
+from mcr_py.utils.logger import rlog
 
 
 class WalkingStep(MLCStep):
@@ -41,13 +42,16 @@ class WalkingStepBuilder(StepBuilder):
         # )
 
         self.walking_edges = add_weights(walking_edges, [TRAVEL_TIME_COLUMN])
-        self.walking_edges = add_weights(walking_edges, [], hidden=True)
-
+        self.walking_edges = add_weights(self.walking_edges, [], hidden=True)
         raw_walking_edges = to_mlc_edges(self.walking_edges)
         self.osm_nodes = osm_nodes
 
+        rlog.debug("MLC Edges created")
+
         self.walking_graph_cache = GraphCache()
+        rlog.debug("Graph Cache Object allocated")
         self.walking_graph_cache.set_graph(raw_walking_edges)  # type: ignore
+        rlog.debug("Graph cache created")
         self.add_pois_to_walking_graph(pois)
 
         self.kwargs = {
