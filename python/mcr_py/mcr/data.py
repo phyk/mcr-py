@@ -5,7 +5,12 @@ from typing import Tuple, TypeVar
 import rustworkx as rx
 import polars as pl
 
-from mcr_py._mcr_py import load_osm_cycling, load_osm_driving, load_osm_walking
+from mcr_py._mcr_py import (
+    load_osm_cycling,
+    load_osm_driving,
+    load_osm_pois,
+    load_osm_walking,
+)
 from mcr_py.utils.geometa import GeoMeta
 from mcr_py.utils.logger import rlog
 from mcr_py.osm import graph
@@ -47,6 +52,8 @@ class OSMData:
 
         self.osm_nodes, self.osm_edges, self.nxgraph = self.read_walking(redownload)
 
+        self.pois = self.read_pois(redownload)
+
         self.additional_networks: dict[
             NetworkType, tuple[pl.DataFrame, pl.DataFrame, rx.PyDiGraph]
         ] = {}
@@ -64,8 +71,8 @@ class OSMData:
             )
 
     def read_walking(self, redownload: bool):
-        nodes_path = f"{self.cache_path}/{self.city_id.lower()}_walking_nodes.csv"
-        edges_path = f"{self.cache_path}/{self.city_id.lower()}_walking_edges.csv"
+        nodes_path = f"{self.cache_path}/{self.city_id.lower()}_walking_nodes.parquet"
+        edges_path = f"{self.cache_path}/{self.city_id.lower()}_walking_edges.parquet"
         if (
             redownload
             or not os.path.exists(nodes_path)
@@ -79,8 +86,8 @@ class OSMData:
                 download=redownload,
             )
         else:
-            nodes = pl.read_csv(nodes_path)
-            edges = pl.read_csv(edges_path)
+            nodes = pl.read_parquet(nodes_path)
+            edges = pl.read_parquet(edges_path)
 
         nodes, edges, rxgraph = graph.create_rx_graph(nodes, edges)
         nodes, edges, rxgraph = graph.crop_graph_to_largest_component(
@@ -93,10 +100,10 @@ class OSMData:
         self, network_type: str, renewed: bool
     ) -> tuple[pl.DataFrame, pl.DataFrame, rx.PyDiGraph]:
         nodes_path = (
-            f"{self.cache_path}/{self.city_id.lower()}_{network_type}_nodes.csv"
+            f"{self.cache_path}/{self.city_id.lower()}_{network_type}_nodes.parquet"
         )
         edges_path = (
-            f"{self.cache_path}/{self.city_id.lower()}_{network_type}_edges.csv"
+            f"{self.cache_path}/{self.city_id.lower()}_{network_type}_edges.parquet"
         )
         if renewed or not os.path.exists(nodes_path) or not os.path.exists(edges_path):
             match network_type:
@@ -122,8 +129,8 @@ class OSMData:
                         "{} is not a valid network type".format(network_type)
                     )
         else:
-            nodes = pl.read_csv(nodes_path)
-            edges = pl.read_csv(edges_path)
+            nodes = pl.read_parquet(nodes_path)
+            edges = pl.read_parquet(edges_path)
 
         nodes, edges, rxgraph = graph.create_rx_graph(nodes, edges)
         nodes, edges, rxgraph = graph.crop_graph_to_largest_component(
@@ -131,6 +138,21 @@ class OSMData:
         )
 
         return nodes, edges, rxgraph
+
+    def read_pois(self, renewed) -> pl.DataFrame:
+        pois_path = f"{self.cache_path}/{self.city_id.lower()}_pois_nodes.parquet"
+        if renewed or not os.path.exists(pois_path):
+            pois = load_osm_pois(
+                city_name=self.city_id,
+                geometry_vec=self.geo_meta.get_bounding_box_as_coord_list(),
+                archive_path=self.osm_path,
+                outpath=self.cache_path,
+                download=False,
+                nodes_to_match_df=self.osm_nodes,
+            )  # type: ignore
+        else:
+            pois = pl.read_parquet(pois_path)
+        return pois
 
 
 def create_walking_graph(

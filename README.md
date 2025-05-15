@@ -1,6 +1,12 @@
 # mcr-py
 
 ## Todo
+Check output of MCR5
+- walking Berlin
+- walking Cologne
+- errors -> are these Hexes reachable by the nodes available?
+
+
 Removing pandas and geopandas
 - minute_city
 - mcr5

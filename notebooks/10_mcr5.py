@@ -3,11 +3,11 @@ import pickle
 from datetime import datetime
 
 import polars as pl
-from mcr_py.utils.geometa import GeoMeta
 from mcr_py.utils.logger import rlog, setup
 from mcr_py.mcr5.mcr5 import MCR5
-from mcr_py.command.step_config import get_walking_only_config_with_data
-from collections import namedtuple
+from mcr_py.command.step_config import (
+    get_walking_only_config,
+)
 
 setup("DEBUG")
 
@@ -17,8 +17,8 @@ city_name_german = "Köln"
 city_name_german_alt = "Koeln"
 crs_sink_name = "EPSG:4839"
 
-timestamp = "20250512"
-now = "20250512-140204"
+timestamp = "20250515"
+now = "20250515-140204"
 
 base_directory = f"{data_directory}/{timestamp}"
 
@@ -33,23 +33,16 @@ gbfs_path = f"{base_directory}/gbfs_raw/{city_name}_{now}.csv"
 osm_path = f"{base_directory}/osm_raw"
 geometa_path = f"{base_directory}/cache/{city_name}_geometa.pkl"
 
-mcr5_output_path = f"{base_directory}/mcr5_results"
+mcr5_output_path = f"{base_directory}/mcr5_results/{city_name}"
 
 walking_location_mapping = (
     f"{cache_path}/{city_name_german_alt.lower()}_walking_h3mapping.parquet"
 )
 # bicycle_base_path = f"../data/sharing_locations_clustered/{city_name.lower()}_bikes/"
-
-geo_meta = GeoMeta.load(geometa_path)
-
 location_mappings = pl.read_parquet(walking_location_mapping)
 
 
 configs = {}
-
-
-GeoData = namedtuple("GeoData", ["osm_nodes", "osm_edges"])
-
 
 # def get_bicyle_public_transport_config_ready(bicycle_location_path, start_time):
 #     initial_steps, repeating_steps = get_bicycle_public_transport_config(
@@ -122,13 +115,11 @@ GeoData = namedtuple("GeoData", ["osm_nodes", "osm_edges"])
 
 
 def get_walking_only_config_ready():
-    initial_steps, repeating_steps = get_walking_only_config_with_data(
-        geo_meta=geo_meta,
-        geo_data=GeoData(
-            pl.read_parquet(f"{cache_path}/koeln_walking_nodes.parquet"),
-            pl.read_parquet(f"{cache_path}/koeln_walking_edges.parquet"),
-        ),
-        pois=pl.read_parquet(f"{cache_path}/koeln_pois_nodes.parquet"),
+    initial_steps, repeating_steps = get_walking_only_config(
+        geo_meta_path=geometa_path,
+        city_id=city_name_german_alt,
+        osm_path=osm_path,
+        cache_path=cache_path,
     )
     rlog.info("Walking step configured")
     return {
@@ -158,7 +149,7 @@ for key, config in configs.items():
 
     location_mappings = config["location_mappings"]
 
-    rlog.info(len(location_mappings))
+    rlog.info("Calculating for {} hexes".format(len(location_mappings)))
 
     start_time = config.get("start_time", "08:00:00")
     rlog.debug("Running MCR5")
@@ -168,6 +159,7 @@ for key, config in configs.items():
         output_dir=output_path,
         max_transfers=config["max_transfers"],
     )
+    rlog.info("Found {} errors".format(len(errors)))
 
     run_time = datetime.now() - loaded_at
     total_time = datetime.now() - start

@@ -54,7 +54,6 @@ class MCR5:
         os.makedirs(output_dir, exist_ok=True)
 
         errors_list = []
-        rlog.debug("Location Mappings:\n{}".format(location_mappings.head()))
         pbar = tqdm(location_mappings, desc="Starting")
         last_pbar_n = 0
         for osm_node_id, h3_cell in location_mappings.rows():
@@ -67,8 +66,12 @@ class MCR5:
                     raise Exception("Error queue is full.")
                 if verbose:
                     self.print_status(processes, pbar)
-                elif pbar.n > (last_pbar_n + len(location_mappings) / 20):
-                    last_pbar_n = pbar.n
+                elif len(location_mappings) - pbar.n > (
+                    last_pbar_n + len(location_mappings) / 20
+                ):
+                    rlog.debug("{}".format(last_pbar_n))
+                    last_pbar_n = len(location_mappings) - pbar.n
+                    rlog.debug("{} {}".format(last_pbar_n, pbar.n))
                     self.print_status(processes, pbar)
 
                 time.sleep(1)
@@ -129,9 +132,13 @@ class MCR5:
     ) -> None:
         output = os.path.join(output_dir, f"{h3_cell}.feather")
 
-        l, log_stream = make_string_stream_logger(f"mcr5-{h3_cell}", logging.DEBUG)
-        copy_settings_to_root_logger(l)
-        mcr_config = MCRConfig(logger=l, disable_paths=True, enable_limit=True)
+        logger_copy, log_stream = make_string_stream_logger(
+            f"mcr5-{h3_cell}", logging.DEBUG
+        )
+        copy_settings_to_root_logger(logger_copy)
+        mcr_config = MCRConfig(
+            logger=logger_copy, disable_paths=True, enable_limit=True
+        )
         try:
             mcr_runner = MCR(
                 initial_steps,

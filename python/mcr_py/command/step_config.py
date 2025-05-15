@@ -6,7 +6,6 @@ from mcr_py.mcr.steps.car import PersonalCarStepBuilder
 from mcr_py.mcr.steps.public_transport import PublicTransportStepBuilder
 from mcr_py.mcr.steps.walking import WalkingStepBuilder
 from mcr_py.minute_city import minute_city
-import polars as pl
 
 CAR_CONFIG = "car"
 BICYCLE_AND_PUBLIC_TRANSPORT_CONFIG = "bicycle_public_transport"
@@ -121,11 +120,11 @@ def get_bicycle_only_config_with_data(
     return initial_steps, repeating_steps
 
 
-def get_walking_only_config_with_data(geo_meta: GeoMeta, geo_data, pois: pl.DataFrame):
+def get_walking_only_config_with_data(geo_data):
     walking_step = WalkingStepBuilder(
         geo_data.osm_nodes,
         geo_data.osm_edges,
-        pois,
+        geo_data.pois,
     )
 
     initial_steps = [[walking_step]]
@@ -205,10 +204,15 @@ def get_bicycle_only_config(
     )
 
 
-def get_walking_only_config(geo_meta_path: str, city_id: str):
+def get_walking_only_config(
+    geo_meta_path: str, city_id: str, osm_path: str, cache_path: str
+):
     geo_meta = GeoMeta.load(geo_meta_path)
-    geo_data = OSMData(geo_meta, city_id)
-    return get_walking_only_config_with_data(geo_meta, geo_data)
+    geo_data = OSMData(
+        geo_meta, city_id, cache_path=cache_path, osm_path=osm_path, redownload=False
+    )
+
+    return get_walking_only_config_with_data(geo_data)
 
 
 def get_public_transport_only_config(

@@ -35,8 +35,8 @@ def load_data_for_city(
     admin_level,
     gbfs_url=None,
 ):
-    # timestamp = datetime.datetime.today().strftime("%Y%m%d")
-    timestamp = "20250512"
+    timestamp = datetime.datetime.today().strftime("%Y%m%d")
+    # timestamp = "20250512"
     now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     start_time = "01.01.1970-00:00:00"
     end_time = "01.01.2050-00:00:00"
@@ -51,7 +51,7 @@ def load_data_for_city(
     gbfs_path = f"{data_directory}/{timestamp}/gbfs_raw/{city_name}_{now}.csv"
     osm_path = f"{data_directory}/{timestamp}/osm_raw"
     geometa_path = f"{data_directory}/{timestamp}/cache/{city_name}_geometa.pkl"
-    mcr_py.utils.logger.setup("INFO")
+    mcr_py.utils.logger.setup("DEBUG")
 
     mcr_py.utils.cache.overwrite_tempdir(cache_path)
     mcr_py.command.area.create_area(
