@@ -54,8 +54,10 @@ class MCR5:
         os.makedirs(output_dir, exist_ok=True)
 
         errors_list = []
+        rlog.debug("Location Mappings:\n{}".format(location_mappings.head()))
         pbar = tqdm(location_mappings, desc="Starting")
-        for osm_node_id, h3_cell in location_mappings.itertuples(index=False):
+        last_pbar_n = 0
+        for osm_node_id, h3_cell in location_mappings.rows():
             while (
                 self.get_active_process_count(processes) >= self.max_processes
                 or get_available_memory() < self.min_free_memory
@@ -65,8 +67,11 @@ class MCR5:
                     raise Exception("Error queue is full.")
                 if verbose:
                     self.print_status(processes, pbar)
-                time.sleep(1)
+                elif pbar.n > (last_pbar_n + len(location_mappings) / 20):
+                    last_pbar_n = pbar.n
+                    self.print_status(processes, pbar)
 
+                time.sleep(1)
             p = Process(
                 target=self.run_mcr,
                 kwargs={

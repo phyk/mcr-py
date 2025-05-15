@@ -149,8 +149,7 @@ for key, config in configs.items():
     rlog.info(f"Running MCR5 for {key}")
 
     config = config()
-    rlog.debug("Pre MCR5")
-    mcr5 = MCR5(**config["init_kwargs"], max_processes=8)
+    mcr5 = MCR5(**config["init_kwargs"])
 
     loaded_at = datetime.now()
     load_time = loaded_at - start
@@ -162,6 +161,7 @@ for key, config in configs.items():
     rlog.info(len(location_mappings))
 
     start_time = config.get("start_time", "08:00:00")
+    rlog.debug("Running MCR5")
     errors = mcr5.run(
         location_mappings,
         start_time=start_time,

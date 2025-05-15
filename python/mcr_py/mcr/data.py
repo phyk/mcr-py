@@ -219,9 +219,12 @@ def add_id_column(df: pl.DataFrame) -> pl.DataFrame:
     return df.with_row_index(name="id")
 
 
-def reset_node_ids(df: pl.DataFrame, mapping: dict[int, int]) -> pl.DataFrame:
-    return df.with_columns(
-        pl.col("source_osm").replace(mapping), pl.col("dest_osm").replace(mapping)
+def reset_node_ids(df: pl.DataFrame, id_df: pl.DataFrame) -> pl.DataFrame:
+    return (
+        df.join(id_df, left_on="source_osm", right_on="osm_id")
+        .with_columns(pl.col("id").alias("source_osm"))
+        .join(id_df, left_on="dest_osm", right_on="osm_id")
+        .with_columns(pl.col("id").alias("dest_osm"))
     )
 
 

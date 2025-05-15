@@ -1,15 +1,12 @@
-use log::info;
+use log::{info,debug};
 use mlc::bag::{Weight, WeightsTuple};
 use mlc::read::MLCGraph;
-use petgraph::graph::DiGraph;
-use petgraph::{graph::NodeIndex, Directed, Graph};
+use petgraph::graph::{DiGraph, NodeIndex};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::usize;
-use log::debug;
 
 #[pyclass]
 pub struct GraphCache {

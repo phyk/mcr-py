@@ -52,12 +52,17 @@ class MLCStep(Step):
         with self.timer.info(f"Preparing input for {self.NAME} step"):
             prepared_input_bags = self.prepare_input(input_bags)
             if not prepared_input_bags:
-                self.logger.warn(
+                self.logger.warning(
                     f"No valid starting node reached by previous step - aborting {self.NAME} step"
                 )
                 return {}
 
         with self.timer.info(f"Running {self.NAME} step"):
+            self.logger.debug(
+                "Prepared bags format {}:\n{}".format(
+                    type(prepared_input_bags), prepared_input_bags
+                )
+            )
             raw_result_bags = mcr_py.run_mlc_with_bags(
                 self.graph_cache,
                 prepared_input_bags,

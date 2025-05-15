@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
+use log::debug;
 use mlc::{
     bag::{Bag, Label},
     mlc::{Bags, MLC},
@@ -39,6 +40,7 @@ impl<'py> IntoPyDict<'py> for PyBags<usize> {
 }
 
 #[pyclass]
+#[derive(Clone)]
 pub struct PyLabel {
     #[pyo3(get)]
     pub values: Vec<u64>,
@@ -128,7 +130,7 @@ impl UpdateLabelFunc {
 pub fn run_mlc_with_bags<'py>(
     _py: Python<'py>,
     graph_cache: &GraphCache,
-    bags: Bound<'py, PyDict>, //<usize, Vec<&PyObject>>,
+    bags: Bound<'py, PyDict>, //HashMap<usize, Vec<&PyAny>>
     update_label_func: Option<String>,
     disable_paths: Option<bool>,
     enable_limit: Option<bool>,
@@ -137,8 +139,9 @@ pub fn run_mlc_with_bags<'py>(
     let mut converted_bags: Bags<usize> = HashMap::new();
     for (node_id, py_labels) in bags.iter() {
         let mut labels = HashSet::new();
-        if let Ok(py_label) = py_labels.try_iter() {
-            let values_result = py_label
+        for py_label in  py_labels.try_iter() .unwrap(){
+            let py_label_extract = py_label.unwrap();
+            let values_result = py_label_extract
                 .getattr("values")
                 .unwrap() // assuming this unwrap does not panic
                 .extract::<Vec<u64>>();
@@ -146,27 +149,28 @@ pub fn run_mlc_with_bags<'py>(
             let values = match values_result {
                 Ok(v) => v,
                 Err(e) => {
-                    panic!("Failed to extract values: {:?} {:?}", e, py_label);
+                    panic!("Failed to extract values: {:?} {:?}", e, py_label_extract);
                 }
             };
-            let hidden_values = py_label
+            let hidden_values = py_label_extract
                 .getattr("hidden_values")
                 .unwrap()
                 .extract::<Option<Vec<u64>>>()
                 .unwrap();
-            let path_result = py_label.getattr("path").unwrap().extract::<Vec<usize>>();
+            let path_result = py_label_extract.getattr("path").unwrap().extract::<Vec<usize>>();
             let path = match path_result {
                 Ok(v) => v,
                 Err(e) => {
-                    panic!("Failed to extract path: {:?} {:?}", e, py_label);
+                    panic!("Failed to extract path: {:?} {:?}", e, py_label_extract);
                 }
             };
 
-            let node_id = py_label
+            let node_id = py_label_extract
                 .getattr("node_id")
                 .unwrap()
                 .extract::<usize>()
                 .unwrap();
+
             let label = Label {
                 values,
                 hidden_values: hidden_values.unwrap_or(vec![]),
