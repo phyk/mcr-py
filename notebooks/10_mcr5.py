@@ -12,9 +12,14 @@ from mcr_py.command.step_config import (
 setup("DEBUG")
 
 data_directory = "../data"
-city_name = "cologne"
-city_name_german = "Köln"
-city_name_german_alt = "Koeln"
+# city_name = "cologne"
+# city_name_german = "Köln"
+# city_name_german_alt = "Koeln"
+city_name = "berlin"
+city_name_german = "Berlin"
+city_name_german_alt = city_name_german
+
+
 crs_sink_name = "EPSG:4839"
 
 timestamp = "20250515"

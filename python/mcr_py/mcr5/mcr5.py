@@ -69,9 +69,7 @@ class MCR5:
                 elif len(location_mappings) - pbar.n > (
                     last_pbar_n + len(location_mappings) / 20
                 ):
-                    rlog.debug("{}".format(last_pbar_n))
                     last_pbar_n = len(location_mappings) - pbar.n
-                    rlog.debug("{} {}".format(last_pbar_n, pbar.n))
                     self.print_status(processes, pbar)
 
                 time.sleep(1)

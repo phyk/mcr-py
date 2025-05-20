@@ -10,7 +10,7 @@ from mcr_py.utils.logger import Timed
 from mcr_py.minute_city import profile
 
 
-def add_pois_to_labels(labels: pl.DataFrame, pois: st.GeoDataFrame) -> pl.DataFrame:
+def add_pois_to_labels(labels: pl.DataFrame, pois: pl.DataFrame) -> pl.DataFrame:
     poi_types = list(pois["type"].unique())
     for t in poi_types:
         pois[t] = (pois["type"] == t).astype(int)
@@ -25,7 +25,7 @@ def add_pois_to_labels(labels: pl.DataFrame, pois: st.GeoDataFrame) -> pl.DataFr
 
 
 def get_profiles_df(
-    labels_with_pois: st.GeoDataFrame,
+    labels_with_pois: pl.DataFrame,
     types: list[str],
     disable_tqdm: bool = False,
     leave_tqdm: bool = True,
