@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
-use log::debug;
 use mlc::{
     bag::{Bag, Label},
     mlc::{Bags, MLC},

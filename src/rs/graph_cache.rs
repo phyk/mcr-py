@@ -10,7 +10,7 @@ use std::usize;
 
 #[pyclass]
 pub struct GraphCache {
-    pub graph: Option<Arc<MLCGraph<u8, 7>>>,
+    pub graph: Option<Arc<MLCGraph<u8>>>,
 }
 
 #[pymethods]
@@ -27,7 +27,7 @@ impl GraphCache {
         debug!("Parsing successfull");
     }
 
-    fn set_node_weights(&mut self, node_weights: HashMap<usize, [u8;7]>) {
+    fn set_node_weights(&mut self, node_weights: HashMap<usize, Vec<u8>>) {
         let arc_graph = self
             .graph
             .as_ref()
@@ -91,7 +91,7 @@ impl GraphCache {
 
 
 
-fn parse_graph<'py>(raw_edges: Bound<'py, PyAny>) -> MLCGraph<u8,7> {
+fn parse_graph<'py>(raw_edges: Bound<'py, PyAny>) -> MLCGraph<u8> {
     let mut edge_list = Vec::new();
     for py_obj in raw_edges.try_iter().unwrap() {
         let (u, v, weights_, hidden_weights_) = py_obj.unwrap().extract::<(usize, usize, String, String)>().unwrap();
@@ -106,7 +106,7 @@ fn parse_graph<'py>(raw_edges: Bound<'py, PyAny>) -> MLCGraph<u8,7> {
         };
         edge_list.push((NodeIndex::new(u), NodeIndex::new(v), weights_tuple));
     }
-    DiGraph::<[u8; 7], WeightsTuple>::from_edges(edge_list)
+    DiGraph::<Vec<u8>, WeightsTuple>::from_edges(edge_list)
 }
 
 fn parse_weights<'py>(raw_weights: &String) -> Result<Vec<u64>, String> {
