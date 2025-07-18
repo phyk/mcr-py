@@ -12,10 +12,15 @@ pub fn add_nearest_node_to_df(
     py: Python,
     geo_df: PyDataFrame,
     nodes_to_match: PyDataFrame,
-    target_crs: &str,
+    target_crs: i64,
 ) -> PyDataFrame {
     let result = py.allow_threads(|| {
-        add_nearest_node_to_geo_df(geo_df.into(), &nodes_to_match.into(), target_crs)
+        add_nearest_node_to_geo_df(
+            geo_df.into(),
+            &nodes_to_match.into(),
+            target_crs.try_into().unwrap(),
+        )
+        .unwrap()
     });
     PyDataFrame(result)
 }
