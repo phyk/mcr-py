@@ -2,15 +2,16 @@ import datetime
 import io
 import json
 import os
+import pathlib
 
 import mcr_py
 import mcr_py.command.area
 import mcr_py.command.build
 import mcr_py.command.gtfs.gtfs
+import mcr_py.mcr.data
 import mcr_py.utils.cache
 import mcr_py.utils.geometa
 import mcr_py.utils.logger
-import mcr_py.mcr.data
 import polars as pl
 from fsspec.implementations.http import HTTPFileSystem
 from mcr_py._mcr_py import (
@@ -41,8 +42,9 @@ def load_data_for_city(
     start_time = "01.01.1970-00:00:00"
     end_time = "01.01.2050-00:00:00"
     crs_sink_name = "EPSG:4839"
+    gtfs_timestamp = "20250718"
     cache_path = f"{data_directory}/{timestamp}/cache/"
-    gtfs_path = f"{data_directory}/{timestamp}/gtfs_raw/germany.zip"
+    gtfs_path = f"{data_directory}/gtfs_raw/{gtfs_timestamp}/latest.zip"
     gtfs_crop_path = f"{data_directory}/{timestamp}/gtfs_clean/{city_name}.zip"
     gtfs_clean_dir = f"{data_directory}/{timestamp}/gtfs_clean/{city_name}/"
     gtfs_clean_struct = (
@@ -90,8 +92,10 @@ def load_data_for_city(
     print("Finished")
 
 
+data_path = pathlib.Path(__file__).parent.parent.resolve() / "data"
+
 load_data_for_city(
-    "../data",
+    data_path,
     "cologne",
     "Köln",
     "Koeln",
@@ -99,4 +103,4 @@ load_data_for_city(
     "https://gbfs.nextbike.net/maps/gbfs/v1/nextbike_kg/de/free_bike_status.json",
 )
 
-load_data_for_city("../data", "berlin", "Berlin", "Berlin", 4)
+load_data_for_city(data_path, "berlin", "Berlin", "Berlin", 4)
