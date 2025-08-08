@@ -1,3 +1,4 @@
+use log::info;
 use osmtools::download::download;
 use osmtools::extractor::{
     _load_osm_cycling, _load_osm_driving, _load_osm_pois, _load_osm_walking,
@@ -48,6 +49,7 @@ pub fn load_osm_cycling(
     download: bool,
 ) -> (PyDataFrame, PyDataFrame, PyDataFrame) {
     let result = py.allow_threads(|| {
+        info!("Loading cycling network from {}", city_name);
         _load_osm_cycling(
             city_name,
             geometry_vec,
@@ -74,6 +76,7 @@ pub fn load_osm_driving(
     download: bool,
 ) -> (PyDataFrame, PyDataFrame, PyDataFrame) {
     let result = py.allow_threads(|| {
+        info!("Loading driving network from {}", city_name);
         _load_osm_driving(city_name, geometry_vec, archive_path, outpath, download)
     });
     (
@@ -93,6 +96,7 @@ pub fn load_osm_walking(
     download: bool,
 ) -> (PyDataFrame, PyDataFrame, PyDataFrame) {
     let result = py.allow_threads(|| {
+        info!("Loading walking network from {}", city_name);
         _load_osm_walking(city_name, geometry_vec, archive_path, outpath, download)
     });
     (
@@ -115,6 +119,7 @@ pub fn load_osm_pois(
     nodes_to_match_path: Option<&str>,
 ) -> PyDataFrame {
     let result = py.allow_threads(|| {
+        info!("Loading POIs from {}", city_name);
         let val_df: DataFrame;
         let df: Option<&DataFrame> = match nodes_to_match_df {
             Some(val) => {
