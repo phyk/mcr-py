@@ -1,15 +1,14 @@
 from datetime import datetime
 from typing import Optional
 
-from mcr_py.utils import storage
 import typer
 from shapely.geometry import Polygon
 from typing_extensions import Annotated
 
-from mcr_py.utils import key
-from mcr_py.utils.geometa import GeoMeta
 from mcr_py.gtfs import catalog, clean, crop
-from mcr_py.utils.logger import Timed
+from mcr_py.utils import key, storage
+from mcr_py.utils.geometa import GeoMeta
+from mcr_py.utils.logger import Timed, rlog
 
 app = typer.Typer()
 
@@ -156,8 +155,7 @@ def clean_gtfs(
 ):
     with Timed.info("Cleaning GTFS data"):
         dfs_dict = clean.clean(gtfs_zip_file)
-
-    with Timed.info("Writing GTFS data to output directory"):
+        rlog.info("Writing cleaned GTFS data")
         storage.write_dfs_dict(dfs_dict, output_dir)
 
 

@@ -1,8 +1,8 @@
-import polars_st as st
 import polars as pl
+import polars_st as st
 
-from mcr_py.utils import key
 from mcr_py.gtfs import archive
+from mcr_py.utils import key
 from mcr_py.utils.logger import Timed
 
 
@@ -15,7 +15,7 @@ def clean(gtfs_zip_path: str) -> dict[str, pl.DataFrame]:
     :param gtfs_zip_path: str - The path to the GTFS zip file to be cleaned.
     :returns: dict[str, pl.DataFrame] - A dictionary containing cleaned DataFrames for trips, stop times, stops, and routes.
     """
-    with Timed.info("Reading GTFS data"):
+    with Timed.debug("Reading GTFS data"):
         dfs = archive.read_dfs(gtfs_zip_path)
     trips_df, stop_times_df, stops_df, routes_df = (
         dfs[key.TRIPS_KEY],
@@ -24,12 +24,12 @@ def clean(gtfs_zip_path: str) -> dict[str, pl.DataFrame]:
         dfs[key.ROUTES_KEY],
     )
 
-    with Timed.info("Removing incompatible trips"):
+    with Timed.debug("Removing incompatible trips"):
         trips_df, stop_times_df = remove_circular_trips(trips_df, stop_times_df)
 
-    with Timed.info("Splitting routes"):
+    with Timed.debug("Splitting routes"):
         trips_df, routes_df = split_routes(trips_df, stop_times_df, routes_df)
-    with Timed.info("Preparing dataframes"):
+    with Timed.debug("Preparing dataframes"):
         trips_df = add_first_stop_info(trips_df, stop_times_df)
         stops_df = remove_unused_stops(stop_times_df, stops_df)
         stops_df = add_geometry(stops_df)

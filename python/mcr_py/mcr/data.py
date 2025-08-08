@@ -13,7 +13,7 @@ from mcr_py._mcr_py import (
 )
 from mcr_py.osm import graph
 from mcr_py.utils.geometa import GeoMeta
-from mcr_py.utils.logger import rlog
+from mcr_py.utils.logger import Timed, rlog
 
 ACCURACY = 1
 ACCURACY_MULTIPLIER = 10 ** (ACCURACY - 1)
@@ -50,25 +50,28 @@ class OSMData:
         if not os.path.exists(f"{osm_path}/{city_id.lower()}.osm.pbf"):
             redownload = True
 
-        self.osm_nodes, self.osm_edges, self.nxgraph = self.read_walking(redownload)
+        with Timed.info("Loading OSM walking"):
+            self.osm_nodes, self.osm_edges, self.nxgraph = self.read_walking(redownload)
 
-        self.pois = self.read_pois(redownload)
+        with Timed.info("Loading OSM POIs"):
+            self.pois = self.read_pois(redownload)
 
         self.additional_networks: dict[
             NetworkType, tuple[pl.DataFrame, pl.DataFrame, rx.PyDiGraph]
         ] = {}
 
         for network_type in additional_network_types:
-            (
-                osm_nodes,
-                osm_edges,
-                nxgraph,
-            ) = self.read_network(network_type.value, redownload)
-            self.additional_networks[network_type] = (
-                osm_nodes,
-                osm_edges,
-                nxgraph,
-            )
+            with Timed.info(f"Loading OSM {network_type.value}"):
+                (
+                    osm_nodes,
+                    osm_edges,
+                    nxgraph,
+                ) = self.read_network(network_type.value, redownload)
+                self.additional_networks[network_type] = (
+                    osm_nodes,
+                    osm_edges,
+                    nxgraph,
+                )
 
     def read_walking(self, redownload: bool):
         nodes_path = f"{self.cache_path}/{self.city_id.lower()}_walking_nodes.parquet"

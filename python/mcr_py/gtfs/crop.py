@@ -3,9 +3,9 @@ from typing import Tuple
 
 import polars as pl
 
+from mcr_py.gtfs import archive
 from mcr_py.utils import key
 from mcr_py.utils.geometa import GeoMeta
-from mcr_py.gtfs import archive
 from mcr_py.utils.logger import Timed, rlog
 
 
@@ -26,7 +26,7 @@ def crop(
     :param time_end: datetime - The end time for the cropping window.
     :raises ValueError: If the bounding box results in no trips or stops remaining.
     """
-    with Timed.info("Reading GTFS data"):
+    with Timed.debug("Reading GTFS data"):
         dfs = archive.read_dfs(path)
 
     trips_df, stop_times_df, stops_df, calendar_df, routes_df = (
