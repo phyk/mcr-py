@@ -1,15 +1,15 @@
-from dataclasses import dataclass
 import os
-from beartype.typing import List, Tuple
+from dataclasses import dataclass
 
 import folium
 import polars as pl
 import polars_st as st
 import pyproj
-from serde import serde
-from serde.json import to_json, from_json
 import shapely.geometry.base
 import shapely.ops
+from beartype.typing import List, Tuple
+from serde import serde
+from serde.json import from_json, to_json
 from shapely.geometry import MultiPolygon, Polygon
 
 from mcr_py.utils import cache
@@ -87,6 +87,23 @@ class GeoMeta:
             return shapely.from_wkt(self.boundary_wkt).bounds
         else:
             return shapely.from_wkt(self.unbuffered_boundary_wkt).bounds
+
+    def get_convex_hull_coord_list(self, use_buffer: bool = True):
+        """
+        Get the coordinates of the boundary as a list.
+
+        use_buffer: Whether to use the buffered boundary or the unbuffered boundary.
+
+        :returns: A list of tuples representing the coordinates of the boundary.
+        """
+        if use_buffer:
+            return [shapely.from_wkt(self.boundary_wkt).convex_hull.boundary.coords]
+        else:
+            return [
+                shapely.from_wkt(
+                    self.unbuffered_boundary_wkt
+                ).convex_hull.boundary.coords
+            ]
 
     def get_bounding_box_as_coord_list(
         self, use_buffer: bool = True

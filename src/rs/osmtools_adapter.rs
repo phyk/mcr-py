@@ -43,6 +43,7 @@ pub fn load_osm_cycling(
     py: Python,
     city_name: &str,
     geometry_vec: Vec<(f64, f64)>,
+    geometry_vec_narrowed: Vec<(f64, f64)>,
     reverse_edges: bool,
     archive_path: &str,
     outpath: &str,
@@ -53,6 +54,7 @@ pub fn load_osm_cycling(
         _load_osm_cycling(
             city_name,
             geometry_vec,
+            geometry_vec_narrowed,
             &reverse_edges,
             archive_path,
             outpath,
@@ -71,13 +73,21 @@ pub fn load_osm_driving(
     py: Python,
     city_name: &str,
     geometry_vec: Vec<(f64, f64)>,
+    geometry_vec_narrowed: Vec<(f64, f64)>,
     archive_path: &str,
     outpath: &str,
     download: bool,
 ) -> (PyDataFrame, PyDataFrame, PyDataFrame) {
     let result = py.allow_threads(|| {
         info!("Loading driving network from {}", city_name);
-        _load_osm_driving(city_name, geometry_vec, archive_path, outpath, download)
+        _load_osm_driving(
+            city_name,
+            geometry_vec,
+            geometry_vec_narrowed,
+            archive_path,
+            outpath,
+            download,
+        )
     });
     (
         PyDataFrame(result.0),
@@ -91,13 +101,21 @@ pub fn load_osm_walking(
     py: Python,
     city_name: &str,
     geometry_vec: Vec<(f64, f64)>,
+    geometry_vec_narrowed: Vec<(f64, f64)>,
     archive_path: &str,
     outpath: &str,
     download: bool,
 ) -> (PyDataFrame, PyDataFrame, PyDataFrame) {
     let result = py.allow_threads(|| {
         info!("Loading walking network from {}", city_name);
-        _load_osm_walking(city_name, geometry_vec, archive_path, outpath, download)
+        _load_osm_walking(
+            city_name,
+            geometry_vec,
+            geometry_vec_narrowed,
+            archive_path,
+            outpath,
+            download,
+        )
     });
     (
         PyDataFrame(result.0),

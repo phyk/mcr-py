@@ -83,7 +83,8 @@ class OSMData:
         ):
             (nodes, edges, _) = load_osm_walking(
                 self.city_id,
-                self.geo_meta.get_bounding_box_as_coord_list(),
+                self.geo_meta.get_convex_hull_coord_list(),
+                self.geo_meta.get_convex_hull_coord_list(use_buffer=False),
                 self.osm_path,
                 self.cache_path,
                 download=redownload,
@@ -113,7 +114,10 @@ class OSMData:
                 case "cycling":
                     (nodes, edges, _) = load_osm_cycling(
                         city_name=self.city_id,
-                        geometry_vec=self.geo_meta.get_bounding_box_as_coord_list(),
+                        geometry_vec=self.geo_meta.get_convex_hull_coord_list(),
+                        geometry_vec_narrowed=self.geo_meta.get_convex_hull_coord_list(
+                            use_buffer=False
+                        ),
                         reverse_edges=True,
                         archive_path=self.osm_path,
                         outpath=self.cache_path,
@@ -122,7 +126,10 @@ class OSMData:
                 case "driving":
                     (nodes, edges, _) = load_osm_driving(
                         city_name=self.city_id,
-                        geometry_vec=self.geo_meta.get_bounding_box_as_coord_list(),
+                        geometry_vec=self.geo_meta.get_convex_hull_coord_list(),
+                        geometry_vec_narrowed=self.geo_meta.get_convex_hull_coord_list(
+                            use_buffer=False
+                        ),
                         archive_path=self.osm_path,
                         outpath=self.cache_path,
                         download=False,

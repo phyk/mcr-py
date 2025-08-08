@@ -38,6 +38,7 @@ def run_mlc_with_bags(
 def load_osm_cycling(
     city_name: str,
     geometry_vec: List[Tuple[float, float]],
+    geometry_vec_narrowed: List[Tuple[float, float]],
     reverse_edges: bool,
     archive_path: str,
     outpath: str,
@@ -46,6 +47,7 @@ def load_osm_cycling(
 def load_osm_walking(
     city_name: str,
     geometry_vec: List[Tuple[float, float]],
+    geometry_vec_narrowed: List[Tuple[float, float]],
     archive_path: str,
     outpath: str,
     download: bool,
@@ -53,6 +55,7 @@ def load_osm_walking(
 def load_osm_driving(
     city_name: str,
     geometry_vec: List[Tuple[float, float]],
+    geometry_vec_narrowed: List[Tuple[float, float]],
     archive_path: str,
     outpath: str,
     download: bool,
