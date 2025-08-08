@@ -1,4 +1,4 @@
-from mcr_py.mcr.data import NetworkType, OSMData
+from mcr_py.mcr.data import NetworkType, OSMData, RedownloadMode
 from mcr_py.mcr.steps.bicycle import BicycleStepBuilder
 from mcr_py.mcr.steps.car import PersonalCarStepBuilder
 from mcr_py.mcr.steps.public_transport import PublicTransportStepBuilder
@@ -209,7 +209,11 @@ def get_walking_only_config(
 ):
     geo_meta = GeoMeta.load(geo_meta_path)
     geo_data = OSMData(
-        geo_meta, city_id, cache_path=cache_path, osm_path=osm_path, redownload=False
+        geo_meta,
+        city_id,
+        cache_path=cache_path,
+        osm_path=osm_path,
+        redownload=RedownloadMode.REUSE,
     )
 
     return get_walking_only_config_with_data(geo_data)
