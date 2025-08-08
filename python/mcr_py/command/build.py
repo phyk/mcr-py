@@ -2,13 +2,13 @@ import os
 from typing import Annotated
 
 import typer
+
+from mcr_py.structs.build import build_structures as build_structures_direct
 from mcr_py.utils import storage
 from mcr_py.utils.key import (
     STOP_TIMES_KEY,
     TRIPS_KEY,
 )
-from mcr_py.utils.logger import Timed
-from mcr_py.structs.build import build_structures as build_structures_direct
 
 
 def build_structures(
@@ -22,7 +22,6 @@ def build_structures(
         os.path.join(clean_gtfs_dir, storage.get_df_filename_for_name(STOP_TIMES_KEY))
     )
 
-    with Timed.info("Building structures"):
-        data = build_structures_direct(trips_df, stop_times_df)
+    data = build_structures_direct(trips_df, stop_times_df)
 
     storage.write_any_dict(data, output_file)

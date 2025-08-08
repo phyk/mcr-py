@@ -1,5 +1,7 @@
 from typing import Any
+
 import polars as pl
+
 from mcr_py.utils.key import (
     IDX_BY_STOP_BY_ROUTE_KEY,
     ROUTE_ID_SET_KEY,
@@ -37,26 +39,28 @@ def build_structures(
     :param stop_times_df: pl.DataFrame - The DataFrame containing stop times information.
     :returns: dict[str, Any] - A dictionary containing built data structures.
     """
-    with Timed.info("Creating `stop_times_by_trip`"):
-        stop_times_by_trip = create_stop_times_by_trip(stop_times_df)
-    # print(stop_times_by_trip[])
-    with Timed.info("Creating `trip_ids_by_route`"):
-        trip_ids_by_route = create_trip_ids_by_route_sorted_by_departure(trips_df)
-    with Timed.info("Creating `stops_by_route`"):
-        stops_by_route = create_stops_by_route_ordered(
-            trip_ids_by_route, stop_times_by_trip
-        )
-    with Timed.info("Creating `routes_by_stop`"):
-        routes_by_stop = create_routes_by_stop(stops_by_route)
-    with Timed.info("Creating `idx_by_stop_by_route`"):
-        idx_by_stop_by_route = create_idx_by_stop_by_route(stops_by_route)
-    with Timed.info("Creating `times_by_stop_by_trip`"):
-        times_by_stop_by_trip = create_times_by_stop_by_trip(stop_times_by_trip)
 
-    with Timed.info("Creating id sets"):
-        stop_id_set, route_id_set, trip_id_set = create_id_sets(
-            trips_df, routes_by_stop
-        )
+    with Timed.info("Building structures"):
+        with Timed.debug("Creating `stop_times_by_trip`"):
+            stop_times_by_trip = create_stop_times_by_trip(stop_times_df)
+        # print(stop_times_by_trip[])
+        with Timed.debug("Creating `trip_ids_by_route`"):
+            trip_ids_by_route = create_trip_ids_by_route_sorted_by_departure(trips_df)
+        with Timed.debug("Creating `stops_by_route`"):
+            stops_by_route = create_stops_by_route_ordered(
+                trip_ids_by_route, stop_times_by_trip
+            )
+        with Timed.debug("Creating `routes_by_stop`"):
+            routes_by_stop = create_routes_by_stop(stops_by_route)
+        with Timed.debug("Creating `idx_by_stop_by_route`"):
+            idx_by_stop_by_route = create_idx_by_stop_by_route(stops_by_route)
+        with Timed.debug("Creating `times_by_stop_by_trip`"):
+            times_by_stop_by_trip = create_times_by_stop_by_trip(stop_times_by_trip)
+
+        with Timed.debug("Creating id sets"):
+            stop_id_set, route_id_set, trip_id_set = create_id_sets(
+                trips_df, routes_by_stop
+            )
 
     data = {
         STOP_TIMES_BY_TRIP_KEY: stop_times_by_trip,
@@ -76,7 +80,7 @@ def create_stop_times_by_trip(stop_times_df: pl.DataFrame) -> dict:
     """
     Creates a dictionary mapping trip IDs to their corresponding stop times.
 
-    :param stop_times_df: pl.DataFrame - The DataFrame containing stop times information.
+    :param stop_times_df: pl.DataFrame - The DataFrame containing stop times debugrmation.
     :returns: dict - A dictionary where each key is a trip ID and the value is a list of stop times.
     """
     with Timed.debug("creating stop_times_by_trip dictionary from dataframe"):
