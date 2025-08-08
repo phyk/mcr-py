@@ -1,5 +1,4 @@
 import polars as pl
-from mcr_py.utils.logger import rlog
 
 
 def list_column_to_osm_nodes(

@@ -1,11 +1,11 @@
-from mcr_py.utils.geometa import GeoMeta
-from mcr_py.utils.logger import Timed
 from mcr_py.mcr.data import NetworkType, OSMData
 from mcr_py.mcr.steps.bicycle import BicycleStepBuilder
 from mcr_py.mcr.steps.car import PersonalCarStepBuilder
 from mcr_py.mcr.steps.public_transport import PublicTransportStepBuilder
 from mcr_py.mcr.steps.walking import WalkingStepBuilder
 from mcr_py.minute_city import minute_city
+from mcr_py.utils.geometa import GeoMeta
+from mcr_py.utils.logger import Timed
 
 CAR_CONFIG = "car"
 BICYCLE_AND_PUBLIC_TRANSPORT_CONFIG = "bicycle_public_transport"
@@ -120,7 +120,7 @@ def get_bicycle_only_config_with_data(
     return initial_steps, repeating_steps
 
 
-def get_walking_only_config_with_data(geo_data):
+def get_walking_only_config_with_data(geo_data: OSMData):
     walking_step = WalkingStepBuilder(
         geo_data.osm_nodes,
         geo_data.osm_edges,

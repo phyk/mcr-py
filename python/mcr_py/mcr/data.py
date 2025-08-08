@@ -1,9 +1,9 @@
-from enum import Enum
 import os
+from enum import Enum
 from typing import Tuple, TypeVar
 
-import rustworkx as rx
 import polars as pl
+import rustworkx as rx
 
 from mcr_py._mcr_py import (
     load_osm_cycling,
@@ -11,9 +11,9 @@ from mcr_py._mcr_py import (
     load_osm_pois,
     load_osm_walking,
 )
+from mcr_py.osm import graph
 from mcr_py.utils.geometa import GeoMeta
 from mcr_py.utils.logger import rlog
-from mcr_py.osm import graph
 
 ACCURACY = 1
 ACCURACY_MULTIPLIER = 10 ** (ACCURACY - 1)

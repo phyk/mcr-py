@@ -1,16 +1,15 @@
 from logging import Logger
 from typing import Callable, Collection, Optional
 
-from mcr_py.utils.logger import Timer
+import mcr_py as mcr_py
+from mcr_py import GraphCache
 from mcr_py.mcr.bag import (
     IntermediateBags,
     convert_mlc_bags_to_intermediate_bags,
 )
 from mcr_py.mcr.path import PathManager, PathType
 from mcr_py.mcr.steps.interface import Step
-
-import mcr_py as mcr_py
-from mcr_py import GraphCache
+from mcr_py.utils.logger import Timer
 
 
 class MLCStep(Step):
