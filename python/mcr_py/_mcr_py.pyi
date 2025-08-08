@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Tuple, Union
+
 import polars as pl
 
 PyBags = dict[int, list[PyLabel]]
@@ -69,5 +70,5 @@ def load_osm_pois(
 def add_nearest_node_to_df(
     geo_df: pl.DataFrame,
     nodes_to_match: pl.DataFrame,
-    target_crs: str,
+    target_crs: int,
 ) -> pl.DataFrame: ...

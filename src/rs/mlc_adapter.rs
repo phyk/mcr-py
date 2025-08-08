@@ -138,7 +138,7 @@ pub fn run_mlc_with_bags<'py>(
     let mut converted_bags: Bags<usize> = HashMap::new();
     for (node_id, py_labels) in bags.iter() {
         let mut labels = HashSet::new();
-        for py_label in  py_labels.try_iter() .unwrap(){
+        for py_label in py_labels.try_iter().unwrap() {
             let py_label_extract = py_label.unwrap();
             let values_result = py_label_extract
                 .getattr("values")
@@ -156,7 +156,10 @@ pub fn run_mlc_with_bags<'py>(
                 .unwrap()
                 .extract::<Option<Vec<u64>>>()
                 .unwrap();
-            let path_result = py_label_extract.getattr("path").unwrap().extract::<Vec<usize>>();
+            let path_result = py_label_extract
+                .getattr("path")
+                .unwrap()
+                .extract::<Vec<usize>>();
             let path = match path_result {
                 Ok(v) => v,
                 Err(e) => {
