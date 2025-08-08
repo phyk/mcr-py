@@ -8,15 +8,15 @@ import polars as pl
 import psutil
 from tqdm.auto import tqdm
 
+from mcr_py.mcr.config import MCRConfig
+from mcr_py.mcr.mcr import MCR, StepBuilderMatrix
+from mcr_py.mcr.output import OutputFormat
 from mcr_py.utils import key
 from mcr_py.utils.logger import (
     copy_settings_to_root_logger,
     make_string_stream_logger,
     rlog,
 )
-from mcr_py.mcr.config import MCRConfig
-from mcr_py.mcr.mcr import MCR, StepBuilderMatrix
-from mcr_py.mcr.output import OutputFormat
 
 
 class MCR5:
@@ -55,7 +55,6 @@ class MCR5:
 
         errors_list = []
         pbar = tqdm(location_mappings, desc="Starting")
-        last_pbar_n = 0
         for osm_node_id, h3_cell in location_mappings.rows():
             while (
                 self.get_active_process_count(processes) >= self.max_processes
@@ -65,11 +64,6 @@ class MCR5:
                 if errors.full():
                     raise Exception("Error queue is full.")
                 if verbose:
-                    self.print_status(processes, pbar)
-                elif len(location_mappings) - pbar.n > (
-                    last_pbar_n + len(location_mappings) / 20
-                ):
-                    last_pbar_n = len(location_mappings) - pbar.n
                     self.print_status(processes, pbar)
 
                 time.sleep(1)
