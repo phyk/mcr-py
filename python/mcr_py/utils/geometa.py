@@ -88,7 +88,9 @@ class GeoMeta:
         else:
             return shapely.from_wkt(self.unbuffered_boundary_wkt).bounds
 
-    def get_convex_hull_coord_list(self, use_buffer: bool = True):
+    def get_convex_hull_coord_list(
+        self, use_buffer: bool = True
+    ) -> list[tuple[float, float]]:
         """
         Get the coordinates of the boundary as a list.
 
@@ -97,13 +99,13 @@ class GeoMeta:
         :returns: A list of tuples representing the coordinates of the boundary.
         """
         if use_buffer:
-            return [shapely.from_wkt(self.boundary_wkt).convex_hull.boundary.coords]
+            return list(shapely.from_wkt(self.boundary_wkt).convex_hull.boundary.coords)
         else:
-            return [
+            return list(
                 shapely.from_wkt(
                     self.unbuffered_boundary_wkt
                 ).convex_hull.boundary.coords
-            ]
+            )
 
     def get_bounding_box_as_coord_list(
         self, use_buffer: bool = True
