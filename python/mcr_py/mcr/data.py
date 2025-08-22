@@ -3,6 +3,8 @@ from enum import Enum
 from typing import Tuple, TypeVar
 
 import polars as pl
+import polars_h3 as plh3
+import polars_st as st
 import rustworkx as rx
 
 from mcr_py._mcr_py import (
@@ -45,8 +47,9 @@ class OSMData:
         city_id: str = "",
         osm_path: str = "",
         cache_path: str = "",
+        resolution: int = 8,
         additional_network_types: list[NetworkType] = [],
-        redownload: RedownloadMode = RedownloadMode.REDOWNLOAD,
+        redownload: RedownloadMode = RedownloadMode.REUSE,
     ):
         self.geo_meta = geo_meta
         self.city_id = city_id
@@ -61,6 +64,11 @@ class OSMData:
 
         with Timed.info("Loading OSM POIs"):
             self.pois = self.read_pois(redownload)
+
+        with Timed.info("Loading location mapping"):
+            # This uses the pruned network
+            self.resolution = resolution
+            self.calculate_location_mapping()
 
         self.additional_networks: dict[
             NetworkType, tuple[pl.DataFrame, pl.DataFrame, rx.PyDiGraph]
@@ -87,10 +95,9 @@ class OSMData:
             or not os.path.exists(nodes_path)
             or not os.path.exists(edges_path)
         ):
-            (nodes, edges, _) = load_osm_walking(
+            (nodes, edges) = load_osm_walking(
                 self.city_id,
                 self.geo_meta.get_convex_hull_coord_list(),
-                self.geo_meta.get_convex_hull_coord_list(use_buffer=False),
                 self.osm_path,
                 self.cache_path,
                 download=redownload == RedownloadMode.REDOWNLOAD,
@@ -122,24 +129,18 @@ class OSMData:
         ):
             match network_type:
                 case "cycling":
-                    (nodes, edges, _) = load_osm_cycling(
+                    (nodes, edges) = load_osm_cycling(
                         city_name=self.city_id,
                         geometry_vec=self.geo_meta.get_convex_hull_coord_list(),
-                        geometry_vec_narrowed=self.geo_meta.get_convex_hull_coord_list(
-                            use_buffer=False
-                        ),
                         reverse_edges=True,
                         archive_path=self.osm_path,
                         outpath=self.cache_path,
                         download=renewed == RedownloadMode.REDOWNLOAD,
                     )
                 case "driving":
-                    (nodes, edges, _) = load_osm_driving(
+                    (nodes, edges) = load_osm_driving(
                         city_name=self.city_id,
                         geometry_vec=self.geo_meta.get_convex_hull_coord_list(),
-                        geometry_vec_narrowed=self.geo_meta.get_convex_hull_coord_list(
-                            use_buffer=False
-                        ),
                         archive_path=self.osm_path,
                         outpath=self.cache_path,
                         download=renewed == RedownloadMode.REDOWNLOAD,
@@ -159,20 +160,71 @@ class OSMData:
 
         return nodes, edges, rxgraph
 
-    def read_pois(self, renewed) -> pl.DataFrame:
+    def read_pois(self, renewed: RedownloadMode) -> pl.DataFrame:
         pois_path = f"{self.cache_path}/{self.city_id.lower()}_pois_nodes.parquet"
-        if renewed or not os.path.exists(pois_path):
+        if renewed != RedownloadMode.REUSE or not os.path.exists(pois_path):
             pois = load_osm_pois(
                 city_name=self.city_id,
                 geometry_vec=self.geo_meta.get_bounding_box_as_coord_list(),
                 archive_path=self.osm_path,
                 outpath=self.cache_path,
-                download=False,
+                download=renewed == RedownloadMode.REDOWNLOAD,
                 nodes_to_match_df=self.osm_nodes,
             )  # type: ignore
         else:
             pois = pl.read_parquet(pois_path)
         return pois
+
+    def calculate_location_mapping(self):
+        self.location_mapping = (
+            self.osm_nodes.lazy()
+            .with_columns(
+                plh3.latlng_to_cell(
+                    pl.col("lat"),
+                    pl.col("long"),
+                    self.resolution,
+                    return_dtype=pl.String,
+                ).alias("h3_cell"),
+                st.point(pl.concat_arr("long", "lat"))
+                .st.set_srid(4326)
+                .alias("point_lnglat"),
+            )
+            .with_columns(
+                st.point(
+                    pl.concat_arr(
+                        plh3.cell_to_lng(pl.col("h3_cell")),
+                        plh3.cell_to_lat(pl.col("h3_cell")),
+                    )
+                )
+                .st.set_srid(4326)
+                .alias("h3_cell_lnglat")
+            )
+            .with_columns(
+                st.to_srid("point_lnglat", srid=4839)
+                .st.distance(st.to_srid("h3_cell_lnglat", srid=4839))
+                .alias("distance_to_cell"),
+            )
+            .group_by("h3_cell")
+            .agg(pl.all().sort_by("distance_to_cell").first())
+            .select("osm_id", "h3_cell")
+            .filter(
+                st.point(
+                    pl.concat_arr(
+                        plh3.cell_to_lng(pl.col("h3_cell")),
+                        plh3.cell_to_lat(pl.col("h3_cell")),
+                    )
+                )
+                .st.set_srid(4326)
+                .st.within(
+                    st.polygon(
+                        pl.lit(
+                            [self.geo_meta.get_convex_hull_coord_list(use_buffer=False)]
+                        )
+                    ).st.set_srid(4326)
+                ),
+            )
+            .collect()
+        )
 
 
 def create_walking_graph(
