@@ -38,28 +38,25 @@ def run_mlc_with_bags(
 def load_osm_cycling(
     city_name: str,
     geometry_vec: List[Tuple[float, float]],
-    geometry_vec_narrowed: List[Tuple[float, float]],
     reverse_edges: bool,
     archive_path: str,
     outpath: str,
     download: bool,
-) -> Tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]: ...
+) -> Tuple[pl.DataFrame, pl.DataFrame]: ...
 def load_osm_walking(
     city_name: str,
     geometry_vec: List[Tuple[float, float]],
-    geometry_vec_narrowed: List[Tuple[float, float]],
     archive_path: str,
     outpath: str,
     download: bool,
-) -> Tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]: ...
+) -> Tuple[pl.DataFrame, pl.DataFrame]: ...
 def load_osm_driving(
     city_name: str,
     geometry_vec: List[Tuple[float, float]],
-    geometry_vec_narrowed: List[Tuple[float, float]],
     archive_path: str,
     outpath: str,
     download: bool,
-) -> Tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]: ...
+) -> Tuple[pl.DataFrame, pl.DataFrame]: ...
 def download_osm_data(city_name: str, archive_path: str): ...
 def load_osm_pois(
     city_name: str,

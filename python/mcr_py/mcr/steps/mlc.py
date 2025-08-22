@@ -12,6 +12,12 @@ from mcr_py.mcr.steps.interface import Step
 from mcr_py.utils.logger import Timer
 
 
+class MLCStepError(Exception):
+    def __init__(self, node_id: int, *args) -> None:
+        self.node_id = node_id
+        super().__init__(*args)
+
+
 class MLCStep(Step):
     NAME = "mlc"
     PATH_TYPE = PathType.UNDEFINED
@@ -87,15 +93,21 @@ class MLCStep(Step):
                 if node_id in self.valid_starting_nodes
             }
 
-        bags = {
-            self.to_internal[node_id]: [
-                label.to_mlc_label(
-                    self.to_internal[node_id],
-                )
-                for label in labels
-            ]
-            for node_id, labels in bags.items()
-        }
+        try:
+            bags = {
+                self.to_internal[node_id]: [
+                    label.to_mlc_label(
+                        self.to_internal[node_id],
+                    )
+                    for label in labels
+                ]
+                for node_id, labels in bags.items()
+            }
+        except KeyError as e:
+            raise MLCStepError(
+                e.args[0],
+                f"Node {e.args[0]} not found in graph cache - aborting {self.NAME} step. Current number of Bags is {len(bags)}",
+            )
 
         return bags
 
