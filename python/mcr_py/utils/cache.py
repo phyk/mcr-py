@@ -9,7 +9,7 @@ from mcr_py.utils import storage
 templir = storage.get_tmp_path()
 
 
-def overwrite_tempdir(path):
+def overwrite_tempdir(path: str) -> None:
     """
     Overwrites the global temporary directory path.
 
@@ -30,8 +30,8 @@ def hash_df(df: pl.DataFrame) -> int:
     for c, t in df.schema.items():
         hasher.update(c.encode())
         hasher.update(str(t).encode())
-    for h in df.hash_rows():
-        hasher.update(h.to_bytes(64))
+    for h in df.hash_rows(42):
+        hasher.update(h.to_bytes(64, "big"))
     return int(hasher.hexdigest(), 16)
 
 
@@ -68,21 +68,21 @@ def combine_hashes(hashes: list[int]) -> int:
     )
 
 
-def cache_gdf(df: pl.DataFrame, hash: int, identifier: str):
+def cache_gdf(df: pl.DataFrame, hash_value: int, identifier: str) -> None:
     """
     Caches a DataFrame to a file using its hash and an identifier.
 
     :param df: pl.DataFrame - The DataFrame to cache.
-    :param hash: int - The hash of the DataFrame.
+    :param hash_value: int - The hash of the DataFrame.
     :param identifier: str - An identifier to include in the cached file name.
     """
     if not os.path.exists(templir):
         os.mkdir(templir)
-    path = os.path.join(templir, f"{identifier}_{hash}")
+    path = os.path.join(templir, f"{identifier}_{hash_value}")
     df.write_parquet(path)
 
 
-def read_gdf(hash: int, identifier: str) -> pl.DataFrame:
+def read_gdf(hash_value: int, identifier: str) -> pl.DataFrame:
     """
     Reads a cached DataFrame from a file using its hash and an identifier.
 
@@ -90,11 +90,11 @@ def read_gdf(hash: int, identifier: str) -> pl.DataFrame:
     :param identifier: str - An identifier to locate the cached file.
     :returns: pl.DataFrame - The read DataFrame.
     """
-    path = os.path.join(templir, f"{identifier}_{hash}")
+    path = os.path.join(templir, f"{identifier}_{hash_value}")
     return pl.read_parquet(path)
 
 
-def cache_entry_exists(hash: int, identifier: str) -> bool:
+def cache_entry_exists(hash_value: int, identifier: str) -> bool:
     """
     Checks if a cached entry exists for a given hash and identifier.
 
@@ -102,5 +102,5 @@ def cache_entry_exists(hash: int, identifier: str) -> bool:
     :param identifier: str - An identifier to check for the cached file.
     :returns: bool - True if the cached entry exists, False otherwise.
     """
-    path = os.path.join(templir, f"{identifier}_{hash}")
+    path = os.path.join(templir, f"{identifier}_{hash_value}")
     return os.path.exists(path)
