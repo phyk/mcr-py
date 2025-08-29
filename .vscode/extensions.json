@@ -2,7 +2,6 @@
     "recommendations": [
         "charliermarsh.ruff",
         "donjayamanne.python-extension-pack",
-        "eamodio.gitlens",
         "njpwerner.autodocstring",
         "kevinrose.vsc-python-indent",
         "mohsen1.prettify-json",

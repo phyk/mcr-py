@@ -1,42 +1,48 @@
-import pandas as pd
+import typing
 
-from mcr_py.utils import strtime
+import polars as pl
 
-PROFILE_MAX_TIME = strtime.str_time_to_seconds("48:00:00")
+import mcr_py.utils.strtime
+
+PROFILE_MAX_TIME = mcr_py.utils.strtime.str_time_to_seconds("48:00:00")
 
 
-def profile_calculation_worker(types: list[str], args: tuple[str, pd.DataFrame]):
+def profile_calculation_worker(
+    poi_types: list[str], args: tuple[str, pl.DataFrame]
+) -> typing.Union[None, tuple[str, list[tuple[int, int]]]]:
     name, group = args
-    profile = calculate_profile_for_group(group, types)
+    profile = calculate_profile_for_group(group, poi_types)
     if profile is not None:
         return name, profile
     return None
 
 
-def calculate_profile_for_group(group, types):
-    costs = group["cost"].unique()
-    costs.sort()
+def calculate_profile_for_group(
+    group: pl.DataFrame, poi_types: list[str]
+) -> list[tuple[int, int]]:
+    costs = group.get_column("cost").unique().sort().to_list()
 
     profile = []
 
     for cost in costs:
-        labels_for_cost = group[group["cost"] <= cost]
-        curr_time = next_larger_minute(labels_for_cost["time"].min())
-        while True:
-            labels_for_cost_and_time = labels_for_cost[labels_for_cost["time"] <= curr_time]
+        labels_for_cost = group.filter(pl.col("cost") <= cost)
 
-            all_reached = labels_for_cost_and_time[types].sum().min() != 0
-            curr_time += 60
+        labels_for_cost = labels_for_cost.lazy().sort(by=["time"], descending=False)
+        for poi_type in poi_types:
+            labels_for_cost = labels_for_cost.with_columns(
+                pl.col(poi_type).cast(pl.Int32).cum_sum()
+            )
+        labels_for_cost = labels_for_cost.filter(pl.all_horizontal(pl.col(*poi_types) > 0))
+        curr_time = labels_for_cost.collect().get_column("time").min()
+        if not isinstance(curr_time, int):
+            error_msg = "Time should always be an integer"
+            raise ValueError(error_msg)
+        if curr_time > PROFILE_MAX_TIME:
+            start_id_hex = group.get_column("start_id_hex").first()
+            error_msg = f"Time limit exceeded for hex id {start_id_hex} at cost {cost}"
+            raise ValueError(error_msg)
 
-            if all_reached:
-                profile.append((cost, curr_time))
-                break
-
-            if curr_time > PROFILE_MAX_TIME:
-                start_id_hex = group["start_id_hex"].iloc[0]
-                raise ValueError(
-                    f"Time limit exceeded for hex id {start_id_hex} at cost {cost}"
-                )
+        profile.append((cost, curr_time))
 
     return profile
 
@@ -45,13 +51,17 @@ def next_larger_minute(seconds_since_midnight: int) -> int:
     return (seconds_since_midnight // 60 + 1) * 60
 
 
-def build_profiles_df(profiles, start_time: int):
-    profiles = [
+def build_profiles_df(
+    profiles: dict[str, list[tuple[int, int]]], start_time: int
+) -> pl.DataFrame:
+    profiles_to_list = [
         (hex_id, cost, time) for hex_id, profile in profiles.items() for cost, time in profile
     ]
-    profiles_df = pd.DataFrame(profiles, columns=pd.Index(["hex_id", "cost", "time"]))
-    profiles_df["time"] = profiles_df["time"] - start_time
-    profiles_df = profiles_df.pivot(index="hex_id", columns="cost", values="time")
+    profiles_df = pl.DataFrame(
+        profiles_to_list, schema={"hex_id": pl.String, "cost": pl.Float64, "time": pl.Int64}
+    ).with_columns(pl.col("time") - pl.lit(start_time))
+
+    profiles_df = profiles_df.pivot(index="hex_id", on="cost", values="time")
 
     profiles_df.columns = [f"cost_{c}" for c in profiles_df.columns]
 
@@ -60,31 +70,29 @@ def build_profiles_df(profiles, start_time: int):
     return profiles_df
 
 
-def fill_columns_by_left(profiles_df: pd.DataFrame) -> pd.DataFrame:
-    # fill first cost in case it is not possible to reach without any cost (e.g. car, that can't stop for some time)
-    profiles_df["cost_0"] = profiles_df["cost_0"].fillna(float("inf"))
-    for c in profiles_df.columns:
-        if c == "cost_0":
-            continue
-        # previous_column = profiles_df.columns[profiles_df.columns.get_loc(c) - 1]
-        # profiles_df[c] = profiles_df[c].fillna(profiles_df[previous_column])
-    profiles_df = profiles_df.astype(float)
+def fill_columns_by_left(profiles_df: pl.DataFrame) -> pl.DataFrame:
+    if "cost_0" not in profiles_df.columns:
+        # fill first cost in case it is not possible to reach without any cost (e.g. car, that can't stop for some time)
+        profiles_df = profiles_df.with_columns(cost_0=pl.lit(float("inf")))
+    else:
+        profiles_df = profiles_df.with_columns(pl.col("cost_0").fill_null(float("inf")))
+
+    profiles_df = profiles_df.transpose().fill_null(strategy="forward").transpose()
     return profiles_df
 
 
-def add_any_column_is_different_column(profiles_df: pd.DataFrame) -> pd.DataFrame:
-    profiles_df["any_column_different"] = False
-    for c in profiles_df.columns:
-        if not c.startswith("cost_") or c == "cost_0":
-            continue
-        # previous_column = profiles_df.columns[profiles_df.columns.get_loc(c) - 1]
-        # profiles_df["any_column_different"] = profiles_df["any_column_different"] | (
-        #     profiles_df[c] != profiles_df[previous_column]
-        # )
+def add_any_column_is_different_column(profiles_df: pl.DataFrame) -> pl.DataFrame:
+    cost_rows = [c for c in profiles_df.columns if c.startswith("cost_")]
+    cost_rows.sort()
+    profiles_df = profiles_df.with_columns(
+        any_column_different=pl.any_horizontal(
+            pl.col(*cost_rows[:-1]) != pl.col(*cost_rows[1:])
+        )
+    )  # noqa: FBT003
     return profiles_df
 
 
-def add_required_cost_for_optimum_column(profiles_df: pd.DataFrame) -> pd.DataFrame:
+def add_required_cost_for_optimum_column(profiles_df: pl.DataFrame) -> pl.DataFrame:
     cost_rows = [c for c in profiles_df.columns if c.startswith("cost_")]
 
     def calculate_required_cost_for_optimal_for_row(row):
@@ -94,13 +102,13 @@ def add_required_cost_for_optimum_column(profiles_df: pd.DataFrame) -> pd.DataFr
                 return int(c[len("cost_") :])
         raise ValueError("No optimal cost found")
 
-    profiles_df["required_cost_for_optimal"] = profiles_df.apply(
-        calculate_required_cost_for_optimal_for_row, axis=1
-    )
+    # profiles_df["required_cost_for_optimal"] = profiles_df.apply(
+    #     calculate_required_cost_for_optimal_for_row, axis=1
+    # )
     return profiles_df
 
 
-def add_optimum_column(profiles_df: pd.DataFrame) -> pd.DataFrame:
+def add_optimum_column(profiles_df: pl.DataFrame) -> pl.DataFrame:
     cost_rows = [c for c in profiles_df.columns if c.startswith("cost_")]
 
     def calculate_optimal_for_row(row):
@@ -110,5 +118,5 @@ def add_optimum_column(profiles_df: pd.DataFrame) -> pd.DataFrame:
                 return row[c]
         raise ValueError("No optimal cost found")
 
-    profiles_df["optimal"] = profiles_df.apply(calculate_optimal_for_row, axis=1)
+    # profiles_df["optimal"] = profiles_df.apply(calculate_optimal_for_row, axis=1)
     return profiles_df
