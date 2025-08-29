@@ -1,10 +1,10 @@
-line-length = 95
-indent-width = 4
-format.quote-style = "double"
-format.indent-style = "space"
+line-length=95
+indent-width=4
+format.quote-style="double"
+format.indent-style="space"
 
 [lint]
-select = [
+select=[
     "A",
     "ANN",
     "B",
@@ -25,11 +25,11 @@ select = [
     "S",
     "SIM",
     "T20",
-    "YTT"
+    "YTT",
 ]
-ignore = ["COM812"]
+ignore=["COM812"]
 
-fixable = ["ALL"]
+fixable=["ALL"]
 
 [lint.per-file-ignores]
-"tests/**.py" = ["S101"]
+"test/**.py"=["S101"]
