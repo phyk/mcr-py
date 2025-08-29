@@ -1,6 +1,5 @@
 import h3
 import pandas as pd
-from scipy.spatial import cKDTree
 
 
 class H3OSMLocationMapping:
@@ -39,16 +38,18 @@ def get_location_mappings_for_cells(
     location_mappings: list[H3OSMLocationMapping] = []
 
     osm_nodes_array = osm_nodes_df[["lat", "lon"]].to_numpy()
-    kdtree = cKDTree(osm_nodes_array)
+    # kdtree = cKDTree(osm_nodes_array)
 
     invalid_h3_cells: list[str] = []
 
     cell_centers = [h3.cell_to_latlng(h3_cell) for h3_cell in h3_cells]
-    all_distances, all_indices = kdtree.query(cell_centers, k=max_tries)
+    all_distances, all_indices = ([], [])  # kdtree.query(cell_centers, k=max_tries)
 
     resolution = h3.get_resolution(h3_cells[0])
 
-    for h3_cell, (distances, indices) in zip(h3_cells, zip(all_distances, all_indices)):
+    for h3_cell, (distances, indices) in zip(
+        h3_cells, zip(all_distances, all_indices, strict=False), strict=False
+    ):
         tries = 0
         distance, index = distances[tries], indices[tries]
         while tries < max_tries:

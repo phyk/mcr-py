@@ -3,10 +3,10 @@ from typing import Generic, Tuple
 
 from typing_extensions import Any, Self
 
-from mcr_py.utils.key import S, T
-from mcr_py.utils.logger import rlog
 from mcr_py.raptor.bag import Bag, L, RouteBag
 from mcr_py.raptor.data import DataQuerier
+from mcr_py.utils.key import S, T
+from mcr_py.utils.logger import rlog
 
 
 class McRaptorSingle(Generic[L, S, T]):

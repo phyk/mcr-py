@@ -59,9 +59,7 @@ def remove_circular_trips(
         pl.col("stop_id").is_duplicated().over("trip_id").alias("duplicated")
     )
     stop_times_df = stop_times_df.filter(~pl.col("duplicated").any().over("trip_id"))
-    trips_df = trips_df.filter(
-        pl.col("trip_id").is_in(stop_times_df.get_column("trip_id"))
-    )
+    trips_df = trips_df.filter(pl.col("trip_id").is_in(stop_times_df.get_column("trip_id")))
     return trips_df, stop_times_df
 
 
@@ -107,9 +105,7 @@ def split_routes_by_direction(trips_df: pl.DataFrame) -> pl.DataFrame:
         return trips_df
 
 
-def create_paths_df(
-    trips_df: pl.DataFrame, stop_times_df: pl.DataFrame
-) -> pl.DataFrame:
+def create_paths_df(trips_df: pl.DataFrame, stop_times_df: pl.DataFrame) -> pl.DataFrame:
     """
     Creates a DataFrame containing route_id, trip_id, and path, where path is a string
     representation of the stops on the route in order.
@@ -175,9 +171,7 @@ def insert_new_routes(routes_df: pl.DataFrame, trips_df: pl.DataFrame) -> pl.Dat
     """
     return (
         routes_df.join(
-            trips_df.select(
-                pl.col("route_id").alias("new_route_id"), pl.col("old_route_id")
-            ),
+            trips_df.select(pl.col("route_id").alias("new_route_id"), pl.col("old_route_id")),
             left_on="route_id",
             right_on="old_route_id",
             how="left",
@@ -187,9 +181,7 @@ def insert_new_routes(routes_df: pl.DataFrame, trips_df: pl.DataFrame) -> pl.Dat
     )
 
 
-def add_first_stop_info(
-    trips_df: pl.DataFrame, stop_times_df: pl.DataFrame
-) -> pl.DataFrame:
+def add_first_stop_info(trips_df: pl.DataFrame, stop_times_df: pl.DataFrame) -> pl.DataFrame:
     """
     Adds information about the first stop for each trip to the trips DataFrame.
 
@@ -213,9 +205,7 @@ def add_first_stop_info(
     return trips_df.join(first_stop_times, on="trip_id", how="left")
 
 
-def remove_unused_stops(
-    stop_times_df: pl.DataFrame, stops_df: pl.DataFrame
-) -> pl.DataFrame:
+def remove_unused_stops(stop_times_df: pl.DataFrame, stops_df: pl.DataFrame) -> pl.DataFrame:
     """
     Removes stops that are not used in the stop times DataFrame.
 
@@ -223,9 +213,7 @@ def remove_unused_stops(
     :param stops_df: pl.DataFrame - The DataFrame containing stops information.
     :returns: pl.DataFrame - The updated stops DataFrame with unused stops removed.
     """
-    stops_df = stops_df.filter(
-        pl.col("stop_id").is_in(stop_times_df.get_column("stop_id"))
-    )
+    stops_df = stops_df.filter(pl.col("stop_id").is_in(stop_times_df.get_column("stop_id")))
     return stops_df
 
 

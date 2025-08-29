@@ -1,10 +1,10 @@
-import pytest
 import os
-import polars as pl
-from unittest.mock import patch
-import tempfile
-import mcr_py.utils.storage
 import pickle
+from unittest.mock import patch
+
+import mcr_py.utils.storage
+import polars as pl
+import pytest
 
 
 @pytest.fixture(scope="session")

@@ -107,21 +107,15 @@ class OSMData:
             edges = pl.read_parquet(edges_path)
 
         nodes, edges, rxgraph = graph.create_rx_graph(nodes, edges)
-        nodes, edges, rxgraph = graph.crop_graph_to_largest_component(
-            rxgraph, nodes, edges
-        )
+        nodes, edges, rxgraph = graph.crop_graph_to_largest_component(rxgraph, nodes, edges)
 
         return nodes, edges, rxgraph
 
     def read_network(
         self, network_type: str, renewed: RedownloadMode
     ) -> tuple[pl.DataFrame, pl.DataFrame, rx.PyDiGraph]:
-        nodes_path = (
-            f"{self.cache_path}/{self.city_id.lower()}_{network_type}_nodes.parquet"
-        )
-        edges_path = (
-            f"{self.cache_path}/{self.city_id.lower()}_{network_type}_edges.parquet"
-        )
+        nodes_path = f"{self.cache_path}/{self.city_id.lower()}_{network_type}_nodes.parquet"
+        edges_path = f"{self.cache_path}/{self.city_id.lower()}_{network_type}_edges.parquet"
         if (
             renewed != RedownloadMode.REUSE
             or not os.path.exists(nodes_path)
@@ -146,17 +140,13 @@ class OSMData:
                         download=renewed == RedownloadMode.REDOWNLOAD,
                     )
                 case _:
-                    raise ValueError(
-                        "{} is not a valid network type".format(network_type)
-                    )
+                    raise ValueError("{} is not a valid network type".format(network_type))
         else:
             nodes = pl.read_parquet(nodes_path)
             edges = pl.read_parquet(edges_path)
 
         nodes, edges, rxgraph = graph.create_rx_graph(nodes, edges)
-        nodes, edges, rxgraph = graph.crop_graph_to_largest_component(
-            rxgraph, nodes, edges
-        )
+        nodes, edges, rxgraph = graph.crop_graph_to_largest_component(rxgraph, nodes, edges)
 
         return nodes, edges, rxgraph
 
@@ -185,9 +175,7 @@ class OSMData:
                     self.resolution,
                     return_dtype=pl.String,
                 ).alias("h3_cell"),
-                st.point(pl.concat_arr("long", "lat"))
-                .st.set_srid(4326)
-                .alias("point_lnglat"),
+                st.point(pl.concat_arr("long", "lat")).st.set_srid(4326).alias("point_lnglat"),
             )
             .with_columns(
                 st.point(
@@ -217,9 +205,7 @@ class OSMData:
                 .st.set_srid(4326)
                 .st.within(
                     st.polygon(
-                        pl.lit(
-                            [self.geo_meta.get_convex_hull_coord_list(use_buffer=False)]
-                        )
+                        pl.lit([self.geo_meta.get_convex_hull_coord_list(use_buffer=False)])
                     ).st.set_srid(4326)
                 ),
             )
@@ -247,9 +233,7 @@ def create_multi_modal_graph(
     avg_driving_speed: float,
 ) -> Tuple[pl.DataFrame, pl.DataFrame]:
     # bike start
-    driving_osm_nodes = prefix_id(
-        driving_osm_nodes, DRIVING_PREFIX, "osm_id", save_old=True
-    )
+    driving_osm_nodes = prefix_id(driving_osm_nodes, DRIVING_PREFIX, "osm_id", save_old=True)
     driving_osm_edges = prefix_id(driving_osm_edges, DRIVING_PREFIX, "source_osm")
     driving_osm_edges = prefix_id(driving_osm_edges, DRIVING_PREFIX, "dest_osm")
 
@@ -260,9 +244,7 @@ def create_multi_modal_graph(
     # bike end
 
     # walking start
-    walking_osm_nodes = prefix_id(
-        walking_osm_nodes, WALKING_PREFIX, "osm_id", save_old=True
-    )
+    walking_osm_nodes = prefix_id(walking_osm_nodes, WALKING_PREFIX, "osm_id", save_old=True)
     walking_osm_edges = prefix_id(walking_osm_edges, WALKING_PREFIX, "source_osm")
     walking_osm_edges = prefix_id(walking_osm_edges, WALKING_PREFIX, "dest_osm")
 
@@ -271,9 +253,7 @@ def create_multi_modal_graph(
 
     transfer_edges = create_transfer_edges(walking_osm_nodes, driving_osm_nodes)
 
-    multi_modal_edges = combine_edges(
-        walking_osm_edges, driving_osm_edges, transfer_edges
-    )
+    multi_modal_edges = combine_edges(walking_osm_edges, driving_osm_edges, transfer_edges)
     multi_modal_nodes = pl.concat([walking_osm_nodes, driving_osm_nodes])
     return multi_modal_nodes, multi_modal_edges
 
@@ -322,9 +302,7 @@ def reset_node_ids(df: pl.DataFrame, id_df: pl.DataFrame) -> pl.DataFrame:
     )
 
 
-def prefix_id(
-    gdf: pl.DataFrame, prefix: str, column: str, save_old=False
-) -> pl.DataFrame:
+def prefix_id(gdf: pl.DataFrame, prefix: str, column: str, save_old=False) -> pl.DataFrame:
     if save_old:
         gdf = gdf.with_columns(pl.col(column).alias(f"{column}_old"))
     gdf = gdf.select(prefix + pl.col(column).cast(pl.String))
@@ -333,9 +311,7 @@ def prefix_id(
 
 
 def create_transfer_edges(walking_nodes: pl.DataFrame, driving_nodes: pl.DataFrame):
-    intersection_node_ids = walking_nodes.select(
-        pl.col("osm_id").alias("walking_id")
-    ).join(
+    intersection_node_ids = walking_nodes.select(pl.col("osm_id").alias("walking_id")).join(
         driving_nodes.select(pl.col("osm_id").alias("driving_id")),
         left_on="walking_id",
         right_on="driving_id",
@@ -362,8 +338,7 @@ def add_weights(edges: pl.DataFrame, columns: list[str], hidden=False) -> pl.Dat
         ).alias(col_name)
     edges = edges.with_columns(
         (
-            expr
-            + pl.lit(mid_seperator + ",".join(["0"] * (n_padding - len(columns))) + ")")
+            expr + pl.lit(mid_seperator + ",".join(["0"] * (n_padding - len(columns))) + ")")
         ).alias(col_name)
     )
 

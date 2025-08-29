@@ -2,15 +2,15 @@ from typing import Generic, Optional
 
 from typing_extensions import Any, Self
 
-from mcr_py.utils import strtime
-from mcr_py.utils.key import S, T
-from mcr_py.utils.logger import rlog
 from mcr_py.raptor.bag import Bag, L, RouteBag
 from mcr_py.raptor.data import ExpandedDataQuerier
 from mcr_py.tracer.tracer import (
     TracerMap,
     TraceStart,
 )
+from mcr_py.utils import strtime
+from mcr_py.utils.key import S, T
+from mcr_py.utils.logger import rlog
 
 
 class McRaptor(Generic[L, S, T]):
@@ -62,9 +62,7 @@ class McRaptor(Generic[L, S, T]):
         """
         start_time = strtime.str_time_to_seconds(start_time_str)
 
-        b_i, b_best, marked_stops, tracers_map = self.init_vars(
-            start_stop_id, start_time
-        )
+        b_i, b_best, marked_stops, tracers_map = self.init_vars(start_stop_id, start_time)
 
         k = 0
         for k in range(1, self.max_transfers + 1):
@@ -259,9 +257,7 @@ class McRaptor(Generic[L, S, T]):
         """
         additional_marked_stops = set()
         for stop_id in marked_stops:
-            for nearby_stop_id, walking_time in self.dq.get_footpaths()[
-                stop_id
-            ].items():
+            for nearby_stop_id, walking_time in self.dq.get_footpaths()[stop_id].items():
                 start_bag = b_i[k][stop_id]
                 footpath_bag = start_bag.create_footpath_bag(
                     walking_time,

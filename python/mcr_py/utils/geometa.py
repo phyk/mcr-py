@@ -15,9 +15,7 @@ from shapely.geometry import MultiPolygon, Polygon
 from mcr_py.utils import cache
 
 
-def convert_to_crs(
-    geometry: shapely.geometry.base.BaseGeometry, crs: str, crs_target: str
-):
+def convert_to_crs(geometry: shapely.geometry.base.BaseGeometry, crs: str, crs_target: str):
     """
     Convert the geometry from one coordinate reference system (CRS) to another.
 
@@ -88,9 +86,7 @@ class GeoMeta:
         else:
             return shapely.from_wkt(self.unbuffered_boundary_wkt).bounds
 
-    def get_convex_hull_coord_list(
-        self, use_buffer: bool = True
-    ) -> list[tuple[float, float]]:
+    def get_convex_hull_coord_list(self, use_buffer: bool = True) -> list[tuple[float, float]]:
         """
         Get the coordinates of the boundary as a list.
 
@@ -102,9 +98,7 @@ class GeoMeta:
             return list(shapely.from_wkt(self.boundary_wkt).convex_hull.boundary.coords)
         else:
             return list(
-                shapely.from_wkt(
-                    self.unbuffered_boundary_wkt
-                ).convex_hull.boundary.coords
+                shapely.from_wkt(self.unbuffered_boundary_wkt).convex_hull.boundary.coords
             )
 
     def get_bounding_box_as_coord_list(
@@ -159,9 +153,7 @@ class GeoMeta:
         with open(path, "w") as f:
             f.write(to_json(self))
 
-    def crop_gdf(
-        self, locations: pl.DataFrame, use_buffer: bool = True
-    ) -> pl.DataFrame:
+    def crop_gdf(self, locations: pl.DataFrame, use_buffer: bool = True) -> pl.DataFrame:
         """
         Crop a GeoDataFrame to the boundaries defined in the GeoMeta object.
 

@@ -3,7 +3,9 @@ __pycache__
 reached.csv
 stop_ids_near_nodes.csv
 target
-/.vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 mlc
 osmtools
 data

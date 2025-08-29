@@ -1,18 +1,16 @@
 import os
-from mcr_py.utils import storage
-import requests
+
 import polars as pl
+import requests
 from rich import print
 from rich.console import Console
 from rich.table import Table
 from typing_extensions import Any
 
-from mcr_py.utils import key
+from mcr_py.utils import key, storage
 from mcr_py.utils.logger import Timed, rlog
 
-CATALOG_PATH = storage.get_tmp_path(
-    key.TMP_GTFS_DIR_NAME, key.TMP_GTFS_CATALOG_FILE_NAME
-)
+CATALOG_PATH = storage.get_tmp_path(key.TMP_GTFS_DIR_NAME, key.TMP_GTFS_CATALOG_FILE_NAME)
 
 COL_ID = "mdb_source_id"
 COL_DATA_TYPE = "data_type"
@@ -110,17 +108,13 @@ def filter_catalog(
     :returns: pl.DataFrame - The filtered catalog DataFrame.
     """
     if country_code:
-        catalog = catalog.filter(
-            pl.col(COL_COUNTRY_CODE).str.contains(f"(?i){country_code}")
-        )
+        catalog = catalog.filter(pl.col(COL_COUNTRY_CODE).str.contains(f"(?i){country_code}"))
     if subdivision_name:
         catalog = catalog.filter(
             pl.col(COL_SUBDIVISION_NAME).str.contains(f"(?i){subdivision_name}")
         )
     if municipality:
-        catalog = catalog.filter(
-            pl.col(COL_MUNICIPALITY).str.contains(f"(?i){municipality}")
-        )
+        catalog = catalog.filter(pl.col(COL_MUNICIPALITY).str.contains(f"(?i){municipality}"))
     return catalog
 
 

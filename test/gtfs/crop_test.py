@@ -1,14 +1,15 @@
 import os
-import pytest
-import polars as pl
 from datetime import datetime
 from unittest.mock import patch
+
+import polars as pl
+import pytest
 from mcr_py.gtfs.crop import (
     crop,
-    reconcile_trips_and_stop_times_with_stops,
     crop_trips,
     reconcile_stop_times_with_trips,
     reconcile_stops_with_stop_times,
+    reconcile_trips_and_stop_times_with_stops,
 )
 
 
@@ -96,9 +97,7 @@ def test_crop_trips(mock_data):
     time_start = datetime(2023, 1, 1, 0, 0)
     time_end = datetime(2023, 12, 31, 23, 59)
 
-    cropped_trips, cropped_calendar = crop_trips(
-        trips_df, calendar_df, time_start, time_end
-    )
+    cropped_trips, cropped_calendar = crop_trips(trips_df, calendar_df, time_start, time_end)
 
     assert len(cropped_trips) == 3  # Expecting all trips to be within the time range
     assert len(cropped_calendar) == 2  # Expecting both services to be returned

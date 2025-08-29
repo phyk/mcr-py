@@ -1,8 +1,8 @@
 import folium
 import polars as pl
 
-from mcr_py.utils import strtime
 from mcr_py.tracer.tracer import Trace, TraceFootpath, TraceStart, TraceTrip
+from mcr_py.utils import strtime
 
 
 def add_tracer_list_to_folium_map(

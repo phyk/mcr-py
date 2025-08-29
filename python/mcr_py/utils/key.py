@@ -63,15 +63,11 @@ OSM_UPPER_COMMAND_NAME = "osm"
 OSM_LIST_COMMAND_NAME = "list"
 OSM_PREP_COMMAND_NAME = "prep"
 
-COMPLETE_GTFS_CLEAN_COMMAND_NAME = (
-    f"{GTFS_UPPER_COMMAND_NAME} {GTFS_CLEAN_COMMAND_NAME}"
-)
+COMPLETE_GTFS_CLEAN_COMMAND_NAME = f"{GTFS_UPPER_COMMAND_NAME} {GTFS_CLEAN_COMMAND_NAME}"
 
 
 # paths
-TMP_DIR_LOCATION = os.path.expanduser(
-    os.environ.get("MCR_PY_TMP_DIR", tempfile.gettempdir())
-)
+TMP_DIR_LOCATION = os.path.expanduser(os.environ.get("MCR_PY_TMP_DIR", tempfile.gettempdir()))
 ROOT_TMP_DIR_NAME = "mcr-py"
 TMP_OSM_DIR_NAME = "osm"
 TMP_GTFS_DIR_NAME = "gtfs"

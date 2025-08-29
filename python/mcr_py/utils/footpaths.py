@@ -1,12 +1,12 @@
 from enum import Enum
 from typing import Any
+
 import polars as pl
 
-
-from mcr_py.utils import storage, key
-from mcr_py.utils.logger import Timed
-from mcr_py.osm import graph
 from mcr_py import add_nearest_node_to_df
+from mcr_py.osm import graph
+from mcr_py.utils import key, storage
+from mcr_py.utils.logger import Timed
 
 
 class GenerationMethod(Enum):
@@ -46,7 +46,7 @@ def generate(
                 pl.col(key.STOP_LON_KEY).alias("long"),
             ),
             nodes,
-            "EPSG:4839",
+            4839,
         )
         stops_df = stops_df.join(
             nodes.select("osm_id", "rx_node_id"),

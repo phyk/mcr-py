@@ -1,8 +1,9 @@
 import os
 import zipfile
-import pytest
+
 import polars as pl
-from mcr_py.gtfs.archive import read_dfs, write_dfs, get_gtfs_filename
+import pytest
+from mcr_py.gtfs.archive import get_gtfs_filename, read_dfs, write_dfs
 
 
 @pytest.fixture

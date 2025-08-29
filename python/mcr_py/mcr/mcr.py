@@ -1,10 +1,8 @@
 from typing import Any, Optional
 
-from mcr_py.utils import strtime
 import pandas as pd
 from typing_extensions import Sequence
 
-from mcr_py.utils import storage
 from mcr_py.mcr.bag import IntermediateBags
 from mcr_py.mcr.config import MCRConfig
 from mcr_py.mcr.label import (
@@ -14,6 +12,7 @@ from mcr_py.mcr.label import (
 from mcr_py.mcr.output import OutputFormat
 from mcr_py.mcr.path import PathManager
 from mcr_py.mcr.steps.interface import Step, StepBuilder
+from mcr_py.utils import storage, strtime
 
 StepBuilderMatrix = Sequence[Sequence[StepBuilder]]
 StepMatrix = list[list[Step]]
@@ -52,9 +51,7 @@ class MCR:
             for step_builders in step_builders
         ]
 
-    def run(
-        self, start_node_id: int, start_time: str, max_transfers: int, output_path: str
-    ):
+    def run(self, start_node_id: int, start_time: str, max_transfers: int, output_path: str):
         start_time_in_seconds = strtime.str_time_to_seconds(start_time)
 
         bags_i: dict[int, IntermediateBags] = {}
@@ -84,7 +81,7 @@ class MCR:
                     result_bags.append(step.run(repeated_bags, offset))
                 repeated_bags = self.merge_bags(*result_bags)
                 if len(repeated_bags) == 0:
-                    self.logger.warn(f"No bags found in iteration {i} - stopping")
+                    self.logger.warning(f"No bags found in iteration {i} - stopping")
                     stop_early = True
                     break
 
@@ -95,9 +92,7 @@ class MCR:
         with self.timer.info("Saving bags"):
             self.save_bags(bags_i, output_path)
 
-    def create_start_bags(
-        self, start_node_id: int, start_time: int
-    ) -> IntermediateBags:
+    def create_start_bags(self, start_node_id: int, start_time: int) -> IntermediateBags:
         return {
             start_node_id: [
                 IntermediateLabel(
@@ -140,12 +135,10 @@ class MCR:
                 for bag in bags.values()
                 for label in bag
             ],
-            columns=["osm_node_id", "time", "cost", "n_transfers"],
+            columns=pd.Index(["osm_node_id", "time", "cost", "n_transfers"]),
         )
 
-        labels["human_readable_time"] = labels["time"].apply(
-            strtime.seconds_to_str_time
-        )
+        labels["human_readable_time"] = labels["time"].apply(strtime.seconds_to_str_time)
 
         labels.to_feather(output_path)
 

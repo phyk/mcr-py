@@ -1,36 +1,19 @@
-import os
-from multiprocessing import Pool
+import pathlib
 
-import pandas as pd
-
-from mcr_py.utils import key
+import polars as pl
 
 
-def process_file(path, nodes):
-    filename, _ = os.path.splitext(os.path.basename(path))
+def read_labels_for_nodes(directory: str, nodes: pl.DataFrame) -> pl.DataFrame:
+    base_path = pathlib.Path(directory)
 
-    labels = pd.read_feather(path)
-    labels = labels[labels["osm_node_id"].isin(nodes)]
-    labels["hex_id"] = filename
-    return labels
-
-
-def read_labels_for_nodes(dir: str, nodes: pd.Series):
-    all_labels = []
-
-    with Pool(processes=key.DEFAULT_N_PROCESSES) as pool:
-        files = [
-            entry.path
-            for entry in os.scandir(dir)
-            if entry.is_file() and entry.name.endswith(".feather")
-        ]
-        label_dfs = pool.starmap(process_file, [(file, nodes) for file in files])
-
-    all_labels.extend(label_dfs)
-
-    labels = pd.concat(all_labels)
-    labels = labels.rename(
-        columns={"osm_node_id": "target_id_osm", "hex_id": "start_id_hex"}
+    labels = (
+        pl.scan_ipc(base_path.name + "*.feather", include_file_paths="start_id_hex")
+        .join(nodes.lazy(), on="osm_node_id", how="inner")
+        .with_columns(
+            pl.col("start_id_hex").str.split("/").list.last().str.split(".").list.first(),
+            pl.col("osm_node_id").alias("target_id_osm"),
+        )
+        .select("start_id_hex", "target_id_osm")
     )
 
-    return labels
+    return labels.collect()

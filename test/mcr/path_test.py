@@ -1,5 +1,4 @@
 import pytest
-
 from mcr_py.mcr.label import IntermediateLabel
 from mcr_py.mcr.path import GTFSPath, Path, PathManager, PathType
 
@@ -56,9 +55,7 @@ def test_reconstruct_and_translate_path_for_label(path_manager: PathManager) -> 
         PathType.PUBLIC_TRANSPORT: {},
     }
 
-    translated_path = path_manager.reconstruct_and_translate_path_for_label(
-        il, translator_map
-    )
+    translated_path = path_manager.reconstruct_and_translate_path_for_label(il, translator_map)
 
     assert len(translated_path) == 2
     assert isinstance(translated_path[0], Path)

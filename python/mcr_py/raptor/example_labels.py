@@ -1,9 +1,7 @@
 from typing import Optional
 
-from typing_extensions import Self
-
-from mcr_py.utils import strtime
 from mcr_py.raptor import bag
+from mcr_py.utils import strtime
 
 
 class ArrivalTimeLabel(bag.TraceLabel):
@@ -21,7 +19,7 @@ class ArrivalTimeLabel(bag.TraceLabel):
         """
         super().__init__(time, stop)
 
-    def strictly_dominates(self, other: Self) -> bool:
+    def strictly_dominates(self, other: bag.BaseLabel) -> bool:
         """
         Determines if this ArrivalTimeLabel strictly dominates another label based on arrival time.
 
@@ -98,7 +96,7 @@ class ActivityDurationLabel(bag.TraceLabel):
         """
         return f"Label({self.arrival_time}, t={self.travel_time}, w={self.walking_time}, wait={self.waiting_time})"
 
-    def strictly_dominates(self, other: Self) -> bool:
+    def strictly_dominates(self, other: bag.BaseLabel) -> bool:
         """
         Determines if this ActivityDurationLabel strictly dominates another label based on arrival time and durations.
 
@@ -107,9 +105,9 @@ class ActivityDurationLabel(bag.TraceLabel):
         """
         return (
             self.arrival_time <= other.arrival_time
-            and self.travel_time <= other.travel_time
-            and self.walking_time <= other.walking_time
-            and self.waiting_time <= other.waiting_time
+            # and self.travel_time <= other.travel_time
+            # and self.walking_time <= other.walking_time
+            # and self.waiting_time <= other.waiting_time
         )
 
     def update_along_trip(self, arrival_time: int, stop_id: str, trip_id: str):

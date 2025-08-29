@@ -1,17 +1,15 @@
+import os.path
 import shutil
 
-from mcr_py.utils import strtime
-import os.path
 import polars as pl
-
 from mcr_py.command.raptor import raptor
-from mcr_py.utils import storage
-from mcr_py.utils.output import enrich_raptor_trace_results
 from mcr_py.tracer.tracer import (
     EnrichedTraceFootpath,
     EnrichedTraceStart,
     EnrichedTraceTrip,
 )
+from mcr_py.utils import storage, strtime
+from mcr_py.utils.output import enrich_raptor_trace_results
 
 NESSELRODE_STR_STOP_ID = "818"
 EHRENFELD_BF_STOP_ID = "835"
@@ -49,9 +47,9 @@ def test_raptor(testdata_path: str):
     # all stops are reachable
     assert len(arrival_times.filter(pl.col("arrival_time") == "--:--:--")) == 0
     assert (
-        arrival_times.row(
-            by_predicate=pl.col("stop_id") == EHRENFELD_BF_STOP_ID, named=True
-        )["arrival_time"]
+        arrival_times.row(by_predicate=pl.col("stop_id") == EHRENFELD_BF_STOP_ID, named=True)[
+            "arrival_time"
+        ]
         == "15:27:27"
     )
 
@@ -62,9 +60,7 @@ def test_raptor(testdata_path: str):
     t13_trace = tracers[2]
     footpath_trace = tracers[3]
 
-    assert isinstance(
-        start_trace, EnrichedTraceStart
-    ), f"type: {type(start_trace).__name__}"
+    assert isinstance(start_trace, EnrichedTraceStart), f"type: {type(start_trace).__name__}"
     assert start_trace.start_stop_id == NESSELRODE_STR_STOP_ID
     assert start_trace.start_time == strtime.str_time_to_seconds("15:00:00")
 

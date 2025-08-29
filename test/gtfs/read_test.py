@@ -1,13 +1,14 @@
-import pytest
 from unittest.mock import patch
+
 import polars as pl
-from mcr_py.utils import key
+import pytest
 from mcr_py.gtfs.read import (
-    print_stops,
+    format_value,
     get_stops_df,
     print_dataframe,
-    format_value,
+    print_stops,
 )  # Replace `your_module` with the actual module name
+from mcr_py.utils import key
 
 # Sample DataFrame for testing
 sample_df = pl.DataFrame(

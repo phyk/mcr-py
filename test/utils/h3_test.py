@@ -1,10 +1,11 @@
-import polars as pl
-import folium
 from unittest.mock import patch
+
+import folium
+import polars as pl
 from mcr_py.utils.h3 import (
     add_h3_cell_id_to_df,
-    plot_h3_cells_discrete_colors_on_folium,
     add_legend_to_map,
+    plot_h3_cells_discrete_colors_on_folium,
     plot_h3_cells_on_folium,
 )
 
@@ -70,8 +71,6 @@ def test_plot_h3_cells_on_folium_with_popup_callback():
         return f"Custom popup: {value}"
 
     with patch("folium.Polygon") as mock_polygon:
-        plot_h3_cells_on_folium(
-            h3_cells, folium_map, popup_callback=mock_popup_callback
-        )
+        plot_h3_cells_on_folium(h3_cells, folium_map, popup_callback=mock_popup_callback)
         mock_polygon.assert_called_once()
         assert folium_map._children

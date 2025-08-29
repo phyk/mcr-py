@@ -1,16 +1,17 @@
-import pytest
-import polars as pl
 from unittest.mock import patch
-from mcr_py.utils import key
+
+import polars as pl
+import pytest
 from mcr_py.tracer.tracer import (
-    TraceStart,
-    TraceTrip,
-    TraceFootpath,
+    EnrichedTraceFootpath,
     EnrichedTraceStart,
     EnrichedTraceTrip,
-    EnrichedTraceFootpath,
+    TraceFootpath,
     TracerMap,
+    TraceStart,
+    TraceTrip,
 )
+from mcr_py.utils import key
 from mcr_py.utils.output import TraceEnricher, enrich_raptor_trace_results
 
 # Sample data for testing

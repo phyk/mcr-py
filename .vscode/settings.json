@@ -1,0 +1,45 @@
+{
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": null,
+    "notebook.formatOnSave.enabled": true,
+    "evenBetterToml.formatter.allowedBlankLines": 2,
+    "evenBetterToml.formatter.arrayAutoCollapse": true,
+    "evenBetterToml.formatter.arrayAutoExpand": true,
+    "evenBetterToml.formatter.columnWidth": 95,
+    "evenBetterToml.formatter.compactEntries": true,
+    "evenBetterToml.formatter.reorderArrays": true,
+    "evenBetterToml.formatter.trailingNewline": true,
+    "git.blame.editorDecoration.enabled": true,
+    "yaml.format.printWidth": 95,
+    "[json]": {
+        "editor.defaultFormatter": "mohsen1.prettify-json"
+    },
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+        }
+    },
+    "[toml]": {
+        "editor.defaultFormatter": "tamasfe.even-better-toml"
+    },
+    "cSpell.customDictionaries": {
+        "custom-dictionary-workspace": {
+            "name": "custom-dictionary-workspace",
+            "path": "${workspaceFolder:mcr-py}/.cspell/custom-dictionary-workspace.txt",
+            "addWords": true,
+            "scope": "workspace"
+        }
+    },
+    "gitlens.currentLine.enabled": true,
+    "gitlens.hovers.currentLine.over": "line",
+    "gitlens.codeLens.enabled": true,
+    "gitlens.codeLens.scopes": [
+        "document",
+        "containers",
+        "blocks"
+    ],
+    "python.analysis.inlayHints.functionReturnTypes": false,
+    "python.analysis.typeCheckingMode": "strict",
+    "python.analysis.typeEvaluation.deprecateTypingAliases": true
+}

@@ -1,7 +1,8 @@
-import mcr_py.utils.geometa
-from typing_extensions import Annotated
 import typer
+from typing_extensions import Annotated
+
 import mcr_py.overpass.query
+import mcr_py.utils.geometa
 
 
 def create_area(
@@ -9,9 +10,7 @@ def create_area(
         str, typer.Argument(help="Name used to find OSM entity of area")
     ],
     admin_level: Annotated[int, typer.Argument(help="OSM admin level")],
-    crs_target: Annotated[
-        str, typer.Argument(help="The local coordinate reference system")
-    ],
+    crs_target: Annotated[str, typer.Argument(help="The local coordinate reference system")],
     geometa_path: Annotated[
         str, typer.Option(help="The path for the geometa state file")
     ] = "data/",

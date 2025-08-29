@@ -1,5 +1,4 @@
 import pytest
-
 from mcr_py.tracer.tracer import TraceFootpath, TracerMap, TraceStart, TraceTrip
 
 

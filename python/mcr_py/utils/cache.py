@@ -63,9 +63,7 @@ def combine_hashes(hashes: list[int]) -> int:
     :returns: int - The combined hash as an integer.
     """
     return int(
-        hashlib.sha256("".join([str(h) for h in hashes]).encode("utf-8"))
-        .digest()
-        .hex(),
+        hashlib.sha256("".join([str(h) for h in hashes]).encode("utf-8")).digest().hex(),
         16,
     )
 

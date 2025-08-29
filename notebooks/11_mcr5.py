@@ -1,27 +1,23 @@
 import itertools
 import os
 import pickle
-import sys
 import tracemalloc
 from datetime import datetime
 from functools import partial
 
-from mcr_py.utils import storage
 import psutil
-
-sys.path.append("../src/")
-from command.step_config import (
+from mcr_py.command.step_config import (
     get_bicycle_only_config_with_data,
     get_bicycle_public_transport_config_with_data,
     get_car_only_config_with_data,
     get_public_transport_only_config_with_data,
     get_walking_only_config_with_data,
 )
-from mcr_py.utils import key
-from mcr_py.utils.geometa import GeoMeta
-from mcr_py.utils.logger import rlog, setup
 from mcr_py.mcr.data import NetworkType, OSMData
 from mcr_py.mcr5.mcr5 import MCR5
+from mcr_py.utils import key, storage
+from mcr_py.utils.geometa import GeoMeta
+from mcr_py.utils.logger import rlog, setup
 
 setup("INFO")
 
@@ -132,7 +128,6 @@ def get_public_transport_only_config_ready(start_time):
 
 def get_walking_only_config_ready():
     initial_steps, repeating_steps = get_walking_only_config_with_data(
-        geo_meta=geo_meta,
         geo_data=geo_data,
     )
     return {
@@ -169,15 +164,11 @@ for i, (time, bicycle_location_path) in enumerate(bicycle_public_transport_confi
 
 for i, time in enumerate(times):
     print(i, time)
-    configs[f"public_transport_{i}"] = partial(
-        get_public_transport_only_config_ready, time
-    )
+    configs[f"public_transport_{i}"] = partial(get_public_transport_only_config_ready, time)
 
 for i, bicycle_location_path in enumerate(bicycle_location_paths):
     print(i, bicycle_location_path)
-    configs[f"bicycle_{i}"] = partial(
-        get_bicycle_only_config_ready, bicycle_location_path
-    )
+    configs[f"bicycle_{i}"] = partial(get_bicycle_only_config_ready, bicycle_location_path)
 
 configs["car"] = get_car_only_config_ready
 configs["walking"] = get_walking_only_config_ready

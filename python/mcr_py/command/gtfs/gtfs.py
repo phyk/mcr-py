@@ -118,9 +118,7 @@ def crop_command(
         and lon_max is not None
         and lon_min is not None
     ):
-        raise ValueError(
-            "Only one of a GeoMeta file or a bounding box must be provided"
-        )
+        raise ValueError("Only one of a GeoMeta file or a bounding box must be provided")
 
     if geometa_path is not None:
         geometa = GeoMeta.load(geometa_path)

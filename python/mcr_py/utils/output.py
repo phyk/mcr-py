@@ -1,9 +1,7 @@
 import os
 
-from mcr_py.utils import storage
 import polars as pl
 
-from mcr_py.utils import key
 from mcr_py.gtfs import archive
 from mcr_py.tracer.tracer import (
     EnrichedTraceFootpath,
@@ -15,6 +13,7 @@ from mcr_py.tracer.tracer import (
     TraceStart,
     TraceTrip,
 )
+from mcr_py.utils import key, storage
 
 
 class TraceEnricher:
@@ -72,9 +71,7 @@ class TraceEnricher:
         :returns: EnrichedTraceStart - An enriched TraceStart object with stop name.
         """
         stop_id = trace.start_stop_id
-        _, stop_name = self.stops_df.row(
-            by_predicate=(pl.col(key.STOP_ID_KEY) == stop_id)
-        )
+        _, stop_name = self.stops_df.row(by_predicate=(pl.col(key.STOP_ID_KEY) == stop_id))
 
         return EnrichedTraceStart(trace, stop_name)
 
@@ -91,16 +88,12 @@ class TraceEnricher:
         _, start_stop = self.stops_df.row(
             by_predicate=(pl.col(key.STOP_ID_KEY) == start_stop_id)
         )
-        _, end_stop = self.stops_df.row(
-            by_predicate=(pl.col(key.STOP_ID_KEY) == end_stop_id)
-        )
+        _, end_stop = self.stops_df.row(by_predicate=(pl.col(key.STOP_ID_KEY) == end_stop_id))
         _, trip_headsign, route_id = self.trips_df.row(
             by_predicate=(pl.col(key.TRIP_ID_KEY) == trip_id)
         )
 
-        _, short_name = self.routes_df.row(
-            by_predicate=(pl.col(key.ROUTE_ID_KEY) == route_id)
-        )
+        _, short_name = self.routes_df.row(by_predicate=(pl.col(key.ROUTE_ID_KEY) == route_id))
 
         return EnrichedTraceTrip(
             trace,
@@ -120,9 +113,7 @@ class TraceEnricher:
         _, start_stop = self.stops_df.row(
             by_predicate=(pl.col(key.STOP_ID_KEY) == start_stop_id)
         )
-        _, end_stop = self.stops_df.row(
-            by_predicate=(pl.col(key.STOP_ID_KEY) == end_stop_id)
-        )
+        _, end_stop = self.stops_df.row(by_predicate=(pl.col(key.STOP_ID_KEY) == end_stop_id))
 
         return EnrichedTraceFootpath(
             trace,

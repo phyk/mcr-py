@@ -35,7 +35,8 @@
 				"ms-python.python",
 				"ms-python.debugpy",
 				"charliermarsh.ruff",
-				"rust-lang.rust-analyzer"
+				"rust-lang.rust-analyzer",
+				"tamasfe.even-better-toml"
 			]
 		}
 	}

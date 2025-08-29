@@ -3,11 +3,12 @@ import pathlib
 import pickle
 from datetime import datetime
 
-import polars as pl
 from mcr_py.command.step_config import (
-    get_walking_only_config,
+    get_walking_only_config_with_data,
 )
+from mcr_py.mcr.data import NetworkType, OSMData, RedownloadMode
 from mcr_py.mcr5.mcr5 import MCR5
+from mcr_py.utils.geometa import GeoMeta
 from mcr_py.utils.logger import rlog, setup
 
 setup("DEBUG")
@@ -21,7 +22,7 @@ city_name_german_alt = "Koeln"
 crs_sink_name = "EPSG:4839"
 
 timestamp = "20250718"
-now = "20250718-180103"
+now = "20250718-114512"
 
 base_directory = f"{data_directory}/{timestamp}"
 
@@ -37,13 +38,28 @@ osm_path = f"{base_directory}/osm_raw"
 geometa_path = f"{base_directory}/cache/{city_name}_geometa.pkl"
 
 mcr5_output_path = f"{base_directory}/mcr5_results/{city_name}"
-
-walking_location_mapping = (
-    f"{cache_path}/{city_name_german_alt.lower()}_walking_h3mapping.parquet"
-)
 # bicycle_base_path = f"../data/sharing_locations_clustered/{city_name.lower()}_bikes/"
-location_mappings = pl.read_parquet(walking_location_mapping)
 
+
+def load_auxiliary_classes(geo_meta_path: str, city_id: str, osm_path: str, cache_path: str):
+    geo_meta = GeoMeta.load(geo_meta_path)
+    geo_data = OSMData(
+        geo_meta,
+        city_id,
+        cache_path=cache_path,
+        osm_path=osm_path,
+        redownload=RedownloadMode.REUSE,
+        additional_network_types=[NetworkType.CYCLING, NetworkType.DRIVING],
+    )
+    return geo_meta, geo_data
+
+
+geo_meta, geo_data = load_auxiliary_classes(
+    geo_meta_path=geometa_path,
+    city_id=city_name_german_alt,
+    osm_path=osm_path,
+    cache_path=cache_path,
+)
 
 configs = {}
 
@@ -117,20 +133,15 @@ configs = {}
 #     }
 
 
-def get_walking_only_config_ready():
-    initial_steps, repeating_steps = get_walking_only_config(
-        geo_meta_path=geometa_path,
-        city_id=city_name_german_alt,
-        osm_path=osm_path,
-        cache_path=cache_path,
-    )
+def get_walking_only_config_ready(geo_data: OSMData):
+    initial_steps, repeating_steps = get_walking_only_config_with_data(geo_data)
     rlog.info("Walking step configured")
     return {
         "init_kwargs": {
             "initial_steps": initial_steps,
             "repeating_steps": repeating_steps,
         },
-        "location_mappings": location_mappings,
+        "location_mappings": geo_data.location_mapping,
         "max_transfers": 0,
     }
 
@@ -142,7 +153,7 @@ for key, config in configs.items():
     start = datetime.now()
     rlog.info(f"Running MCR5 for {key}")
 
-    config = config()
+    config = config(geo_data)
     mcr5 = MCR5(**config["init_kwargs"])
 
     loaded_at = datetime.now()
@@ -161,6 +172,7 @@ for key, config in configs.items():
         start_time=start_time,
         output_dir=output_path,
         max_transfers=config["max_transfers"],
+        verbose=True,
     )
     rlog.info("Found {} errors".format(len(errors)))
 

@@ -124,13 +124,9 @@ class MCR5:
     ) -> None:
         output = os.path.join(output_dir, f"{h3_cell}.feather")
 
-        logger_copy, log_stream = make_string_stream_logger(
-            f"mcr5-{h3_cell}", logging.DEBUG
-        )
+        logger_copy, log_stream = make_string_stream_logger(f"mcr5-{h3_cell}", logging.DEBUG)
         copy_settings_to_root_logger(logger_copy)
-        mcr_config = MCRConfig(
-            logger=logger_copy, disable_paths=True, enable_limit=True
-        )
+        mcr_config = MCRConfig(logger=logger_copy, disable_paths=True, enable_limit=True)
         try:
             mcr_runner = MCR(
                 initial_steps,

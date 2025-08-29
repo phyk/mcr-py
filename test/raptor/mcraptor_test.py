@@ -1,6 +1,5 @@
 import shutil
 
-from mcr_py.utils import storage
 from mcr_py.raptor.example_labels import ArrivalTimeLabel
 from mcr_py.raptor.mcraptor import McRaptor
 from mcr_py.tracer.tracer import (
@@ -8,7 +7,7 @@ from mcr_py.tracer.tracer import (
     TraceStart,
     TraceTrip,
 )
-from mcr_py.utils import strtime
+from mcr_py.utils import storage, strtime
 from pandas.compat import os
 
 NESSELRODE_STR_STOP_ID = "818"
@@ -28,9 +27,7 @@ def test_mcraptor(testdata_path: str):
 
     structs_dict = storage.read_any_dict(os.path.join(testdata_path, "structs.pkl"))
 
-    mc_raptor = McRaptor(
-        structs_dict, footpaths_dict, 10, 180, {}, {}, ArrivalTimeLabel
-    )
+    mc_raptor = McRaptor(structs_dict, footpaths_dict, 10, 180, {}, {}, ArrivalTimeLabel)
     bags: dict[str, dict] = mc_raptor.run(NESSELRODE_STR_STOP_ID, "", "15:00:00")
 
     assert any(len(b) == 1 for b in bags.values())

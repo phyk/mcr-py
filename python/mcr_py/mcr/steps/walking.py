@@ -29,20 +29,16 @@ class WalkingStepBuilder(StepBuilder):
         pois: pl.DataFrame,
     ):
         osm_nodes = osm_nodes.rename({"rx_node_id": "id"})
-        osm_edges = osm_edges.select(
-            "source_rx_node_id", "dest_rx_node_id", "length"
-        ).rename({"source_rx_node_id": "source_osm", "dest_rx_node_id": "dest_osm"})
-        self.walking_nodes, self.walking_edges = create_walking_graph(
-            osm_nodes, osm_edges
+        osm_edges = osm_edges.select("source_rx_node_id", "dest_rx_node_id", "length").rename(
+            {"source_rx_node_id": "source_osm", "dest_rx_node_id": "dest_osm"}
         )
+        self.walking_nodes, self.walking_edges = create_walking_graph(osm_nodes, osm_edges)
 
         from_internal = {
-            key: value
-            for (key, value) in self.walking_nodes.select("id", "osm_id").rows()
+            key: value for (key, value) in self.walking_nodes.select("id", "osm_id").rows()
         }
         to_internal = {
-            value: key
-            for (key, value) in self.walking_nodes.select("id", "osm_id").rows()
+            value: key for (key, value) in self.walking_nodes.select("id", "osm_id").rows()
         }
         pois = pois.join(
             self.walking_nodes.select("id", "osm_id"),
@@ -80,9 +76,7 @@ class WalkingStepBuilder(StepBuilder):
         pois = pois.with_columns(
             pl.col("poi_type").replace(type_map).alias("type_internal").cast(pl.UInt8)
         )
-        osm_nodes = osm.list_column_to_osm_nodes(
-            self.walking_nodes, pois, "type_internal"
-        )
+        osm_nodes = osm.list_column_to_osm_nodes(self.walking_nodes, pois, "type_internal")
         resetted_walking_node_id_to_type_map = {
             key: value[0]
             for key, value in osm_nodes.select(

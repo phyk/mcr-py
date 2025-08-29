@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import Sequence
 
 from mcr_py.raptor.bag import BaseLabel as McRAPTORBaseLabel
@@ -72,9 +73,7 @@ def merge_intermediate_bags(
 ) -> list[IntermediateLabel]:
     merged_bag = []
     for label in bag:
-        if not any(
-            [other_label.strictly_dominates(label) for other_label in other_bag]
-        ):
+        if not any([other_label.strictly_dominates(label) for other_label in other_bag]):
             merged_bag.append(label)
     for label in other_bag:
         if not any([other_label.strictly_dominates(label) for other_label in bag]):
@@ -94,7 +93,9 @@ class McRAPTORLabel(McRAPTORBaseLabel):
         self.cost = cost
         self.n_stops = n_stops
 
-    def strictly_dominates(self, other: McRAPTORLabel) -> bool:
+    def strictly_dominates(self, other: McRAPTORBaseLabel) -> bool:
+        if not isinstance(other, McRAPTORLabel):
+            raise TypeError("Other label must be of type McRAPTORLabel")
         return self.arrival_time <= other.arrival_time and self.cost <= other.cost
 
     def update_along_trip(self, arrival_time: int, stop_id: str, trip_id: str):

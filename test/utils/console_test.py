@@ -35,13 +35,7 @@ def test_print_tree_from_list(capfd):
 
     captured = capfd.readouterr()
     expected_output = (
-        ":root:\n"
-        "├── item1\n"
-        "├── \n"
-        "│   └── key1: value1\n"
-        "└── \n"
-        "    ├── item2\n"
-        "    └── item3\n"
+        ":root:\n├── item1\n├── \n│   └── key1: value1\n└── \n    ├── item2\n    └── item3\n"
     )
 
     assert captured.out == expected_output

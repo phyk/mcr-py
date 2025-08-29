@@ -29,9 +29,7 @@ STRUCTS_KEYS = [
 ]
 
 
-def build_structures(
-    trips_df: pl.DataFrame, stop_times_df: pl.DataFrame
-) -> dict[str, Any]:
+def build_structures(trips_df: pl.DataFrame, stop_times_df: pl.DataFrame) -> dict[str, Any]:
     """
     Builds various data structures from trips and stop times DataFrames.
 
@@ -58,9 +56,7 @@ def build_structures(
             times_by_stop_by_trip = create_times_by_stop_by_trip(stop_times_by_trip)
 
         with Timed.debug("Creating id sets"):
-            stop_id_set, route_id_set, trip_id_set = create_id_sets(
-                trips_df, routes_by_stop
-            )
+            stop_id_set, route_id_set, trip_id_set = create_id_sets(trips_df, routes_by_stop)
 
     data = {
         STOP_TIMES_BY_TRIP_KEY: stop_times_by_trip,

@@ -2,12 +2,11 @@ import multiprocessing
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-import polars_st as st
 import polars as pl
 from tqdm.auto import tqdm
 
-from mcr_py.utils.logger import Timed
 from mcr_py.minute_city import profile
+from mcr_py.utils.logger import Timed
 
 
 def add_pois_to_labels(labels: pl.DataFrame, pois: pl.DataFrame) -> pl.DataFrame:
@@ -29,13 +28,13 @@ def get_profiles_df(
     types: list[str],
     disable_tqdm: bool = False,
     leave_tqdm: bool = True,
-) -> pl.DataFrame:
+):  # -> pl.DataFrame:
     """
     Calculates the profiles for the given labels.
     """
     with Timed.debug("Grouping labels"):
-        grouped = labels_with_pois.groupby("start_id_hex")
-        n_groups = len(grouped)
+        grouped = labels_with_pois.group_by("start_id_hex")
+        n_groups = labels_with_pois.get_column("start_id_hex").n_unique()
 
     partial_worker = partial(profile.profile_calculation_worker, types)
 

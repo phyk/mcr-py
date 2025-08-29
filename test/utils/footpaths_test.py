@@ -1,9 +1,10 @@
-import pytest
-import polars as pl
 from unittest.mock import patch
+
+import polars as pl
+import pytest
 from mcr_py.utils.footpaths import (
-    generate,
     GenerationMethod,
+    generate,
 )  # Replace 'your_module' with the actual module name
 
 

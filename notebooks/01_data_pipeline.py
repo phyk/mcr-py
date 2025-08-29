@@ -14,9 +14,6 @@ import mcr_py.utils.geometa
 import mcr_py.utils.logger
 import polars as pl
 from fsspec.implementations.http import HTTPFileSystem
-from mcr_py._mcr_py import (
-    load_osm_pois,
-)
 
 
 def fetch_gbfs_to_csv(gbfs_url, target_path):
@@ -36,8 +33,8 @@ def load_data_for_city(
     admin_level,
     gbfs_url=None,
 ):
-    timestamp = datetime.datetime.today().strftime("%Y%m%d")
-    # timestamp = "20250411"
+    # timestamp = datetime.datetime.today().strftime("%Y%m%d")
+    timestamp = "20250718"
     now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     start_time = "01.01.1970-00:00:00"
     end_time = "01.01.2050-00:00:00"
@@ -47,9 +44,7 @@ def load_data_for_city(
     gtfs_path = f"{data_directory}/gtfs_raw/{gtfs_timestamp}/latest.zip"
     gtfs_crop_path = f"{data_directory}/{timestamp}/gtfs_clean/{city_name}.zip"
     gtfs_clean_dir = f"{data_directory}/{timestamp}/gtfs_clean/{city_name}/"
-    gtfs_clean_struct = (
-        f"{data_directory}/{timestamp}/gtfs_clean/{city_name}/structs.pkl"
-    )
+    gtfs_clean_struct = f"{data_directory}/{timestamp}/gtfs_clean/{city_name}/structs.pkl"
     gbfs_path = f"{data_directory}/{timestamp}/gbfs_raw/{city_name}_{now}.csv"
     osm_path = f"{data_directory}/{timestamp}/osm_raw"
     geometa_path = f"{data_directory}/{timestamp}/cache/{city_name}_geometa.pkl"
@@ -69,7 +64,7 @@ def load_data_for_city(
 
     geo_meta = mcr_py.utils.geometa.GeoMeta.load(geometa_path)
 
-    osm_data = mcr_py.mcr.data.OSMData(
+    _ = mcr_py.mcr.data.OSMData(
         geo_meta=geo_meta,
         city_id=city_name_german_alt,
         osm_path=osm_path,
@@ -78,16 +73,7 @@ def load_data_for_city(
             mcr_py.mcr.data.NetworkType.CYCLING,
             mcr_py.mcr.data.NetworkType.DRIVING,
         ],
-        redownload=True,
-    )
-    load_osm_pois(
-        city_name_german_alt,
-        geo_meta.get_bounding_box_as_coord_list(),
-        osm_path,
-        cache_path,
-        False,
-        nodes_to_match_path=f"{cache_path}{city_name_german_alt.lower()}_walking_nodes.parquet",
-        nodes_to_match_df=osm_data.osm_nodes,
+        redownload=mcr_py.mcr.data.RedownloadMode.OVERWRITE_NOREDOWNLOAD,
     )
     print("Finished")
 

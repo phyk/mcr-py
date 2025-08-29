@@ -1,10 +1,11 @@
-from mcr_py.utils import storage
+import os
+
 import polars as pl
 from rich.console import Console
 from rich.table import Table
-import os
-from mcr_py.utils import key
+
 from mcr_py.gtfs import archive
+from mcr_py.utils import key, storage
 from mcr_py.utils.logger import Timed, rlog
 
 
@@ -37,9 +38,7 @@ def get_stops_df(path: str) -> pl.DataFrame:
 
     rlog.debug("Reading stops from directory")
 
-    return storage.read_df(
-        os.path.join(path, storage.get_df_filename_for_name(key.STOPS_KEY))
-    )
+    return storage.read_df(os.path.join(path, storage.get_df_filename_for_name(key.STOPS_KEY)))
 
 
 def print_dataframe(df: pl.DataFrame):

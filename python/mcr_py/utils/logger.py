@@ -6,8 +6,8 @@ from logging import CRITICAL, DEBUG, ERROR, INFO, WARNING
 from time import time
 
 import click
-from rich.logging import RichHandler
 from rich.console import Console
+from rich.logging import RichHandler
 
 
 def setup(log_level: str):
@@ -239,9 +239,7 @@ def make_string_stream_logger(name: str | None, level: int = logging.INFO):
     logger.setLevel(level)
     handler = logging.StreamHandler(log_stream)
     handler.setLevel(level)
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 

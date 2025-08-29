@@ -1,8 +1,4 @@
 import typer
-from mcr_py.utils.logger import Timed
-from mcr_py.mcr import mcr
-from mcr_py.mcr.config import MCRConfig
-from mcr_py.mcr.output import OutputFormat
 from typing_extensions import Annotated
 
 from mcr_py.command.footpaths import CITY_ID_HELP, OSM_HELP, STOPS_HELP
@@ -20,6 +16,10 @@ from mcr_py.command.step_config import (
     get_public_transport_only_config,
     get_walking_only_config,
 )
+from mcr_py.mcr import mcr
+from mcr_py.mcr.config import MCRConfig
+from mcr_py.mcr.output import OutputFormat
+from mcr_py.utils.logger import Timed
 
 
 def run(
@@ -74,9 +74,7 @@ def run(
         str,
         typer.Option(help="Path to the bicycle location file."),
     ] = "",
-    output_format: Annotated[
-        OutputFormat, typer.Option()
-    ] = OutputFormat.CLASS_PICKLE.value,  # type: ignore
+    output_format: Annotated[OutputFormat, typer.Option()] = OutputFormat.CLASS_PICKLE.value,  # type: ignore
     enable_limit: Annotated[
         bool,
         typer.Option(
@@ -130,6 +128,8 @@ def run(
             initial_steps, repeating_steps = get_walking_only_config(
                 geo_meta_path=geo_meta_path,
                 city_id=city_id,
+                osm_path="",
+                cache_path="",
             )
 
         else:

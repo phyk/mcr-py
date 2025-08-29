@@ -1,3 +1,14 @@
+import os
+
+import polars as pl
+import pytest
+import shapely
+from mcr_py.gtfs.clean import (
+    add_first_stop_info,
+    create_paths_df,
+    split_routes,
+    split_routes_by_direction,
+)
 from mcr_py.structs.build import (
     create_id_sets,
     create_idx_by_stop_by_route,
@@ -6,17 +17,6 @@ from mcr_py.structs.build import (
     create_stops_by_route_ordered,
     create_times_by_stop_by_trip,
     create_trip_ids_by_route_sorted_by_departure,
-)
-import os
-import shapely
-
-import polars as pl
-import pytest
-from mcr_py.gtfs.clean import (
-    add_first_stop_info,
-    create_paths_df,
-    split_routes,
-    split_routes_by_direction,
 )
 from mcr_py.utils.geometa import GeoMeta
 
@@ -119,16 +119,10 @@ def stop_times_df() -> pl.DataFrame:
             [
                 {
                     "trip_id": trip_id,
-                    "departure_time": trips[trip_id]["stop_times"][stop_id][
-                        "departure_time"
-                    ],
-                    "arrival_time": trips[trip_id]["stop_times"][stop_id][
-                        "arrival_time"
-                    ],
+                    "departure_time": trips[trip_id]["stop_times"][stop_id]["departure_time"],
+                    "arrival_time": trips[trip_id]["stop_times"][stop_id]["arrival_time"],
                     "stop_id": stop_id,
-                    "stop_sequence": trips[trip_id]["stop_times"][stop_id][
-                        "stop_sequence"
-                    ],
+                    "stop_sequence": trips[trip_id]["stop_times"][stop_id]["stop_sequence"],
                 }
                 for stop_id in trips[trip_id]["stop_times"]
             ]
@@ -162,12 +156,10 @@ def sample_polygon():
 
 @pytest.fixture
 def geo_meta(sample_polygon):
-    return GeoMeta.create(
-        boundary=sample_polygon, crs="EPSG:4326", crs_target="EPSG:3857"
-    )
+    return GeoMeta.create(boundary=sample_polygon, crs="EPSG:4326", crs_target="EPSG:3857")
 
 
-@pytest.fixture()
+@pytest.fixture
 def cleaned_trips_df(
     trips_df: pl.DataFrame, stop_times_df: pl.DataFrame, routes_df: pl.DataFrame
 ) -> pl.DataFrame:

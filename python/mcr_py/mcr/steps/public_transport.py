@@ -1,11 +1,9 @@
 from logging import Logger
 from typing import Optional
 
-from mcr_py._mcr_py import add_nearest_node_to_df
 import polars as pl
 
-from mcr_py.utils import storage
-from mcr_py.utils.logger import Timed, Timer
+from mcr_py._mcr_py import add_nearest_node_to_df
 from mcr_py.mcr.bag import (
     IntermediateBags,
     convert_mc_raptor_bags_to_intermediate_bags,
@@ -19,6 +17,8 @@ from mcr_py.mcr.path import PathManager, PathType
 from mcr_py.mcr.steps.interface import Step, StepBuilder
 from mcr_py.raptor.bag import Bag
 from mcr_py.raptor.mcraptor_single import McRaptorSingle
+from mcr_py.utils import storage
+from mcr_py.utils.logger import Timed, Timer
 
 McRAPTORInputBags = dict[str, list[IntermediateLabel]]
 
@@ -57,9 +57,7 @@ class PublicTransportStep(Step):
             mc_raptor = McRaptorSingle(
                 self.structs_dict,
                 default_transfer_time=60,
-                label_class=(
-                    McRAPTORLabel if self.disable_paths else McRAPTORLabelWithPath
-                ),
+                label_class=(McRAPTORLabel if self.disable_paths else McRAPTORLabelWithPath),
             )
             raw_public_transport_result_bags = mc_raptor.run(prepared_input_bags)  # type: ignore
 
@@ -76,9 +74,7 @@ class PublicTransportStep(Step):
         return raw_public_transport_result_bags
 
     # converts bags with node ids to bags with stop ids
-    def prepare_public_transport_step_input(
-        self, bags: IntermediateBags
-    ) -> McRAPTORInputBags:
+    def prepare_public_transport_step_input(self, bags: IntermediateBags) -> McRAPTORInputBags:
         def translate_osm_node_id_to_stop_id(
             walking_node_id: int,
         ) -> str | None:
@@ -119,8 +115,7 @@ class PublicTransportStep(Step):
             be set to the length of the path before the step.
         """
         mc_raptor_result_bags = {
-            self.stop_to_osm_node_map[str(stop_id)]: bag
-            for stop_id, bag in bags.items()
+            self.stop_to_osm_node_map[str(stop_id)]: bag for stop_id, bag in bags.items()
         }
         mc_raptor_result_bags = convert_mc_raptor_bags_to_intermediate_bags(
             mc_raptor_result_bags,
@@ -144,16 +139,12 @@ class PublicTransportStepBuilder(StepBuilder):
         with Timed.info("Reading stops"):
             self.stops_df = storage.read_df(stops_path)
 
-        self.stops_df = add_nearest_node_to_df(
-            self.stops_df, walking_nodes, "EPSG:4839"
-        )
+        self.stops_df = add_nearest_node_to_df(self.stops_df, walking_nodes, 4839)
 
         stop_to_osm_node_map: dict[str, int] = self.stops_df.select(
             pl.col("stop_id", "nearest_osm_node")
         ).rows_by_key("nearest_osm_node", unique=True)
-        osm_node_to_stop_map: dict[int, str] = {
-            v: k for k, v in stop_to_osm_node_map.items()
-        }
+        osm_node_to_stop_map: dict[int, str] = {v: k for k, v in stop_to_osm_node_map.items()}
         self.kwargs = {
             "structs_dict": structs_dict,
             "osm_node_to_stop_map": osm_node_to_stop_map,

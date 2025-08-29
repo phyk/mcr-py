@@ -1,27 +1,26 @@
 import os
-import pytest
-import polars_st as st
+
 import polars as pl
-from shapely.geometry import Polygon
+import polars_st as st
+import pytest
 from mcr_py.utils.cache import (  # Replace 'your_module' with the actual module name
-    overwrite_tempdir,
-    hash_df,
-    hash_str,
-    hash_polygon,
-    combine_hashes,
-    cache_gdf,
-    read_gdf,
     cache_entry_exists,
+    cache_gdf,
+    combine_hashes,
+    hash_df,
+    hash_polygon,
+    hash_str,
+    overwrite_tempdir,
+    read_gdf,
 )
+from shapely.geometry import Polygon
 
 
 # Sample GeoDataFrame for testing
 @pytest.fixture
 def sample_gdf():
     # Create a simple GeoDataFrame for testing
-    return st.GeoDataFrame(
-        {"geometry": [Polygon([(0, 0), (1, 1), (1, 0)])], "value": [1]}
-    )
+    return st.GeoDataFrame({"geometry": [Polygon([(0, 0), (1, 1), (1, 0)])], "value": [1]})
 
 
 @pytest.fixture
@@ -78,9 +77,7 @@ def test_read_gdf(temp_dir, sample_gdf):
     read_gdf_result = read_gdf(gdf_hash, identifier)
     assert isinstance(read_gdf_result, pl.DataFrame)
     print(read_gdf_result)
-    assert read_gdf_result.select(st.geom().st.bounds()).row(0) == (
-        [0.0, 0.0, 1.0, 1.0],
-    )
+    assert read_gdf_result.select(st.geom().st.bounds()).row(0) == ([0.0, 0.0, 1.0, 1.0],)
 
 
 def test_cache_entry_exists(temp_dir, sample_gdf):

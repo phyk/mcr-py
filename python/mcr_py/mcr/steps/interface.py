@@ -1,9 +1,9 @@
 from logging import Logger
 from typing import Optional
 
-from mcr_py.utils.logger import Timer
 from mcr_py.mcr.bag import IntermediateBags
 from mcr_py.mcr.path import PathManager
+from mcr_py.utils.logger import Timer
 
 
 class Step:

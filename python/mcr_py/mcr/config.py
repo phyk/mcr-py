@@ -1,8 +1,8 @@
 from logging import Logger
 from typing import Optional
 
-from mcr_py.utils.logger import Timer, rlog
 from mcr_py.mcr.path import PathManager
+from mcr_py.utils.logger import Timer, rlog
 
 
 class MCRConfig:

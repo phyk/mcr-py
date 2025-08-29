@@ -3,8 +3,8 @@ from typing import Generic, Optional
 
 from typing_extensions import Self
 
-from mcr_py.utils.key import S, T
 from mcr_py.structs import build
+from mcr_py.utils.key import S, T
 
 
 class DataQuerier:
@@ -133,9 +133,7 @@ class DataQuerier:
             )
         return self.footpaths[stop_id].items()
 
-    def iterate_stops_in_route_from_idx(
-        self: Self, route_id: str, idx: int
-    ) -> list[str]:
+    def iterate_stops_in_route_from_idx(self: Self, route_id: str, idx: int) -> list[str]:
         """
         Iterates over stops in a specific route starting from a given index.
 

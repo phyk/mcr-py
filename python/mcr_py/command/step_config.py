@@ -161,9 +161,7 @@ def get_public_transport_only_config_with_data(
 
 def get_car_only_config(geo_meta_path: str, city_id: str):
     geo_meta = GeoMeta.load(geo_meta_path)
-    geo_data = OSMData(
-        geo_meta, city_id, additional_network_types=[NetworkType.DRIVING]
-    )
+    geo_data = OSMData(geo_meta, city_id, additional_network_types=[NetworkType.DRIVING])
     return get_car_only_config_with_data(geo_meta, geo_data)
 
 
@@ -176,9 +174,7 @@ def get_bicycle_public_transport_config(
     stops_path: str,
 ):
     geo_meta = GeoMeta.load(geo_meta_path)
-    geo_data = OSMData(
-        geo_meta, city_id, additional_network_types=[NetworkType.CYCLING]
-    )
+    geo_data = OSMData(geo_meta, city_id, additional_network_types=[NetworkType.CYCLING])
     return get_bicycle_public_transport_config_with_data(
         geo_meta,
         geo_data,
@@ -196,17 +192,13 @@ def get_bicycle_only_config(
     bicycle_location_path: str,
 ):
     geo_meta = GeoMeta.load(geo_meta_path)
-    geo_data = OSMData(
-        geo_meta, city_id, additional_network_types=[NetworkType.CYCLING]
-    )
+    geo_data = OSMData(geo_meta, city_id, additional_network_types=[NetworkType.CYCLING])
     return get_bicycle_only_config_with_data(
         geo_meta, geo_data, bicycle_price_function, bicycle_location_path
     )
 
 
-def get_walking_only_config(
-    geo_meta_path: str, city_id: str, osm_path: str, cache_path: str
-):
+def get_walking_only_config(geo_meta_path: str, city_id: str, osm_path: str, cache_path: str):
     geo_meta = GeoMeta.load(geo_meta_path)
     geo_data = OSMData(
         geo_meta,

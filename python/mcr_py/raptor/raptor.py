@@ -3,8 +3,6 @@ from typing import Optional
 
 from typing_extensions import Self
 
-from mcr_py.utils import strtime
-from mcr_py.utils.logger import rlog
 from mcr_py.raptor.data import DataQuerier
 from mcr_py.tracer.tracer import (
     TraceFootpath,
@@ -12,6 +10,8 @@ from mcr_py.tracer.tracer import (
     TraceStart,
     TraceTrip,
 )
+from mcr_py.utils import strtime
+from mcr_py.utils.logger import rlog
 
 MarkedRouteStopTuples = dict[str, tuple[str, int]]
 TausPerIteration = dict[int, dict[str, int]]
@@ -53,9 +53,7 @@ class Raptor:
         """
         start_time = strtime.str_time_to_seconds(start_time_str)
 
-        tau_i, tau_best, marked_stops, tracers_map = self.init_vars(
-            start_stop_id, start_time
-        )
+        tau_i, tau_best, marked_stops, tracers_map = self.init_vars(start_stop_id, start_time)
 
         k = 0
         for k in range(1, self.max_transfers + 1):
@@ -184,9 +182,7 @@ class Raptor:
         if trip_id is not None and self.dq.get_arrival_time(trip_id, stop_id) < min(
             tau_best[stop_id], tau_best_end_stop_id
         ):
-            self.update_tau_through_trip(
-                trip_id, stop_id, k, tau_i, tau_best, tracers_map
-            )
+            self.update_tau_through_trip(trip_id, stop_id, k, tau_i, tau_best, tracers_map)
             marked_stops.add(stop_id)
 
         ready_to_depart = tau_i[k - 1][stop_id] + self.default_transfer_time
@@ -291,14 +287,10 @@ class Raptor:
         """
         additional_marked_stops = set()
         for stop_id in marked_stops:
-            for nearby_stop_id, walking_time in self.dq.iterate_footpaths_from_stop(
-                stop_id
-            ):
+            for nearby_stop_id, walking_time in self.dq.iterate_footpaths_from_stop(stop_id):
                 nearby_stop_arrival_time = tau_i[k][stop_id] + walking_time
 
-                tau_best_end_stop_id = (
-                    tau_best[end_stop_id] if end_stop_id else sys.maxsize
-                )
+                tau_best_end_stop_id = tau_best[end_stop_id] if end_stop_id else sys.maxsize
                 # we have a couple of modifications here:
                 # 1. we only mark the stop if tau is actually updated
                 # 2. we use tau_best instead of tau_k (should not make a difference)

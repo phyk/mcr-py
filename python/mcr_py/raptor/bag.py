@@ -3,9 +3,9 @@ from typing import Generic, Optional, TypeVar
 
 from typing_extensions import Self
 
-from mcr_py.utils.key import S, T
 from mcr_py.raptor.data import DataQuerier, ExpandedDataQuerier
 from mcr_py.tracer.tracer import TraceFootpath, TraceStart, TraceTrip
+from mcr_py.utils.key import S, T
 
 
 class BaseLabel:
@@ -175,9 +175,7 @@ class Bag:
 
         :param label: BaseLabel - The label to compare against.
         """
-        self._bag = {
-            other for other in self._bag if not label.strictly_dominates(other)
-        }
+        self._bag = {other for other in self._bag if not label.strictly_dominates(other)}
 
     # merge other into self
     def merge(self: Self, other: Self) -> bool:
@@ -416,9 +414,7 @@ class TraceLabel(BaseLabel):
             )
         else:
             self.traces.append(
-                TraceTrip(
-                    self.stops[-1], old_arrival_time, stop_id, arrival_time, trip_id
-                )
+                TraceTrip(self.stops[-1], old_arrival_time, stop_id, arrival_time, trip_id)
             )
 
         self.last_update = "trip"

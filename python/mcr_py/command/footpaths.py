@@ -1,4 +1,8 @@
+import os
+
 import typer
+from typing_extensions import Annotated
+
 from mcr_py.utils import storage
 from mcr_py.utils.footpaths import GenerationMethod
 from mcr_py.utils.footpaths import generate as direct_generate
@@ -8,8 +12,6 @@ from mcr_py.utils.key import (
     STOPS_KEY,
 )
 from mcr_py.utils.logger import Timed
-from pyrosm.data import os
-from typing_extensions import Annotated
 
 CLEAN_STOPS_FILENAME = storage.get_df_filename_for_name(STOPS_KEY)
 
@@ -70,7 +72,7 @@ def generate(
         typer.Option(
             help=f"Method to use for generating footpaths ({', '.join(GenerationMethod.all())})."
         ),
-    ] = GenerationMethod.IGRAPH.name,
+    ] = GenerationMethod.RUSTWORKX.name,
 ):
     validate_flags(
         city_id,
@@ -87,9 +89,7 @@ def generate(
             city_id,
             osm,
             stops,
-            geo_meta_path,
             avg_walking_speed,
-            max_walking_duration,
             parsed_method,
         )
 

@@ -1,0 +1,35 @@
+line-length = 95
+indent-width = 4
+format.quote-style = "double"
+format.indent-style = "space"
+
+[lint]
+select = [
+    "A",
+    "ANN",
+    "B",
+    "BLE",
+    "C4",
+    "COM",
+    "DTZ",
+    "E4",
+    "E7",
+    "E9",
+    "EM",
+    "ERA",
+    "F",
+    "FBT",
+    "G",
+    "I",
+    "PT",
+    "S",
+    "SIM",
+    "T20",
+    "YTT"
+]
+ignore = ["COM812"]
+
+fixable = ["ALL"]
+
+[lint.per-file-ignores]
+"tests/**.py" = ["S101"]

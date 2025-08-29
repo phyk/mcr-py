@@ -2,8 +2,8 @@ from logging import Logger
 from typing import Optional
 
 import polars as pl
-from mcr_py.utils import storage
-from mcr_py.utils.logger import Timer
+
+from mcr_py import GraphCache
 from mcr_py.mcr.bag import IntermediateBags
 from mcr_py.mcr.data import (
     AVG_CAR_SPEED,
@@ -18,8 +18,8 @@ from mcr_py.mcr.path import PathManager, PathType
 from mcr_py.mcr.steps.interface import StepBuilder
 from mcr_py.mcr.steps.mlc import MLCStep
 from mcr_py.osm import osm
-
-from mcr_py import GraphCache
+from mcr_py.utils import storage
+from mcr_py.utils.logger import Timer
 
 
 class PersonalCarStep(MLCStep):
@@ -105,7 +105,7 @@ class PersonalCarStepBuilder(StepBuilder):
         raw_edges = to_mlc_edges(multi_modal_edges)
         self.osm_nodes = walking_nodes
         self.mm_graph_cache = GraphCache()
-        self.mm_graph_cache.set_graph(raw_edges)
+        # self.mm_graph_cache.set_graph(raw_edges)
         self.add_pois_to_mm_graph(pois)
 
         self.kwargs = {

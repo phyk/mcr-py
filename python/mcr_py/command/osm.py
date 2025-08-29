@@ -1,22 +1,10 @@
 import typer
-from mcr_py.utils import key
-from mcr_py.osm import osm
 from typing_extensions import Annotated
+
+from mcr_py.utils import key
 from mcr_py.utils.geometa import GeoMeta
 
 app = typer.Typer()
-
-
-@app.command(
-    name=key.OSM_LIST_COMMAND_NAME,
-    help="List all available OSM data",
-)
-def list_command(
-    selector: Annotated[
-        str, typer.Option(help="Selector in dot notation, e.g. '.regions.africa'")
-    ] = "",
-):
-    osm.list_available(selector)
 
 
 @app.command(name=key.OSM_PREP_COMMAND_NAME, help="Preload OSM protobuf file")
@@ -33,13 +21,11 @@ def prep_osm_networks(
     ] = "/tmp/pyrosm",
 ):
     geometa = GeoMeta.load(geometa_path)
-    reader = osm.get_osm_reader_for_city_id_or_osm_path(
-        city_id=city_id, osm_path=f"{location}/{city_id}.osm.pbf"
-    )
-    for network_type in additional_networks:
-        osm.get_graph_for_city_cropped_to_boundary(
-            reader, geometa, network_type=network_type
-        )
+    # reader = osm.get_osm_reader_for_city_id_or_osm_path(
+    #     city_id=city_id, osm_path=f"{location}/{city_id}.osm.pbf"
+    # )
+    # for network_type in additional_networks:
+    #     osm.get_graph_for_city_cropped_to_boundary(reader, geometa, network_type=network_type)
 
 
 @app.callback(invoke_without_command=True, no_args_is_help=True)

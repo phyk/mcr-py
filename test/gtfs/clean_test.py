@@ -1,5 +1,4 @@
 import polars as pl
-
 from mcr_py.gtfs.clean import (
     add_first_stop_info,
     add_unique_route_ids,
@@ -50,14 +49,11 @@ def test_add_first_stop_info(trips_df: pl.DataFrame, stop_times_df: pl.DataFrame
     print(trips_df.columns)
     assert (trips_df.get_column("first_stop_id") == expected_first_stop_ids).all()
     assert (
-        trips_df.get_column("trip_departure_time")
-        == expected_first_stop_departure_times
+        trips_df.get_column("trip_departure_time") == expected_first_stop_departure_times
     ).all()
 
 
 def test_remove_unused_stops(stop_times_df: pl.DataFrame, stops_df: pl.DataFrame):
     stops_df = remove_unused_stops(stop_times_df, stops_df)
-    expected_stops = pl.Series(
-        values=["stop1", "stop2", "stop3", "stop4"], name="stop_id"
-    )
+    expected_stops = pl.Series(values=["stop1", "stop2", "stop3", "stop4"], name="stop_id")
     assert stops_df.get_column("stop_id").is_in(expected_stops).all()

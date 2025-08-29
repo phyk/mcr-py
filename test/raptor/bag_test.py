@@ -1,10 +1,9 @@
 from mcr_py.raptor.bag import (
-    BaseLabel,
     Bag,
+    BaseLabel,
     RouteBag,
     TraceLabel,
 )  # Adjust the import based on your module structure
-from mcr_py.raptor.example_labels import ArrivalTimeLabel
 
 
 # Test for BaseLabel

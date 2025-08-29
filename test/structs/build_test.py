@@ -1,15 +1,15 @@
-import pytest
 import polars as pl
+import pytest
 from mcr_py.structs.build import (
-    create_stop_times_by_trip,
-    create_trip_ids_by_route_sorted_by_departure,
-    create_stops_by_route_ordered,
-    create_routes_by_stop,
     create_id_sets,
     create_idx_by_stop_by_route,
+    create_routes_by_stop,
+    create_stop_times_by_trip,
+    create_stops_by_route_ordered,
     create_times_by_stop_by_trip,
-    validate_structs_dict,
+    create_trip_ids_by_route_sorted_by_departure,
     unpack_structs,
+    validate_structs_dict,
 )
 from mcr_py.utils import strtime
 
@@ -143,9 +143,7 @@ def test_create_stops_by_route(
     trip_ids_by_route: dict[str, list[str]],
     stop_times_by_trip: dict[str, list[dict[str, str]]],
 ):
-    stops_by_route = create_stops_by_route_ordered(
-        trip_ids_by_route, stop_times_by_trip
-    )
+    stops_by_route = create_stops_by_route_ordered(trip_ids_by_route, stop_times_by_trip)
 
     expected_stops_by_route = {
         "route1_1": ["stop1", "stop2", "stop3"],
@@ -169,12 +167,8 @@ def test_create_routes_by_stop(stops_by_route: dict[str, list[str]]):
     assert routes_by_stop == expected_routes_by_stop
 
 
-def test_create_id_sets(
-    cleaned_trips_df: pl.DataFrame, routes_by_stop: dict[str, set[str]]
-):
-    stop_id_set, route_id_set, trip_id_set = create_id_sets(
-        cleaned_trips_df, routes_by_stop
-    )
+def test_create_id_sets(cleaned_trips_df: pl.DataFrame, routes_by_stop: dict[str, set[str]]):
+    stop_id_set, route_id_set, trip_id_set = create_id_sets(cleaned_trips_df, routes_by_stop)
 
     stop_id_set_expected = set(["stop1", "stop2", "stop3", "stop4"])
     route_id_set_expected = set(["route1_1", "route1_2", "route1_3"])

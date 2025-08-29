@@ -1,8 +1,10 @@
-import polars as pl
-import numpy as np
-import rustworkx as rx
 import os
 from typing import Tuple
+
+import numpy as np
+import polars as pl
+import rustworkx as rx
+
 from mcr_py.utils.logger import rlog
 
 
@@ -21,9 +23,7 @@ def create_rx_graph(
     nodes = nodes.with_columns(
         pl.Series(
             name="rx_node_id",
-            values=np.array(
-                graph.add_nodes_from(nodes.get_column("osm_id").to_numpy())
-            ),
+            values=np.array(graph.add_nodes_from(nodes.get_column("osm_id").to_numpy())),
         )
     )
     edges = edges.join(
@@ -41,6 +41,7 @@ def create_rx_graph(
             edges["source_rx_node_id"].to_numpy(),
             edges["dest_rx_node_id"].to_numpy(),
             edges["length"].to_numpy(),
+            strict=False,
         )
     )
     return (nodes, edges, graph)
@@ -84,6 +85,4 @@ def shortest_paths(graph: rx.PyDiGraph, num_threads=4) -> rx.AllPairsPathLengthM
     :returns: rx.AllPairsPathLengthMapping - A mapping of shortest path lengths between all pairs of nodes.
     """
     os.environ["RAYON_NUM_THREADS"] = str(num_threads)
-    return rx.all_pairs_bellman_ford_path_lengths(
-        graph, edge_cost_fn=lambda length: length
-    )
+    return rx.all_pairs_bellman_ford_path_lengths(graph, edge_cost_fn=lambda length: length)

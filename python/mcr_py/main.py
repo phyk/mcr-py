@@ -1,11 +1,9 @@
-from .package.utils import logger
 import typer
 from typing_extensions import Annotated
 
-from .command import build, footpaths, mcr, osm, raptor
+from .command import area, build, footpaths, mcr, osm, raptor
 from .command.gtfs import gtfs
-from .package.utils import key
-from .command import area
+from .utils import key, logger
 
 app = typer.Typer(pretty_exceptions_show_locals=False)
 app.command(key.BUILD_STRUCTURES_COMMAND_NAME)(build.build_structures)

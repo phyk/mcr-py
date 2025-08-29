@@ -1,13 +1,12 @@
 from typing import Callable
 
+from mcr_py import PyLabel
 from mcr_py.mcr.label import (
     IntermediateLabel,
     McRAPTORLabel,
     McRAPTORLabelWithPath,
 )
 from mcr_py.raptor.bag import Bag
-
-from mcr_py import PyLabel
 
 # key is osm_node_id, value is list of labels
 IntermediateBags = dict[int, list[IntermediateLabel]]
@@ -41,20 +40,13 @@ def convert_mc_raptor_bags_to_intermediate_bags(
         intermediate_bags[int(node_id)] = []
         for label in bag:  # type: ignore
             if not isinstance(label, McRAPTORLabel):
-                raise ValueError(
-                    f"Expected McRAPTORLabel, got {str(type(label))} instead"
-                )
+                raise ValueError(f"Expected McRAPTORLabel, got {str(type(label))} instead")
 
             label: McRAPTORLabel = label
-            if (
-                isinstance(label, McRAPTORLabelWithPath)
-                and len(label.path) < min_path_length
-            ):
+            if isinstance(label, McRAPTORLabelWithPath) and len(label.path) < min_path_length:
                 continue
 
-            intermediate_bags[int(node_id)].append(
-                label.to_intermediate_label(int(node_id))
-            )
+            intermediate_bags[int(node_id)].append(label.to_intermediate_label(int(node_id)))
 
     # remove empty bags
     intermediate_bags = {

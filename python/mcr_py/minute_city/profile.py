@@ -23,9 +23,7 @@ def calculate_profile_for_group(group, types):
         labels_for_cost = group[group["cost"] <= cost]
         curr_time = next_larger_minute(labels_for_cost["time"].min())
         while True:
-            labels_for_cost_and_time = labels_for_cost[
-                labels_for_cost["time"] <= curr_time
-            ]
+            labels_for_cost_and_time = labels_for_cost[labels_for_cost["time"] <= curr_time]
 
             all_reached = labels_for_cost_and_time[types].sum().min() != 0
             curr_time += 60
@@ -49,11 +47,9 @@ def next_larger_minute(seconds_since_midnight: int) -> int:
 
 def build_profiles_df(profiles, start_time: int):
     profiles = [
-        (hex_id, cost, time)
-        for hex_id, profile in profiles.items()
-        for cost, time in profile
+        (hex_id, cost, time) for hex_id, profile in profiles.items() for cost, time in profile
     ]
-    profiles_df = pd.DataFrame(profiles, columns=["hex_id", "cost", "time"])
+    profiles_df = pd.DataFrame(profiles, columns=pd.Index(["hex_id", "cost", "time"]))
     profiles_df["time"] = profiles_df["time"] - start_time
     profiles_df = profiles_df.pivot(index="hex_id", columns="cost", values="time")
 
@@ -70,8 +66,8 @@ def fill_columns_by_left(profiles_df: pd.DataFrame) -> pd.DataFrame:
     for c in profiles_df.columns:
         if c == "cost_0":
             continue
-        previous_column = profiles_df.columns[profiles_df.columns.get_loc(c) - 1]
-        profiles_df[c] = profiles_df[c].fillna(profiles_df[previous_column])
+        # previous_column = profiles_df.columns[profiles_df.columns.get_loc(c) - 1]
+        # profiles_df[c] = profiles_df[c].fillna(profiles_df[previous_column])
     profiles_df = profiles_df.astype(float)
     return profiles_df
 
@@ -81,10 +77,10 @@ def add_any_column_is_different_column(profiles_df: pd.DataFrame) -> pd.DataFram
     for c in profiles_df.columns:
         if not c.startswith("cost_") or c == "cost_0":
             continue
-        previous_column = profiles_df.columns[profiles_df.columns.get_loc(c) - 1]
-        profiles_df["any_column_different"] = profiles_df["any_column_different"] | (
-            profiles_df[c] != profiles_df[previous_column]
-        )
+        # previous_column = profiles_df.columns[profiles_df.columns.get_loc(c) - 1]
+        # profiles_df["any_column_different"] = profiles_df["any_column_different"] | (
+        #     profiles_df[c] != profiles_df[previous_column]
+        # )
     return profiles_df
 
 

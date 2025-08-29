@@ -1,4 +1,5 @@
 from typing import Optional
+
 from mcr_py.utils import strtime
 
 
@@ -72,9 +73,7 @@ class TracerMap:
 
             previous_tracers = self.tracers[start_stop_id]
 
-            if len(previous_tracers) == 0 or not isinstance(
-                previous_tracers[0], TraceStart
-            ):
+            if len(previous_tracers) == 0 or not isinstance(previous_tracers[0], TraceStart):
                 raise ValueError(
                     f"The first tracer for stop {start_stop_id} must be a TraceStart"
                 )
@@ -131,7 +130,9 @@ class TraceStart(Trace):
 
         :returns: str - A formatted string indicating the start stop and time.
         """
-        return f"Start at {self.start_stop_id} at {strtime.seconds_to_str_time(self.start_time)}"
+        return (
+            f"Start at {self.start_stop_id} at {strtime.seconds_to_str_time(self.start_time)}"
+        )
 
 
 class EnrichedTraceStart(TraceStart):

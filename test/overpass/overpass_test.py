@@ -1,10 +1,11 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from shapely.geometry import Polygon
 from mcr_py.overpass.query import (
-    order_ways_and_nodes,
     fetch_boundary_polygon,
+    order_ways_and_nodes,
 )  # Replace 'your_module' with the actual module name
+from shapely.geometry import Polygon
 
 
 @pytest.fixture

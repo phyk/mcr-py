@@ -1,7 +1,6 @@
-import pytest
-import shapely.geometry
 import polars as pl
 import polars_st as st
+import shapely.geometry
 from mcr_py.utils import cache
 from mcr_py.utils.geometa import GeoMeta
 
@@ -40,9 +39,7 @@ def test_load_and_save(geo_meta, tmp_path):
 
 def test_crop_gdf(geo_meta):
     # Create a sample DataFrame
-    data = {
-        "geometry": [shapely.geometry.Point(0.5, 0.5), shapely.geometry.Point(2, 2)]
-    }
+    data = {"geometry": [shapely.geometry.Point(0.5, 0.5), shapely.geometry.Point(2, 2)]}
     locations = pl.DataFrame(data)
     locations = locations.select(st.from_shapely("geometry"))
     cropped_locations = geo_meta.crop_gdf(locations)

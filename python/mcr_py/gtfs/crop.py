@@ -114,13 +114,10 @@ def reconcile_trips_and_stop_times_with_stops(
     """
     stop_ids = stops_df.get_column(key.STOP_ID_KEY).unique()
     stop_times_df = stop_times_df.filter(
-        pl.col(key.STOP_ID_KEY).is_in(stop_ids)
-        & (pl.col(key.TRIP_ID_KEY).is_duplicated())
+        pl.col(key.STOP_ID_KEY).is_in(stop_ids) & (pl.col(key.TRIP_ID_KEY).is_duplicated())
     )
     trips_df = trips_df.filter(
-        pl.col(key.TRIP_ID_KEY).is_in(
-            stop_times_df.get_column(key.TRIP_ID_KEY).unique()
-        )
+        pl.col(key.TRIP_ID_KEY).is_in(stop_times_df.get_column(key.TRIP_ID_KEY).unique())
     )  # type: ignore
 
     return trips_df, stop_times_df
