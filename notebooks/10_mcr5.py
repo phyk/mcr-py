@@ -1,8 +1,10 @@
-import os
+import json
 import pathlib
-import pickle
+import typing
+import zoneinfo
 from datetime import datetime
 
+import tomllib
 from mcr_py.command.step_config import (
     get_walking_only_config_with_data,
 )
@@ -11,37 +13,10 @@ from mcr_py.mcr5.mcr5 import MCR5
 from mcr_py.utils.geometa import GeoMeta
 from mcr_py.utils.logger import rlog, setup
 
-setup("DEBUG")
 
-data_directory = pathlib.Path(__file__).parent.parent.resolve() / "data"
-city_name = "cologne"
-city_name_german = "Köln"
-city_name_german_alt = "Koeln"
-
-
-crs_sink_name = "EPSG:4839"
-
-timestamp = "20250718"
-now = "20250718-114512"
-
-base_directory = f"{data_directory}/{timestamp}"
-
-cache_path = f"{base_directory}/cache/"
-gtfs_path = f"{base_directory}/gtfs_raw/{city_name}.zip"
-gtfs_crop_path = f"{base_directory}/gtfs_clean/{city_name}.zip"
-gtfs_clean_dir = f"{base_directory}/gtfs_clean/{city_name}/"
-gtfs_clean_struct = f"{gtfs_clean_dir}/structs.pkl"
-gtfs_clean_stops = f"{gtfs_clean_dir}/stops.csv"
-
-gbfs_path = f"{base_directory}/gbfs_raw/{city_name}_{now}.csv"
-osm_path = f"{base_directory}/osm_raw"
-geometa_path = f"{base_directory}/cache/{city_name}_geometa.pkl"
-
-mcr5_output_path = f"{base_directory}/mcr5_results/{city_name}"
-# bicycle_base_path = f"../data/sharing_locations_clustered/{city_name.lower()}_bikes/"
-
-
-def load_auxiliary_classes(geo_meta_path: str, city_id: str, osm_path: str, cache_path: str):
+def load_auxiliary_classes(
+    geo_meta_path: pathlib.Path, city_id: str, osm_path: pathlib.Path, cache_path: pathlib.Path
+) -> tuple[GeoMeta, OSMData]:
     geo_meta = GeoMeta.load(geo_meta_path)
     geo_data = OSMData(
         geo_meta,
@@ -54,16 +29,7 @@ def load_auxiliary_classes(geo_meta_path: str, city_id: str, osm_path: str, cach
     return geo_meta, geo_data
 
 
-geo_meta, geo_data = load_auxiliary_classes(
-    geo_meta_path=geometa_path,
-    city_id=city_name_german_alt,
-    osm_path=osm_path,
-    cache_path=cache_path,
-)
-
-configs = {}
-
-# def get_bicyle_public_transport_config_ready(bicycle_location_path, start_time):
+# def get_bicycle_public_transport_config_ready(bicycle_location_path, start_time):
 #     initial_steps, repeating_steps = get_bicycle_public_transport_config(
 #         geo_meta_path=geometa_path,
 #         city_id=city_id_osm,
@@ -133,7 +99,7 @@ configs = {}
 #     }
 
 
-def get_walking_only_config_ready(geo_data: OSMData):
+def get_walking_only_config_ready(geo_data: OSMData) -> dict[str, typing.Any]:
     initial_steps, repeating_steps = get_walking_only_config_with_data(geo_data)
     rlog.info("Walking step configured")
     return {
@@ -146,45 +112,73 @@ def get_walking_only_config_ready(geo_data: OSMData):
     }
 
 
-configs["walking"] = get_walking_only_config_ready
+if __name__ == "__main__":
+    with open(pathlib.Path(__file__).parent.resolve() / "config.toml", "rb") as f:
+        settings = tomllib.load(f)
 
-runtimes = {}
-for key, config in configs.items():
-    start = datetime.now()
-    rlog.info(f"Running MCR5 for {key}")
+    setup(settings["run_type"]["run_type"])
+    city_name = settings["city"].keys()[0]
+    data_directory = pathlib.Path(__file__).parent.parent.resolve() / "data"
+    base_directory = data_directory / settings["timestamp"]["timestamp"]
+    cache_path = base_directory / "cache/"
+    gtfs_path = base_directory / f"/gtfs_raw/{city_name}.zip"
+    gtfs_crop_path = base_directory / f"/gtfs_clean/{city_name}.zip"
+    gtfs_clean_dir = base_directory / f"/gtfs_clean/{city_name}/"
+    gtfs_clean_struct = gtfs_clean_dir / "structs.pkl"
+    gtfs_clean_stops = gtfs_clean_dir / "stops.csv"
 
-    config = config(geo_data)
-    mcr5 = MCR5(**config["init_kwargs"])
+    gbfs_path = base_directory / f"gbfs_raw/{city_name}_{settings['timestamp']['now']}.csv"
+    osm_path = base_directory / "osm_raw"
+    geometa_path = base_directory / f"cache/{city_name}_geometa.pkl"
 
-    loaded_at = datetime.now()
-    load_time = loaded_at - start
+    mcr5_output_path = base_directory / f"mcr5_results/{city_name}"
+    bicycle_base_path = f"../data/sharing_locations_clustered/{city_name.lower()}_bikes/"
 
-    output_path = os.path.join(mcr5_output_path, key)
-
-    location_mappings = config["location_mappings"]
-
-    rlog.info("Calculating for {} hexes".format(len(location_mappings)))
-
-    start_time = config.get("start_time", "08:00:00")
-    rlog.debug("Running MCR5")
-    errors = mcr5.run(
-        location_mappings,
-        start_time=start_time,
-        output_dir=output_path,
-        max_transfers=config["max_transfers"],
-        verbose=True,
+    geo_meta, geo_data = load_auxiliary_classes(
+        geo_meta_path=geometa_path,
+        city_id=settings["city"][city_name]["city_name_german_alt"],
+        osm_path=osm_path,
+        cache_path=cache_path,
     )
-    rlog.info("Found {} errors".format(len(errors)))
 
-    run_time = datetime.now() - loaded_at
-    total_time = datetime.now() - start
-    runtimes[key] = {
-        "load_time": load_time,
-        "run_time": run_time,
-        "total_time": total_time,
-    }
+    configs = {}
+    configs["walking"] = get_walking_only_config_ready
 
-with open(os.path.join(mcr5_output_path, "runtimes.pkl"), "wb") as f:
-    pickle.dump(runtimes, f)
+    runtimes = {}
+    for key, config in configs.items():
+        start = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
+        rlog.info(f"Running MCR5 for {key}")
 
-print("Ready")
+        config = config(geo_data)
+        mcr5 = MCR5(**config["init_kwargs"])
+
+        loaded_at = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
+        load_time = loaded_at - start
+
+        output_path = mcr5_output_path / key
+
+        location_mappings = config["location_mappings"]
+
+        rlog.info("Calculating for {} hexes".format(len(location_mappings)))
+
+        start_time = config.get("start_time", "08:00:00")
+        rlog.debug("Running MCR5")
+        errors = mcr5.run(
+            location_mappings,
+            start_time=start_time,
+            output_dir=output_path,
+            max_transfers=config["max_transfers"],
+            verbose=True,
+        )
+        rlog.info("Found {} errors".format(len(errors)))
+
+        run_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - loaded_at
+        total_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - start
+        runtimes[key] = {
+            "load_time": load_time,
+            "run_time": run_time,
+            "total_time": total_time,
+        }
+
+    with open(mcr5_output_path / "runtimes.json", "w") as f:
+        json.dump(runtimes, f)
