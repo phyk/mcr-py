@@ -4,6 +4,7 @@ import typing
 import zoneinfo
 from datetime import datetime
 
+import polars as pl
 import tomllib
 from mcr_py.command.step_config import (
     get_walking_only_config_with_data,
@@ -12,75 +13,6 @@ from mcr_py.command.utils import load_auxiliary_classes
 from mcr_py.mcr.data import OSMData
 from mcr_py.mcr5.mcr5 import MCR5
 from mcr_py.utils.logger import rlog, setup
-
-# def get_bicycle_public_transport_config_ready(bicycle_location_path, start_time):
-#     initial_steps, repeating_steps = get_bicycle_public_transport_config(
-#         geo_meta_path=geometa_path,
-#         city_id=city_id_osm,
-#         bicycle_price_function="next_bike_no_tariff",
-#         bicycle_location_path=bicycle_location_path,
-#         structs_path=structs,
-#         stops_path=stops,
-#     )
-#     return {
-#         "init_kwargs": {
-#             "initial_steps": initial_steps,
-#             "repeating_steps": repeating_steps,
-#         },
-#         "location_mappings": location_mappings,
-#         "max_transfers": 2,
-#         "start_time": start_time,
-#     }
-
-
-# def get_car_only_config_ready():
-#     initial_steps, repeating_steps = get_car_only_config(
-#         geo_meta_path=geo_meta_path,
-#         city_id=city_id_osm,
-#     )
-#     return {
-#         "init_kwargs": {
-#             "initial_steps": initial_steps,
-#             "repeating_steps": repeating_steps,
-#         },
-#         "location_mappings": car_location_mappings,
-#         "max_transfers": 1,
-#     }
-
-
-# def get_bicycle_only_config_ready(bicycle_location_path):
-#     initial_steps, repeating_steps = get_bicycle_only_config(
-#         geo_meta_path=geo_meta_path,
-#         city_id=city_id_osm,
-#         bicycle_price_function="next_bike_no_tariff",
-#         bicycle_location_path=bicycle_location_path,
-#     )
-#     return {
-#         "init_kwargs": {
-#             "initial_steps": initial_steps,
-#             "repeating_steps": repeating_steps,
-#         },
-#         "location_mappings": location_mappings,
-#         "max_transfers": 2,
-#     }
-
-
-# def get_public_transport_only_config_ready(start_time):
-#     initial_steps, repeating_steps = get_public_transport_only_config(
-#         geo_meta_path=geo_meta_path,
-#         city_id=city_id_osm,
-#         structs_path=structs,
-#         stops_path=stops,
-#     )
-#     return {
-#         "init_kwargs": {
-#             "initial_steps": initial_steps,
-#             "repeating_steps": repeating_steps,
-#         },
-#         "location_mappings": location_mappings,
-#         "max_transfers": 2,
-#         "start_time": start_time,
-#     }
 
 
 def get_walking_only_config_ready(geo_data: OSMData) -> dict[str, typing.Any]:
@@ -97,11 +29,13 @@ def get_walking_only_config_ready(geo_data: OSMData) -> dict[str, typing.Any]:
 
 
 if __name__ == "__main__":
+    city_name = "cologne"
+    first_n_rows = 20
+
     with open(pathlib.Path(__file__).parent.resolve() / "config.toml", "rb") as f:
         settings = tomllib.load(f)
 
     setup(settings["run_type"]["run_type"])
-    city_name = settings["city"].keys()[0]
     data_directory = pathlib.Path(__file__).parent.parent.resolve() / "data"
     base_directory = data_directory / settings["timestamp"]["timestamp"]
     cache_path = base_directory / "cache/"
@@ -113,7 +47,7 @@ if __name__ == "__main__":
     osm_path = base_directory / "osm_raw"
     geometa_path = base_directory / f"cache/{city_name}_geometa.pkl"
 
-    mcr5_output_path = base_directory / f"mcr5_results/{city_name}"
+    mcr5_output_path = base_directory / f"mcr5_results/{city_name}_{first_n_rows}_rows"
     bicycle_base_path = f"../data/sharing_locations_clustered/{city_name.lower()}_bikes/"
 
     geo_meta, geo_data = load_auxiliary_classes(
@@ -125,7 +59,6 @@ if __name__ == "__main__":
 
     configs = {}
     configs["walking"] = get_walking_only_config_ready
-
     runtimes = {}
     for key, config in configs.items():
         start = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
@@ -138,8 +71,10 @@ if __name__ == "__main__":
         load_time = loaded_at - start
 
         output_path = mcr5_output_path / key
+        output_path.mkdir(parents=True, exist_ok=True)
 
-        location_mappings = config["location_mappings"]
+        location_mappings: pl.DataFrame = config["location_mappings"]
+        location_mappings = location_mappings.head(first_n_rows)
 
         rlog.info("Calculating for {} hexes".format(len(location_mappings)))
 
@@ -157,9 +92,9 @@ if __name__ == "__main__":
         run_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - loaded_at
         total_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - start
         runtimes[key] = {
-            "load_time": load_time,
-            "run_time": run_time,
-            "total_time": total_time,
+            "load_time": str(load_time),
+            "run_time": str(run_time),
+            "total_time": str(total_time),
         }
 
     with open(mcr5_output_path / "runtimes.json", "w") as f:

@@ -8,9 +8,9 @@ PROFILE_MAX_TIME = mcr_py.utils.strtime.str_time_to_seconds("48:00:00")
 
 
 def profile_calculation_worker(
-    poi_types: list[str], args: tuple[str, pl.DataFrame]
+    poi_types: list[str], args: tuple[tuple[str], pl.DataFrame]
 ) -> typing.Union[None, tuple[str, list[tuple[int, int]]]]:
-    name, group = args
+    (name,), group = args
     profile = calculate_profile_for_group(group, poi_types)
     if profile is not None:
         return name, profile
@@ -97,6 +97,9 @@ def fill_columns_by_left(profiles_df: pl.DataFrame) -> pl.DataFrame:
 def add_any_column_is_different_column(profiles_df: pl.DataFrame) -> pl.DataFrame:
     cost_rows = [c for c in profiles_df.columns if c.startswith("cost_")]
     cost_rows.sort()
+    if len(cost_rows) == 1:
+        profiles_df = profiles_df.with_columns(any_column_different=pl.lit(False))  # noqa: FBT003
+        return profiles_df
     profiles_df = profiles_df.with_columns(
         any_column_different=pl.any_horizontal(pl.col(cost_rows[0]) != pl.col(*cost_rows[1:]))
     )

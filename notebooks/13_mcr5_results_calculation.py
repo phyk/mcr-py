@@ -4,9 +4,9 @@ import pathlib
 import mcr_py.utils.logger
 import polars as pl
 import tomllib
+from mcr_py.command.utils import load_auxiliary_classes
 from mcr_py.mcr5.labels import read_labels_for_nodes
 from mcr_py.minute_city import minute_city
-from mcr_py.utils.cache import load_auxiliary_classes
 from tqdm import tqdm
 
 if __name__ == "__main__":

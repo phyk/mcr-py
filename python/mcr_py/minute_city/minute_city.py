@@ -1,12 +1,8 @@
-import multiprocessing
-from concurrent.futures import ProcessPoolExecutor
-from functools import partial
-
 import polars as pl
 from tqdm.auto import tqdm
 
 from mcr_py.minute_city import profile
-from mcr_py.utils.logger import Timed
+from mcr_py.utils.logger import Timed, rlog
 
 
 def add_pois_to_labels(labels: pl.LazyFrame, pois: pl.LazyFrame) -> pl.LazyFrame:
@@ -47,15 +43,12 @@ def get_profiles_df(
         grouped = labels_with_pois.group_by("start_id_hex")
         n_groups = labels_with_pois.get_column("start_id_hex").n_unique()
 
-    partial_worker = partial(profile.profile_calculation_worker, poi_types)
-
     profiles: dict[str, list[tuple[int, int]]] = {}
-    with (
-        Timed.debug("Calculating profiles"),
-        ProcessPoolExecutor(max_workers=multiprocessing.cpu_count() - 2) as executor,
-    ):
+    with Timed.debug("Calculating profiles"):
         pbar = tqdm(total=n_groups, disable=disable_tqdm, leave=leave_tqdm)
-        for result in executor.map(partial_worker, grouped):
+        # for result in executor.map(partial_worker, grouped):
+        for group in grouped:
+            result = profile.profile_calculation_worker(poi_types=poi_types, args=group)  # type: ignore
             pbar.update(1)
             if result is not None:
                 name, prof = result
@@ -64,6 +57,7 @@ def get_profiles_df(
 
     with Timed.debug("Creating profiles dataframe"):
         start_time: int = labels_with_pois.get_column("time").min()  # type: ignore
+        rlog.debug(next(iter(profiles.items())))
         profiles_df = profile.build_profiles_df(profiles, start_time)
 
         # tuning
