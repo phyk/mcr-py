@@ -8,26 +8,10 @@ import tomllib
 from mcr_py.command.step_config import (
     get_walking_only_config_with_data,
 )
-from mcr_py.mcr.data import NetworkType, OSMData, RedownloadMode
+from mcr_py.mcr.data import OSMData
 from mcr_py.mcr5.mcr5 import MCR5
-from mcr_py.utils.geometa import GeoMeta
+from mcr_py.utils.cache import load_auxiliary_classes
 from mcr_py.utils.logger import rlog, setup
-
-
-def load_auxiliary_classes(
-    geo_meta_path: pathlib.Path, city_id: str, osm_path: pathlib.Path, cache_path: pathlib.Path
-) -> tuple[GeoMeta, OSMData]:
-    geo_meta = GeoMeta.load(geo_meta_path)
-    geo_data = OSMData(
-        geo_meta,
-        city_id,
-        cache_path=cache_path,
-        osm_path=osm_path,
-        redownload=RedownloadMode.REUSE,
-        additional_network_types=[NetworkType.CYCLING, NetworkType.DRIVING],
-    )
-    return geo_meta, geo_data
-
 
 # def get_bicycle_public_transport_config_ready(bicycle_location_path, start_time):
 #     initial_steps, repeating_steps = get_bicycle_public_transport_config(
