@@ -47,10 +47,6 @@ def calculate_profile_for_group(
     return profile
 
 
-def next_larger_minute(seconds_since_midnight: int) -> int:
-    return (seconds_since_midnight // 60 + 1) * 60
-
-
 def build_profiles_df(
     profiles: dict[str, list[tuple[int, int]]], start_time: int
 ) -> pl.DataFrame:
@@ -58,12 +54,18 @@ def build_profiles_df(
         (hex_id, cost, time) for hex_id, profile in profiles.items() for cost, time in profile
     ]
     profiles_df = pl.DataFrame(
-        profiles_to_list, schema={"hex_id": pl.String, "cost": pl.Float64, "time": pl.Int64}
+        profiles_to_list,
+        schema={"hex_id": pl.String, "cost": pl.Int64, "time": pl.Int64},
+        orient="row",
     ).with_columns(pl.col("time") - pl.lit(start_time))
 
     profiles_df = profiles_df.pivot(index="hex_id", on="cost", values="time")
 
-    profiles_df.columns = [f"cost_{c}" for c in profiles_df.columns]
+    rename_columns = [f"cost_{c}" for c in profiles_df.columns if c != "hex_id"]
+    profiles_df.columns = ["hex_id"] + rename_columns
+
+    rename_columns.sort()
+    profiles_df = profiles_df.select(["hex_id"] + rename_columns)
 
     profiles_df = fill_columns_by_left(profiles_df)
 
@@ -74,10 +76,22 @@ def fill_columns_by_left(profiles_df: pl.DataFrame) -> pl.DataFrame:
     if "cost_0" not in profiles_df.columns:
         # fill first cost in case it is not possible to reach without any cost (e.g. car, that can't stop for some time)
         profiles_df = profiles_df.with_columns(cost_0=pl.lit(float("inf")))
+        profiles_df = profiles_df.select(
+            ["hex_id", "cost_0"]
+            + [
+                column
+                for column in profiles_df.columns
+                if column != "hex_id" and column != "cost_0"
+            ]
+        )
     else:
         profiles_df = profiles_df.with_columns(pl.col("cost_0").fill_null(float("inf")))
 
-    profiles_df = profiles_df.transpose().fill_null(strategy="forward").transpose()
+    profiles_df = (
+        profiles_df.transpose(include_header=True, header_name="cost", column_names="hex_id")
+        .fill_null(strategy="forward")
+        .transpose(include_header=True, header_name="hex_id", column_names="cost")
+    )
     return profiles_df
 
 
@@ -85,38 +99,22 @@ def add_any_column_is_different_column(profiles_df: pl.DataFrame) -> pl.DataFram
     cost_rows = [c for c in profiles_df.columns if c.startswith("cost_")]
     cost_rows.sort()
     profiles_df = profiles_df.with_columns(
-        any_column_different=pl.any_horizontal(
-            pl.col(*cost_rows[:-1]) != pl.col(*cost_rows[1:])
-        )
-    )  # noqa: FBT003
-    return profiles_df
-
-
-def add_required_cost_for_optimum_column(profiles_df: pl.DataFrame) -> pl.DataFrame:
-    cost_rows = [c for c in profiles_df.columns if c.startswith("cost_")]
-
-    def calculate_required_cost_for_optimal_for_row(row):
-        optimal = min(row[cost_rows])
-        for c in cost_rows:
-            if row[c] == optimal:
-                return int(c[len("cost_") :])
-        raise ValueError("No optimal cost found")
-
-    # profiles_df["required_cost_for_optimal"] = profiles_df.apply(
-    #     calculate_required_cost_for_optimal_for_row, axis=1
-    # )
+        any_column_different=pl.any_horizontal(pl.col(cost_rows[0]) != pl.col(*cost_rows[1:]))
+    )
     return profiles_df
 
 
 def add_optimum_column(profiles_df: pl.DataFrame) -> pl.DataFrame:
     cost_rows = [c for c in profiles_df.columns if c.startswith("cost_")]
+    cost_values = [int(c.replace("cost_", "")) for c in cost_rows]
 
-    def calculate_optimal_for_row(row):
-        optimal = min(row[cost_rows])
-        for c in cost_rows:
-            if row[c] == optimal:
-                return row[c]
-        raise ValueError("No optimal cost found")
-
-    # profiles_df["optimal"] = profiles_df.apply(calculate_optimal_for_row, axis=1)
+    profiles_df = profiles_df.with_columns(
+        pl.concat_list(pl.col(cost_rows)).alias("all_costs")
+    ).with_columns(
+        pl.col("all_costs").list.min().alias("optimal"),
+        pl.col("all_costs")
+        .list.arg_min()
+        .replace(dict(enumerate(cost_values)))
+        .alias("required_cost_for_optimal"),
+    )
     return profiles_df

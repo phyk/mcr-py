@@ -47,7 +47,7 @@ def get_profiles_df(
         grouped = labels_with_pois.group_by("start_id_hex")
         n_groups = labels_with_pois.get_column("start_id_hex").n_unique()
 
-    partial_worker = partial(profile.profile_calculation_worker, poi_types=poi_types)
+    partial_worker = partial(profile.profile_calculation_worker, poi_types)
 
     profiles: dict[str, list[tuple[int, int]]] = {}
     with (
@@ -68,7 +68,6 @@ def get_profiles_df(
 
         # tuning
         profiles_df = profile.add_any_column_is_different_column(profiles_df)
-        profiles_df = profile.add_required_cost_for_optimum_column(profiles_df)
         profiles_df = profile.add_optimum_column(profiles_df)
 
     return profiles_df
