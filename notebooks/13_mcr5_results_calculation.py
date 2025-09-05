@@ -1,3 +1,4 @@
+import itertools
 import os
 import pathlib
 
@@ -7,7 +8,45 @@ import tomllib
 from mcr_py.command.utils import load_auxiliary_classes
 from mcr_py.mcr5.labels import read_labels_for_nodes
 from mcr_py.minute_city import minute_city
+from mcr_py.minute_city.profile import fill_columns_by_left
 from tqdm import tqdm
+
+
+def calculate_unit_metrics(profiles_df: pl.DataFrame) -> pl.DataFrame:
+    profiles_df = profiles_df.with_columns(
+        (pl.col("required_cost_for_optimal") / pl.lit(100)).alias(
+            "required_cost_for_optimal_in_euro"
+        ),
+        (pl.col("optimal") / pl.lit(60)).alias("optimal_in_minutes"),
+    )
+    return profiles_df
+
+
+def trim_trailing_numbers(string: str) -> str:
+    has_trailing_numbers = string[-1].isdigit()
+    if not has_trailing_numbers:
+        return string
+    return "_".join(string.split("_")[:-1])
+
+
+def reorder_columns(profiles_df: pl.DataFrame) -> pl.DataFrame:
+    cost_columns = []
+    other_columns = []
+
+    for column in profiles_df.columns:
+        if column.startswith("cost_"):
+            cost_columns.append(column)
+        else:
+            other_columns.append(column)
+
+    cost_columns.sort()
+    new_columns = other_columns + cost_columns
+
+    # Reorder the DataFrame columns
+    profiles_df = profiles_df.select(new_columns)
+
+    return profiles_df
+
 
 if __name__ == "__main__":
     city_name = "cologne"
@@ -44,10 +83,41 @@ if __name__ == "__main__":
         labels_per_scenario[entry.name] = labels.collect(engine="streaming")  # type: ignore
     mcr_py.utils.logger.rlog.info("Reading MCR5 results done")
     poi_types = geo_data.pois.get_column("poi_type").unique().to_list()
+
+    # Calculate the optimal profile per scenario
     profiles_df_per_scenario = {}
     for scenario, labels in tqdm(labels_per_scenario.items()):
+        core_scenario = trim_trailing_numbers(scenario)
         scenario_df = minute_city.get_profiles_df(labels, poi_types, disable_tqdm=False)
-        scenario_df = scenario_df.with_columns(scenario=pl.lit(scenario))
+        scenario_df = scenario_df.with_columns(
+            scenario=pl.lit(scenario), core_scenario=pl.lit(core_scenario)
+        )
         profiles_df_per_scenario[scenario] = scenario_df
     profiles_df: pl.DataFrame = pl.concat(profiles_df_per_scenario.values())
-    profiles_df.write_parquet(mcr5_output_path / "profiles.parquet", compression="snappy")
+    profiles_df = calculate_unit_metrics(profiles_df)
+    profiles_df = reorder_columns(profiles_df)
+    profiles_df = fill_columns_by_left(profiles_df)
+    profiles_df.write_parquet(
+        mcr5_output_path / "profiles_tariffs.parquet", compression="snappy"
+    )
+
+    # Calculate the optimal profile per scenario and poi_type
+    profiles_df_per_scenario_per_type = {t: {} for t in poi_types}
+    for t, (scenario, labels) in tqdm(
+        list(itertools.product(poi_types, labels_per_scenario.items()))
+    ):
+        core_scenario = trim_trailing_numbers(scenario)
+        scenario_df = minute_city.get_profiles_df(labels, [t], disable_tqdm=True)
+        scenario_df = scenario_df.with_columns(
+            scenario=pl.lit(scenario), category=pl.lit(t), core_scenario=pl.lit(core_scenario)
+        )
+        profiles_df_per_scenario_per_type[t][scenario] = scenario_df
+    profiles_df_categories = pl.concat(
+        [df for dfs in profiles_df_per_scenario_per_type.values() for df in dfs.values()]
+    )
+    profiles_df_categories = calculate_unit_metrics(profiles_df_categories)
+    profiles_df_categories = reorder_columns(profiles_df_categories)
+    profiles_df_categories = fill_columns_by_left(profiles_df_categories)
+    profiles_df_categories.write_parquet(
+        mcr5_output_path / "profiles_categories_tariffs.parquet", compression="snappy"
+    )
