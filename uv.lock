@@ -1518,7 +1518,7 @@ dependencies = [
     { name = "maturin" },
     { name = "networkx" },
     { name = "notebook" },
-    { name = "overpy" },
+    { name = "overpass" },
     { name = "pandera", extra = ["polars"] },
     { name = "patchelf" },
     { name = "polars" },
@@ -1555,7 +1555,7 @@ requires-dist = [
     { name = "maturin", specifier = ">=1.8.1" },
     { name = "networkx", specifier = ">=3.4.2" },
     { name = "notebook", specifier = ">=7.3.2" },
-    { name = "overpy", specifier = ">=0.7" },
+    { name = "overpass", specifier = ">=0.7.2" },
     { name = "pandera", extras = ["polars"], specifier = ">=0.26.1" },
     { name = "patchelf", specifier = ">=0.17.2.1" },
     { name = "polars", specifier = ">=1.19.0" },
@@ -1853,12 +1853,26 @@ wheels = [
 ]
 
 [[package]]
-name = "overpy"
-version = "0.7"
+name = "osm2geojson"
+version = "0.2.6"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/9a/21/4287be6d9de8092837d4d8cfe0bd1e9c48205f0d0760d221868bd0d74ce2/overpy-0.7.tar.gz", hash = "sha256:f6df5073de0cc1f63aed6d2632140f98c3d91fa3a2e3bef1bcfaa6225500f364", size = 48555, upload-time = "2023-12-04T12:20:17.593Z" }
+dependencies = [
+    { name = "requests" },
+    { name = "shapely" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/69/bd/31dd0aaddf79a8e16f6762a2b8f2dcc3fe7b0d226fc7b089b325aaf75d00/osm2geojson-0.2.6.tar.gz", hash = "sha256:06ee8f06c6ac26fc0cda9972cc7f3064c7c78140b03bd382e611db70f3a78c35", size = 14452, upload-time = "2025-03-24T17:30:32.597Z" }
+
+[[package]]
+name = "overpass"
+version = "0.7.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "osm2geojson" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a5/64/186d0a2e5f76e5f5c767c9ac09a8b69b68a30b59637697766aa7b179a19d/overpass-0.7.2.tar.gz", hash = "sha256:2658b3a4b4e30b38314daaf3076202d96b102b66f19a616ba8fd045ce6445c2f", size = 11217, upload-time = "2024-08-10T20:38:15.087Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ec/12/315d56e8386a4060d9a978a34ad48a9af072b67f40504eaa2f44197a15e5/overpy-0.7-py3-none-any.whl", hash = "sha256:cc888c9dcdf9076e667b435909f57e028845c4a1133b6a6f3528284a304516c3", size = 14779, upload-time = "2023-12-04T12:20:15.966Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/31/33eb3a90e736a9dfebc8d0fdb39b87b5fc094ed9ab9031ac33ed78ce018f/overpass-0.7.2-py3-none-any.whl", hash = "sha256:0b97a31123290425c37c04f2c6cc4b497b730c1977449392448f5f1ce959ad96", size = 13238, upload-time = "2024-08-10T20:38:14.01Z" },
 ]
 
 [[package]]
