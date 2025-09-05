@@ -1,4 +1,5 @@
 import os
+import pathlib
 from dataclasses import dataclass
 
 import folium
@@ -120,7 +121,7 @@ class GeoMeta:
         ]
 
     @staticmethod
-    def load(path: str):
+    def load(path: pathlib.Path):
         """
         Load a GeoMeta object from a pickle file.
 

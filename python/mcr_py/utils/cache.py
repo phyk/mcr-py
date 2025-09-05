@@ -1,5 +1,6 @@
 import hashlib
 import os
+import pathlib
 
 import polars as pl
 from shapely.geometry import Polygon
@@ -9,7 +10,7 @@ from mcr_py.utils import storage
 templir = storage.get_tmp_path()
 
 
-def overwrite_tempdir(path: str) -> None:
+def overwrite_tempdir(path: pathlib.Path) -> None:
     """
     Overwrites the global temporary directory path.
 

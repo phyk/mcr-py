@@ -1,3 +1,4 @@
+import pathlib
 from datetime import datetime
 from typing import Optional
 
@@ -97,7 +98,7 @@ def crop_command(
         ),
     ] = None,
     geometa_path: Annotated[
-        Optional[str],
+        Optional[pathlib.Path],
         typer.Option(
             help="Path to the GeoMeta file containing the boundary of the area of consideration",
         ),

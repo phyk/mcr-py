@@ -1,4 +1,5 @@
 import os
+import pathlib
 from enum import Enum
 from typing import Tuple, TypeVar
 
@@ -36,7 +37,7 @@ class NetworkType(Enum):
 
 class RedownloadMode(Enum):
     REDOWNLOAD = "redownload"
-    OVERWRITE_NOREDOWNLOAD = "overwrite"
+    OVERWRITE_NO_REDOWNLOAD = "overwrite"
     REUSE = "reuse"
 
 
@@ -45,18 +46,18 @@ class OSMData:
         self,
         geo_meta: GeoMeta,
         city_id: str = "",
-        osm_path: str = "",
-        cache_path: str = "",
+        osm_path: pathlib.Path = pathlib.Path(),
+        cache_path: pathlib.Path = pathlib.Path(),
         resolution: int = 8,
         additional_network_types: list[NetworkType] = [],
         redownload: RedownloadMode = RedownloadMode.REUSE,
-    ):
+    ) -> None:
         self.geo_meta = geo_meta
         self.city_id = city_id
         self.osm_path = osm_path
         self.cache_path = cache_path
 
-        if not os.path.exists(f"{osm_path}/{city_id.lower()}.osm.pbf"):
+        if not (osm_path / f"{city_id.lower()}.osm.pbf").exists():
             redownload = RedownloadMode.REDOWNLOAD
 
         with Timed.info("Loading OSM walking"):
@@ -87,9 +88,11 @@ class OSMData:
                     nxgraph,
                 )
 
-    def read_walking(self, redownload: RedownloadMode):
-        nodes_path = f"{self.cache_path}/{self.city_id.lower()}_walking_nodes.parquet"
-        edges_path = f"{self.cache_path}/{self.city_id.lower()}_walking_edges.parquet"
+    def read_walking(
+        self, redownload: RedownloadMode
+    ) -> tuple[pl.DataFrame, pl.DataFrame, rx.PyDiGraph]:
+        nodes_path = self.cache_path / f"{self.city_id.lower()}_walking_nodes.parquet"
+        edges_path = self.cache_path / f"{self.city_id.lower()}_walking_edges.parquet"
         if (
             redownload != RedownloadMode.REUSE
             or not os.path.exists(nodes_path)
@@ -98,8 +101,8 @@ class OSMData:
             (nodes, edges) = load_osm_walking(
                 self.city_id,
                 self.geo_meta.get_convex_hull_coord_list(),
-                self.osm_path,
-                self.cache_path,
+                str(self.osm_path),
+                str(self.cache_path),
                 download=redownload == RedownloadMode.REDOWNLOAD,
             )
         else:
@@ -114,8 +117,8 @@ class OSMData:
     def read_network(
         self, network_type: str, renewed: RedownloadMode
     ) -> tuple[pl.DataFrame, pl.DataFrame, rx.PyDiGraph]:
-        nodes_path = f"{self.cache_path}/{self.city_id.lower()}_{network_type}_nodes.parquet"
-        edges_path = f"{self.cache_path}/{self.city_id.lower()}_{network_type}_edges.parquet"
+        nodes_path = self.cache_path / f"{self.city_id.lower()}_{network_type}_nodes.parquet"
+        edges_path = self.cache_path / f"{self.city_id.lower()}_{network_type}_edges.parquet"
         if (
             renewed != RedownloadMode.REUSE
             or not os.path.exists(nodes_path)
@@ -127,20 +130,21 @@ class OSMData:
                         city_name=self.city_id,
                         geometry_vec=self.geo_meta.get_convex_hull_coord_list(),
                         reverse_edges=True,
-                        archive_path=self.osm_path,
-                        outpath=self.cache_path,
+                        archive_path=str(self.osm_path),
+                        outpath=str(self.cache_path),
                         download=renewed == RedownloadMode.REDOWNLOAD,
                     )
                 case "driving":
                     (nodes, edges) = load_osm_driving(
                         city_name=self.city_id,
                         geometry_vec=self.geo_meta.get_convex_hull_coord_list(),
-                        archive_path=self.osm_path,
-                        outpath=self.cache_path,
+                        archive_path=str(self.osm_path),
+                        outpath=str(self.cache_path),
                         download=renewed == RedownloadMode.REDOWNLOAD,
                     )
                 case _:
-                    raise ValueError("{} is not a valid network type".format(network_type))
+                    msg = "{} is not a valid network type".format(network_type)
+                    raise ValueError(msg)
         else:
             nodes = pl.read_parquet(nodes_path)
             edges = pl.read_parquet(edges_path)
@@ -151,7 +155,7 @@ class OSMData:
         return nodes, edges, rxgraph
 
     def read_pois(self, renewed: RedownloadMode) -> pl.DataFrame:
-        pois_path = f"{self.cache_path}/{self.city_id.lower()}_pois_nodes.parquet"
+        pois_path = self.cache_path / f"{self.city_id.lower()}_pois_nodes.parquet"
         if renewed != RedownloadMode.REUSE or not os.path.exists(pois_path):
             pois = load_osm_pois(
                 city_name=self.city_id,
@@ -165,7 +169,7 @@ class OSMData:
             pois = pl.read_parquet(pois_path)
         return pois
 
-    def calculate_location_mapping(self):
+    def calculate_location_mapping(self) -> None:
         self.location_mapping = (
             self.osm_nodes.lazy()
             .with_columns(

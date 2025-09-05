@@ -87,11 +87,10 @@ def fill_columns_by_left(profiles_df: pl.DataFrame) -> pl.DataFrame:
     else:
         profiles_df = profiles_df.with_columns(pl.col("cost_0").fill_null(float("inf")))
 
-    profiles_df = (
-        profiles_df.transpose(include_header=True, header_name="cost", column_names="hex_id")
-        .fill_null(strategy="forward")
-        .transpose(include_header=True, header_name="hex_id", column_names="cost")
-    )
+    for prev_column, column in zip(
+        profiles_df.columns[:-1], profiles_df.columns[1:], strict=False
+    ):
+        profiles_df = profiles_df.with_columns(pl.col(column).fill_null(pl.col(prev_column)))
     return profiles_df
 
 
