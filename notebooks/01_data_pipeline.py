@@ -107,5 +107,5 @@ if __name__ == "__main__":
             admin_level=settings["city"][city]["admin_level"],
             crs_sink_name=settings["geography"]["crs_sink_name"],
             gtfs_timestamp=settings["gtfs"]["timestamp"],
-            gbfs_url=settings["city"][city]["gbfs_url"],
+            gbfs_url=settings["city"][city].get("gbfs_url", None),
         )

@@ -57,11 +57,12 @@ class OSMData:
         self.osm_path = osm_path
         self.cache_path = cache_path
 
-        if not (osm_path / f"{city_id.lower()}.osm.pbf").exists():
-            redownload = RedownloadMode.REDOWNLOAD
-
         with Timed.info("Loading OSM walking"):
-            self.osm_nodes, self.osm_edges, self.nxgraph = self.read_walking(redownload)
+            self.osm_nodes, self.osm_edges, self.nxgraph = self.read_walking(
+                redownload
+                if (osm_path / f"{city_id.lower()}.osm.pbf").exists()
+                else RedownloadMode.REDOWNLOAD
+            )
 
         with Timed.info("Loading OSM POIs"):
             self.pois = self.read_pois(redownload)
@@ -160,8 +161,8 @@ class OSMData:
             pois = load_osm_pois(
                 city_name=self.city_id,
                 geometry_vec=self.geo_meta.get_bounding_box_as_coord_list(),
-                archive_path=self.osm_path,
-                outpath=self.cache_path,
+                archive_path=str(self.osm_path),
+                outpath=str(self.cache_path),
                 download=renewed == RedownloadMode.REDOWNLOAD,
                 nodes_to_match_df=self.osm_nodes,
             )  # type: ignore
