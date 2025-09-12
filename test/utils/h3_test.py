@@ -10,7 +10,7 @@ from mcr_py.utils.h3 import (
 )
 
 
-def test_add_h3_cell_id_to_df():
+def test_add_h3_cell_id_to_df() -> None:
     """
     Tests the add_h3_cell_id_to_df function by verifying the addition of H3 cell ID column.
     """
@@ -24,7 +24,7 @@ def test_add_h3_cell_id_to_df():
     assert cell_id == 617700169957507071
 
 
-def test_plot_h3_cells_discrete_colors_on_folium():
+def test_plot_h3_cells_discrete_colors_on_folium() -> None:
     """
     Tests the plot_h3_cells_discrete_colors_on_folium function by verifying folium polygon creation.
     """
@@ -36,7 +36,7 @@ def test_plot_h3_cells_discrete_colors_on_folium():
     assert folium_map._children
 
 
-def test_add_legend_to_map():
+def test_add_legend_to_map() -> None:
     """
     Tests the add_legend_to_map function by verifying legend addition to folium map.
     """
@@ -47,7 +47,7 @@ def test_add_legend_to_map():
     assert result_map._children
 
 
-def test_plot_h3_cells_on_folium():
+def test_plot_h3_cells_on_folium() -> None:
     """
     Tests the plot_h3_cells_on_folium function by verifying folium polygon creation with popup.
     """
@@ -60,14 +60,14 @@ def test_plot_h3_cells_on_folium():
         assert folium_map._children
 
 
-def test_plot_h3_cells_on_folium_with_popup_callback():
+def test_plot_h3_cells_on_folium_with_popup_callback() -> None:
     """
     Tests the plot_h3_cells_on_folium function by verifying popup callback functionality.
     """
     h3_cells = {"8928308280fffff": 10}
     folium_map = folium.Map()
 
-    def mock_popup_callback(value):
+    def mock_popup_callback(value) -> str:
         return f"Custom popup: {value}"
 
     with patch("folium.Polygon") as mock_polygon:

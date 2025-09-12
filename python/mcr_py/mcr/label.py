@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence
+from typing import NoReturn, Sequence
 
 from mcr_py.raptor.bag import BaseLabel as McRAPTORBaseLabel
 
@@ -17,21 +17,21 @@ class IntermediateLabel:
         hidden_values: Sequence[int],
         path: Sequence[int | str],
         osm_node_id: int,
-    ):
+    ) -> None:
         self.values = list(values)
         self.hidden_values = list(hidden_values)
         self.path = list(path)
         self.node_id = osm_node_id
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"IntermediateLabel(values={self.values}, hidden_values={self.hidden_values}, path={self.path}, node_id={self.node_id})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)
 
     def strictly_dominates(self, other: IntermediateLabel) -> bool:
         assert len(self.values) == len(other.values)
-        return all([self.values[i] <= other.values[i] for i in range(len(self.values))])
+        return all(self.values[i] <= other.values[i] for i in range(len(self.values)))
 
     def copy_with_node_id(self, node_id: int) -> IntermediateLabel:
         return IntermediateLabel(
@@ -73,10 +73,10 @@ def merge_intermediate_bags(
 ) -> list[IntermediateLabel]:
     merged_bag = []
     for label in bag:
-        if not any([other_label.strictly_dominates(label) for other_label in other_bag]):
+        if not any(other_label.strictly_dominates(label) for other_label in other_bag):
             merged_bag.append(label)
     for label in other_bag:
-        if not any([other_label.strictly_dominates(label) for other_label in bag]):
+        if not any(other_label.strictly_dominates(label) for other_label in bag):
             merged_bag.append(label)
     return merged_bag
 
@@ -88,17 +88,18 @@ class McRAPTORLabel(McRAPTORBaseLabel):
         cost: int,
         stop: str,
         n_stops: int,
-    ):
+    ) -> None:
         super().__init__(time, stop)
         self.cost = cost
         self.n_stops = n_stops
 
     def strictly_dominates(self, other: McRAPTORBaseLabel) -> bool:
         if not isinstance(other, McRAPTORLabel):
-            raise TypeError("Other label must be of type McRAPTORLabel")
+            msg = "Other label must be of type McRAPTORLabel"
+            raise TypeError(msg)
         return self.arrival_time <= other.arrival_time and self.cost <= other.cost
 
-    def update_along_trip(self, arrival_time: int, stop_id: str, trip_id: str):
+    def update_along_trip(self, arrival_time: int, stop_id: str, trip_id: str) -> None:
         super().update_along_trip(arrival_time, stop_id, trip_id)
         if self.n_stops == 0:
             self.cost += COST_SHORT_DISTANCE_TICKET_INCR
@@ -107,13 +108,14 @@ class McRAPTORLabel(McRAPTORBaseLabel):
             self.cost += COST_LONG_DISTANCE_TICKET_INCR
         self.n_stops += 1
 
-    def update_along_footpath(self, walking_time: int, stop_id: str):
-        raise NotImplementedError("This label should not be updated along a footpath")
+    def update_along_footpath(self, walking_time: int, stop_id: str) -> NoReturn:
+        msg = "This label should not be updated along a footpath"
+        raise NotImplementedError(msg)
 
-    def update_before_route_bag_merge(self, departure_time: int, stop_id: str):
+    def update_before_route_bag_merge(self, departure_time: int, stop_id: str) -> None:
         super().update_before_route_bag_merge(departure_time, stop_id)
 
-    def update_before_stop_bag_merge(self, stop_id: str):
+    def update_before_stop_bag_merge(self, stop_id: str) -> None:
         pass
         # self.n_stops = 4  # artifically set to 4, so that if another public transport trip is taken, long distance ticket is used
 
@@ -130,27 +132,29 @@ class McRAPTORLabelWithPath(McRAPTORLabel):
     STOP_PREFIX = "STOP_"
     TRIP_PREFIX = "TRIP_"
 
-    def __init__(self, time: int, cost: int, stop: str, n_stops, path: list[int | str]):
+    def __init__(
+        self, time: int, cost: int, stop: str, n_stops, path: list[int | str]
+    ) -> None:
         super().__init__(time, cost, stop, n_stops=n_stops)
         self.path = path
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"McRAPTORLabelWithPath(time={self.arrival_time}, cost={self.cost}, n_stops={self.n_stops}, path={self.path})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)
 
-    def update_along_trip(self, arrival_time: int, stop_id: str, trip_id: str):
+    def update_along_trip(self, arrival_time: int, stop_id: str, trip_id: str) -> None:
         super().update_along_trip(arrival_time, stop_id, trip_id)
         trip_id = self.TRIP_PREFIX + trip_id
         if self.path[-1] != trip_id:
             self.path.append(trip_id)
 
-    def update_before_route_bag_merge(self, departure_time: int, stop_id: str):
+    def update_before_route_bag_merge(self, departure_time: int, stop_id: str) -> None:
         super().update_before_route_bag_merge(departure_time, stop_id)
         self.path.append(self.STOP_PREFIX + stop_id)
 
-    def update_before_stop_bag_merge(self, stop_id: str):
+    def update_before_stop_bag_merge(self, stop_id: str) -> None:
         super().update_before_stop_bag_merge(stop_id)
         self.path.append(self.STOP_PREFIX + stop_id)
 
@@ -170,4 +174,5 @@ def convert_mc_raptor_path_element(path_element: int | str) -> int | str:
     elif path_element.startswith(McRAPTORLabelWithPath.TRIP_PREFIX):
         return path_element[len(McRAPTORLabelWithPath.TRIP_PREFIX) :]
     else:
-        raise ValueError(f"Unknown path element {path_element}")
+        msg = f"Unknown path element {path_element}"
+        raise ValueError(msg)

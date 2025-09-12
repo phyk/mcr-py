@@ -19,7 +19,7 @@ from mcr_py.utils import key, storage
 class TraceEnricher:
     def __init__(
         self, stops_df: pl.DataFrame, trips_df: pl.DataFrame, routes_df: pl.DataFrame
-    ):
+    ) -> None:
         """
         Initializes the TraceEnricher with DataFrames containing stop, trip, and route information.
 
@@ -61,7 +61,8 @@ class TraceEnricher:
         elif isinstance(trace, TraceFootpath):
             return self.enrich_trace_footpath(trace)
 
-        raise ValueError(f"Unknown trace type: {type(trace).__name__}")
+        msg = f"Unknown trace type: {type(trace).__name__}"
+        raise ValueError(msg)
 
     def enrich_trace_start(self, trace: TraceStart) -> EnrichedTraceStart:
         """

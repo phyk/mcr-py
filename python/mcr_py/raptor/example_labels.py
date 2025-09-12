@@ -10,7 +10,7 @@ class ArrivalTimeLabel(bag.TraceLabel):
     behaves like the original RAPTOR algorithm.
     """
 
-    def __init__(self, time: int, stop: Optional[str] = None):
+    def __init__(self, time: int, stop: Optional[str] = None) -> None:
         """
         Initializes an ArrivalTimeLabel with an arrival time and an optional stop ID.
 
@@ -28,7 +28,7 @@ class ArrivalTimeLabel(bag.TraceLabel):
         """
         return self.arrival_time <= other.arrival_time
 
-    def update_along_trip(self, arrival_time: int, stop_id: str, trip_id: str):
+    def update_along_trip(self, arrival_time: int, stop_id: str, trip_id: str) -> None:
         """
         Updates the ArrivalTimeLabel's arrival time along a trip.
 
@@ -38,7 +38,7 @@ class ArrivalTimeLabel(bag.TraceLabel):
         """
         super().update_along_trip(arrival_time, stop_id, trip_id)
 
-    def update_along_footpath(self, walking_time: int, stop_id: str):
+    def update_along_footpath(self, walking_time: int, stop_id: str) -> None:
         """
         Updates the ArrivalTimeLabel's arrival time based on walking time along a footpath.
 
@@ -47,7 +47,7 @@ class ArrivalTimeLabel(bag.TraceLabel):
         """
         super().update_along_footpath(walking_time, stop_id)
 
-    def update_before_route_bag_merge(self, departure_time: int, stop_id: str):
+    def update_before_route_bag_merge(self, departure_time: int, stop_id: str) -> None:
         """
         Updates the ArrivalTimeLabel before merging with a route bag.
 
@@ -75,7 +75,7 @@ class ActivityDurationLabel(bag.TraceLabel):
     Label class for McRAPTOR algorithm that tracks arrival time, travel time, walking time, and waiting time.
     """
 
-    def __init__(self, time: int, stop: Optional[str] = None):
+    def __init__(self, time: int, stop: Optional[str] = None) -> None:
         """
         Initializes an ActivityDurationLabel with an arrival time and an optional stop ID,
         and initializes time tracking attributes.
@@ -88,7 +88,7 @@ class ActivityDurationLabel(bag.TraceLabel):
         self.walking_time = 0
         self.waiting_time = 0
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Returns a string representation of the ActivityDurationLabel.
 
@@ -110,7 +110,7 @@ class ActivityDurationLabel(bag.TraceLabel):
             # and self.waiting_time <= other.waiting_time
         )
 
-    def update_along_trip(self, arrival_time: int, stop_id: str, trip_id: str):
+    def update_along_trip(self, arrival_time: int, stop_id: str, trip_id: str) -> None:
         """
         Updates the ActivityDurationLabel's arrival time along a trip and tracks travel time.
 
@@ -124,7 +124,7 @@ class ActivityDurationLabel(bag.TraceLabel):
         assert interval >= 0
         self.travel_time += interval
 
-    def update_along_footpath(self, walking_time: int, stop_id: str):
+    def update_along_footpath(self, walking_time: int, stop_id: str) -> None:
         """
         Updates the ActivityDurationLabel's arrival time based on walking time along a footpath and tracks walking time.
 
@@ -134,7 +134,7 @@ class ActivityDurationLabel(bag.TraceLabel):
         super().update_along_footpath(walking_time, stop_id)
         self.walking_time += walking_time
 
-    def update_before_route_bag_merge(self, departure_time: int, stop_id: str):
+    def update_before_route_bag_merge(self, departure_time: int, stop_id: str) -> None:
         """
         Updates the ActivityDurationLabel before merging with a route bag and tracks waiting time.
 

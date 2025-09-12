@@ -40,7 +40,8 @@ def convert_mc_raptor_bags_to_intermediate_bags(
         intermediate_bags[int(node_id)] = []
         for label in bag:  # type: ignore
             if not isinstance(label, McRAPTORLabel):
-                raise ValueError(f"Expected McRAPTORLabel, got {str(type(label))} instead")
+                msg = f"Expected McRAPTORLabel, got {str(type(label))} instead"
+                raise ValueError(msg)
 
             label: McRAPTORLabel = label
             if isinstance(label, McRAPTORLabelWithPath) and len(label.path) < min_path_length:

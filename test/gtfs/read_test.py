@@ -22,38 +22,38 @@ sample_df = pl.DataFrame(
 
 
 @patch("mcr_py.gtfs.archive.read_dfs", return_value={key.STOPS_KEY: sample_df})
-def test_get_stops_df_zip(mock_read_dfs):
+def test_get_stops_df_zip(mock_read_dfs) -> None:
     _ = get_stops_df("test.zip")
     mock_read_dfs.assert_called_once_with("test.zip")
 
 
 @patch("mcr_py.gtfs.archive.read_dfs", return_value={"stops": sample_df})
-def test_get_stops_df_directory(mock_read_df):
+def test_get_stops_df_directory(mock_read_df) -> None:
     _ = get_stops_df("test_directory.zip")
     mock_read_df.assert_called_once_with("test_directory.zip")
 
 
-def test_get_stops_df_invalid_path():
+def test_get_stops_df_invalid_path() -> None:
     with pytest.raises(ValueError, match="Path is neither a zip file nor a directory"):
         get_stops_df("invalid_path")
 
 
 @patch("mcr_py.gtfs.read.get_stops_df", return_value=sample_df)
-def test_print_stops(mock_get_stops_df):
+def test_print_stops(mock_get_stops_df) -> None:
     print_stops("test.zip")
     mock_get_stops_df.assert_called_once_with("test.zip")
 
 
 # Test for print_dataframe
 @patch("rich.console.Console.print")
-def test_print_dataframe(mock_print):
+def test_print_dataframe(mock_print) -> None:
     print_dataframe(sample_df)
     # Check that the print function was called with the correct table format
     mock_print.assert_called_once()
 
 
 # Test for format_value
-def test_format_value():
+def test_format_value() -> None:
     assert format_value(123) == "123"
     assert format_value("test") == "test"
     assert format_value(None) == "None"

@@ -1,7 +1,7 @@
 import os
 import pathlib
 from enum import Enum
-from typing import Tuple, TypeVar
+from typing import Optional, Tuple, TypeVar
 
 import polars as pl
 import polars_h3 as plh3
@@ -15,7 +15,7 @@ from mcr_py._mcr_py import (
     load_osm_walking,
 )
 from mcr_py.osm import graph
-from mcr_py.utils.geometa import GeoMeta
+from mcr_py.utils.geometa import Buffering, GeoMeta
 from mcr_py.utils.logger import Timed, rlog
 
 ACCURACY = 1
@@ -49,9 +49,11 @@ class OSMData:
         osm_path: pathlib.Path = pathlib.Path(),
         cache_path: pathlib.Path = pathlib.Path(),
         resolution: int = 8,
-        additional_network_types: list[NetworkType] = [],
+        additional_network_types: Optional[list[NetworkType]] = None,
         redownload: RedownloadMode = RedownloadMode.REUSE,
     ) -> None:
+        if additional_network_types is None:
+            additional_network_types = []
         self.geo_meta = geo_meta
         self.city_id = city_id
         self.osm_path = osm_path
@@ -210,7 +212,13 @@ class OSMData:
                 .st.set_srid(4326)
                 .st.within(
                     st.polygon(
-                        pl.lit([self.geo_meta.get_convex_hull_coord_list(use_buffer=False)])
+                        pl.lit(
+                            [
+                                self.geo_meta.get_convex_hull_coord_list(
+                                    buffering=Buffering.UNBUFFERED
+                                )
+                            ]
+                        )
                     ).st.set_srid(4326)
                 ),
             )

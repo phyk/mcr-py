@@ -16,7 +16,7 @@ AMSTERDAMER_STR_STOP_ID = "317"
 VENLOER_STR_STOP_ID = "251"
 
 
-def test_mcraptor(testdata_path: str):
+def test_mcraptor(testdata_path: str) -> None:
     output_dir = os.path.join(testdata_path, "output")
 
     if os.path.exists(output_dir):

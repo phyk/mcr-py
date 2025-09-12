@@ -8,7 +8,7 @@ from mcr_py.utils.key import S, T
 
 
 class DataQuerier:
-    def __init__(self: Self, structs_dict: dict, footpaths: dict | None):
+    def __init__(self: Self, structs_dict: dict, footpaths: dict | None) -> None:
         """
         Initializes a DataQuerier with structured data and optional footpaths.
 
@@ -31,7 +31,8 @@ class DataQuerier:
 
     def get_footpaths(self) -> dict:
         if self.footpaths is None:
-            raise Exception("Footpaths are not set")
+            msg = "Footpaths are not set"
+            raise Exception(msg)
         return self.footpaths
 
     def get_stop_ids(self) -> set[str]:
@@ -128,9 +129,8 @@ class DataQuerier:
         :returns: dict_items - An iterable of footpath items from the specified stop.
         """
         if self.footpaths is None:
-            raise Exception(
-                "footpaths has to be defined when calling iterate_footpaths_from_stop"
-            )
+            msg = "footpaths has to be defined when calling iterate_footpaths_from_stop"
+            raise Exception(msg)
         return self.footpaths[stop_id].items()
 
     def iterate_stops_in_route_from_idx(self: Self, route_id: str, idx: int) -> list[str]:
@@ -151,7 +151,7 @@ class ExpandedDataQuerier(Generic[S, T], DataQuerier):
         footpaths: dict | None,
         additional_stop_information: dict[str, S],
         additional_trip_information: dict[str, T],
-    ):
+    ) -> None:
         """
         Initializes an ExpandedDataQuerier with structured data, optional footpaths,
         and additional stop and trip information.

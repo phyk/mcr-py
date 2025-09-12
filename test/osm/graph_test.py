@@ -20,7 +20,7 @@ def create_sample_data():
     return nodes, edges
 
 
-def test_create_rx_graph():
+def test_create_rx_graph() -> None:
     nodes, edges = create_sample_data()
     nodes_df, edges_df, graph = create_rx_graph(nodes, edges)
 
@@ -30,7 +30,7 @@ def test_create_rx_graph():
     assert len(graph.edges()) == 2
 
 
-def test_create_rx_graph_empty():
+def test_create_rx_graph_empty() -> None:
     nodes = pl.DataFrame(schema={"osm_id": pl.Int64})
     edges = pl.DataFrame(
         schema={"source_osm": pl.Int64, "dest_osm": pl.Int64, "length": pl.Float64}
@@ -44,7 +44,7 @@ def test_create_rx_graph_empty():
     assert len(graph.edges()) == 0
 
 
-def test_crop_graph_to_largest_component():
+def test_crop_graph_to_largest_component() -> None:
     nodes, edges = create_sample_data()
     nodes_df, edges_df, graph = create_rx_graph(nodes, edges)
 
@@ -56,7 +56,7 @@ def test_crop_graph_to_largest_component():
     assert len(cropped_edges) == len(edges_df)
 
 
-def test_shortest_paths():
+def test_shortest_paths() -> None:
     nodes, edges = create_sample_data()
     nodes_df, edges_df, graph = create_rx_graph(nodes, edges)
 
@@ -65,7 +65,7 @@ def test_shortest_paths():
     assert len(path_lengths) == 3  # Should return path lengths for all nodes
 
 
-def test_shortest_paths_empty_graph():
+def test_shortest_paths_empty_graph() -> None:
     graph = rx.PyDiGraph()
 
     path_lengths = shortest_paths(graph)

@@ -1,3 +1,4 @@
+import logging
 from unittest.mock import patch
 
 import polars as pl
@@ -40,13 +41,13 @@ def trace_enricher():
     return TraceEnricher(stops_df, trips_df, routes_df)
 
 
-def test_enrich_trace_start(trace_enricher):
+def test_enrich_trace_start(trace_enricher) -> None:
     enriched_trace = trace_enricher.enrich_trace_start(trace_start)
     assert isinstance(enriched_trace, EnrichedTraceStart)
     assert enriched_trace.start_stop_name == "Stop A"
 
 
-def test_enrich_trace_trip(trace_enricher):
+def test_enrich_trace_trip(trace_enricher) -> None:
     enriched_trace = trace_enricher.enrich_trace_trip(trace_trip)
     assert isinstance(enriched_trace, EnrichedTraceTrip)
     assert enriched_trace.start_stop_name == "Stop A"
@@ -54,7 +55,7 @@ def test_enrich_trace_trip(trace_enricher):
     assert enriched_trace.trip_name == "Route A Head A"
 
 
-def test_enrich_trace_footpath(trace_enricher):
+def test_enrich_trace_footpath(trace_enricher) -> None:
     enriched_trace = trace_enricher.enrich_trace_footpath(trace_footpath)
     assert isinstance(enriched_trace, EnrichedTraceFootpath)
     assert enriched_trace.start_stop_name == "Stop B"
@@ -63,13 +64,13 @@ def test_enrich_trace_footpath(trace_enricher):
 
 @patch("mcr_py.utils.storage.read_any_dict")
 @patch("mcr_py.gtfs.archive.read_dfs")
-def test_enrich_raptor_trace_results(mock_read_dfs, mock_read_any_dict):
+def test_enrich_raptor_trace_results(mock_read_dfs, mock_read_any_dict) -> None:
     mock_read_dfs.return_value = {
         key.STOPS_KEY: stops_df,
         key.TRIPS_KEY: trips_df,
         key.ROUTES_KEY: routes_df,
     }
-    tracer_map = TracerMap(stop_ids=set(["1", "2", "3"]))
+    tracer_map = TracerMap(stop_ids={"1", "2", "3"})
     tracer_map.add(trace_start)
     tracer_map.add(trace_trip)
     tracer_map.add(trace_footpath)
@@ -80,7 +81,7 @@ def test_enrich_raptor_trace_results(mock_read_dfs, mock_read_any_dict):
 
     enriched_map = enrich_raptor_trace_results(results_dir_path, gtfs_dir_path)
     enriched_tracers = enriched_map.tracers
-    print(tracer_map)
+    logging.info(tracer_map)
     assert isinstance(enriched_tracers["1"][0], EnrichedTraceStart)
     assert isinstance(enriched_tracers["2"][0], EnrichedTraceStart)
     assert isinstance(enriched_tracers["2"][1], EnrichedTraceTrip)

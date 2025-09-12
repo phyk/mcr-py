@@ -25,7 +25,7 @@ class Raptor:
         footpaths: dict,
         max_transfers: int,
         default_transfer_time: int,
-    ):
+    ) -> None:
         """
         Initializes the Raptor algorithm with structured data, footpaths, transfer limits,
         and default transfer time.
@@ -219,9 +219,8 @@ class Raptor:
 
         hop_on_stop_id, hop_on_time = tracers_map.get_last_hop()
         if hop_on_stop_id is None or hop_on_time is None:
-            raise Exception(
-                "hop_on_stop_id or hop_on_time should not be None if trip_id is not None"
-            )
+            msg = "hop_on_stop_id or hop_on_time should not be None if trip_id is not None"
+            raise Exception(msg)
         tracers_map.add(
             TraceTrip(
                 start_stop_id=hop_on_stop_id,

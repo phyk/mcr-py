@@ -42,7 +42,7 @@ class BicycleStep(MLCStep):
         from_internal: dict,
         bicycle_transfer_osm_node_ids: np.ndarray,
         update_label_func: str,
-    ):
+    ) -> None:
         self.logger = logger
         self.timer = timer
         self.path_manager = path_manager
@@ -79,12 +79,12 @@ class BicycleStepBuilder(StepBuilder):
         cycling_nodes: pl.DataFrame,
         cycling_edges: pl.DataFrame,
         pois: pl.DataFrame,
-    ):
+    ) -> None:
         bicycle_locations = None
         if bicycle_location_path != "":
             bicycle_locations = storage.read_df(bicycle_location_path)
             bicycle_locations = bicycle_locations.with_columns(
-                st.from_coords(pl.concat_arr(["lon", "lat"])).alias("geometry")
+                st.point(pl.concat_arr(["lon", "lat"])).alias("geometry")
             )
             bicycle_locations = geo_meta.crop_gdf(bicycle_locations)
             # max distance = 1000,
@@ -131,7 +131,7 @@ class BicycleStepBuilder(StepBuilder):
             multi_modal_edges, [TRAVEL_TIME_DRIVING_COLUMN], hidden=True
         )
 
-        raw_edges = to_mlc_edges(multi_modal_edges)
+        to_mlc_edges(multi_modal_edges)
         self.osm_nodes = walking_nodes
         self.mm_graph_cache = GraphCache()
         # self.mm_graph_cache.set_graph(raw_edges)
@@ -145,7 +145,7 @@ class BicycleStepBuilder(StepBuilder):
             "update_label_func": update_label_func,
         }
 
-    def add_pois_to_mm_graph(self, pois: pl.DataFrame):
+    def add_pois_to_mm_graph(self, pois: pl.DataFrame) -> None:
         """
         Adds POIs to the multi modal graph cache.
 

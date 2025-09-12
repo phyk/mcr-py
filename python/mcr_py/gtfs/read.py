@@ -9,7 +9,7 @@ from mcr_py.utils import key, storage
 from mcr_py.utils.logger import Timed, rlog
 
 
-def print_stops(path: str):
+def print_stops(path: str) -> None:
     """
     Reads and prints the stops DataFrame from the specified path.
 
@@ -34,14 +34,15 @@ def get_stops_df(path: str) -> pl.DataFrame:
         return dfs[key.STOPS_KEY]
 
     if not os.path.isdir(path):
-        raise ValueError("Path is neither a zip file nor a directory")
+        msg = "Path is neither a zip file nor a directory"
+        raise ValueError(msg)
 
     rlog.debug("Reading stops from directory")
 
     return storage.read_df(os.path.join(path, storage.get_df_filename_for_name(key.STOPS_KEY)))
 
 
-def print_dataframe(df: pl.DataFrame):
+def print_dataframe(df: pl.DataFrame) -> None:
     """
     Prints the stops DataFrame in a formatted table.
 
@@ -51,7 +52,6 @@ def print_dataframe(df: pl.DataFrame):
     table.add_column("Stop ID")
     table.add_column("Stop Name")
     table.add_column("Google maps link")
-    print(df.columns)
     for sid, sname, slat, slon in df.iter_rows():
         table.add_row(
             format_value(sid),  # type: ignore

@@ -30,15 +30,15 @@ class Path:
         path_type: PathType,
         path: PathPoints,
         meta: Optional[dict[str, Any]] = None,
-    ):
+    ) -> None:
         self.path_type = path_type
         self.path = path
         self.meta = meta
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Path(path_type={self.path_type}, path={self.path}, meta={self.meta})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)
 
 
@@ -49,7 +49,7 @@ class GTFSPath:
         end_stop_id: int,
         trip_id: str,
         meta: Optional[dict[str, Any]] = None,
-    ):
+    ) -> None:
         self.start_stop_id = start_stop_id
         self.end_stop_id = end_stop_id
         self.trip_id = trip_id
@@ -57,14 +57,14 @@ class GTFSPath:
 
 
 class PathManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self.paths: dict[int, Path] = {}
         self.path_id_counter = 0
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"PathManager(path_id_counter={self.path_id_counter})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)
 
     def _add_path(
@@ -83,7 +83,7 @@ class PathManager:
         bags: dict[int, list[IntermediateLabel]],
         path_type: PathType,
         path_index_offset: int = 0,
-    ):
+    ) -> None:
         for bag in bags.values():
             for label in bag:
                 self.extract_path_from_label(
@@ -122,9 +122,8 @@ class PathManager:
                 )
             elif path.path_type == PathType.PUBLIC_TRANSPORT:
                 if len(path.path) != 3:
-                    raise ValueError(
-                        f"Expected path to have length 3, got {len(path.path)} instead. Path: {path.path}"
-                    )
+                    msg = f"Expected path to have length 3, got {len(path.path)} instead. Path: {path.path}"
+                    raise ValueError(msg)
                 translated_path.append(
                     GTFSPath(
                         start_stop_id=int(path.path[0]),
@@ -134,5 +133,6 @@ class PathManager:
                     )
                 )
             else:
-                raise ValueError(f"Unknown path type {path.path_type}")
+                msg = f"Unknown path type {path.path_type}"
+                raise ValueError(msg)
         return translated_path

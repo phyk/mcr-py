@@ -14,16 +14,16 @@ class Step:
         path_manager: Optional[PathManager],
         enable_limit: bool,
         disable_paths: bool,
-    ):
+    ) -> None:
         pass
 
     def run(self, input_bags: IntermediateBags, offset: int = 0) -> IntermediateBags:
         raise NotImplementedError
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__class__.__name__
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(self)
 
 
@@ -33,7 +33,7 @@ class StepBuilder:
     def __init__(
         self,
         **kwargs,
-    ):
+    ) -> None:
         self.kwargs = kwargs
 
     def build(

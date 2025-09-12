@@ -22,7 +22,7 @@ def list_command(
     country_code: Annotated[str, typer.Option(help="Country code used to filter")] = "",
     subdivision: Annotated[str, typer.Option(help="Subdivision used to filter")] = "",
     municipality: Annotated[str, typer.Option(help="Municipality used to filter")] = "",
-):
+) -> None:
     catalog.list_catalog(country_code, subdivision, municipality)
 
 
@@ -40,7 +40,7 @@ def download_command(
             help="Path to where the GTFS feed will be downloaded",
         ),
     ],
-):
+) -> None:
     catalog.download(id, output)
 
 
@@ -103,14 +103,15 @@ def crop_command(
             help="Path to the GeoMeta file containing the boundary of the area of consideration",
         ),
     ] = None,
-):
+) -> None:
     time_start_datetime = datetime.strptime(time_start, key.DATE_TIME_FORMAT)
     time_end_datetime = datetime.strptime(time_end, key.DATE_TIME_FORMAT)
 
     if geometa_path is None and (
         lat_min is None or lat_max is None or lon_min is None or lon_max is None
     ):
-        raise ValueError("Either a GeoMeta file or a bounding box must be provided")
+        msg = "Either a GeoMeta file or a bounding box must be provided"
+        raise ValueError(msg)
 
     if (
         geometa_path is not None
@@ -119,7 +120,8 @@ def crop_command(
         and lon_max is not None
         and lon_min is not None
     ):
-        raise ValueError("Only one of a GeoMeta file or a bounding box must be provided")
+        msg = "Only one of a GeoMeta file or a bounding box must be provided"
+        raise ValueError(msg)
 
     if geometa_path is not None:
         geometa = GeoMeta.load(geometa_path)
@@ -151,7 +153,7 @@ def crop_command(
 def clean_gtfs(
     gtfs_zip_file: Annotated[str, typer.Argument(help="Path to GTFS zip file")],
     output_dir: Annotated[str, typer.Argument(help="Path to output directory")],
-):
+) -> None:
     with Timed.info("Cleaning GTFS data"):
         dfs_dict = clean.clean(gtfs_zip_file)
         rlog.info("Writing cleaned GTFS data")
@@ -159,7 +161,7 @@ def clean_gtfs(
 
 
 @app.callback(invoke_without_command=True, no_args_is_help=True)
-def main():
+def main() -> None:
     pass
 
 

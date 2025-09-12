@@ -34,7 +34,7 @@ class PublicTransportStep(Step):
         structs_dict: dict,
         osm_node_to_stop_map: dict[int, str],
         stop_to_osm_node_map: dict[str, int],
-    ):
+    ) -> None:
         self.logger = logger
         self.timer = timer
         self.path_manager = path_manager
@@ -134,7 +134,9 @@ class PublicTransportStep(Step):
 class PublicTransportStepBuilder(StepBuilder):
     step = PublicTransportStep
 
-    def __init__(self, structs_path: str, stops_path: str, walking_nodes: pl.DataFrame):
+    def __init__(
+        self, structs_path: str, stops_path: str, walking_nodes: pl.DataFrame
+    ) -> None:
         structs_dict = storage.read_any_dict(structs_path)
         with Timed.info("Reading stops"):
             self.stops_df = storage.read_df(stops_path)

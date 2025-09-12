@@ -36,7 +36,7 @@ RELEVANT_COLUMNS = [
 ID_COLOR = "magenta"
 
 
-def list_catalog(country_code: str, subdivision_name: str, municipality: str):
+def list_catalog(country_code: str, subdivision_name: str, municipality: str) -> None:
     """
     Lists all available GTFS feeds based on the specified filters.
 
@@ -73,7 +73,7 @@ def get_catalog() -> pl.DataFrame:
     return catalog
 
 
-def download_catalog():
+def download_catalog() -> None:
     """
     Downloads the GTFS catalog from the specified URL and saves it to the local path.
     """
@@ -118,7 +118,7 @@ def filter_catalog(
     return catalog
 
 
-def print_catalog(catalog: pl.DataFrame):
+def print_catalog(catalog: pl.DataFrame) -> None:
     """
     Prints the GTFS catalog in a formatted table.
 
@@ -184,7 +184,7 @@ def format_value(value: Any) -> str:
     return formatted_value
 
 
-def download(id: int, output: str):
+def download(id: int, output: str) -> None:
     """
     Downloads a GTFS feed based on the specified ID and saves it to the output path.
 

@@ -1,7 +1,7 @@
 from mcr_py.mcr.label import IntermediateLabel, merge_intermediate_bags
 
 
-def test_merge_intermediate_bags():
+def test_merge_intermediate_bags() -> None:
     il1 = IntermediateLabel([1, 1], [1, 1], [1, "a"], 1)
     il2 = IntermediateLabel([2, 2], [2, 2], [2, "b"], 2)
     il3 = IntermediateLabel([2, 1], [2, 1], [2, "c"], 3)

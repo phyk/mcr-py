@@ -20,7 +20,7 @@ MAX_TRANSFERS = 10
 DEFAULT_TRANFER_TIME = 180
 
 
-def test_raptor(testdata_path: str):
+def test_raptor(testdata_path: str) -> None:
     output_dir = os.path.join(testdata_path, "output")
 
     if os.path.exists(output_dir):
@@ -42,7 +42,6 @@ def test_raptor(testdata_path: str):
     )
 
     arrival_times = storage.read_df(os.path.join(output_dir, "arrival_times.parquet"))
-    print(arrival_times.head())
 
     # all stops are reachable
     assert len(arrival_times.filter(pl.col("arrival_time") == "--:--:--")) == 0

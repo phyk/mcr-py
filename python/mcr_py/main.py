@@ -16,7 +16,7 @@ app.add_typer(osm.app, name=key.OSM_UPPER_COMMAND_NAME)
 
 
 @app.callback(invoke_without_command=True, no_args_is_help=True)
-def main(log_level: Annotated[str, typer.Option(help="Log level.")] = "INFO"):
+def main(log_level: Annotated[str, typer.Option(help="Log level.")] = "INFO") -> None:
     logger.setup(log_level.upper())
 
 

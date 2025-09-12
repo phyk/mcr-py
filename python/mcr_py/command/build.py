@@ -14,7 +14,7 @@ from mcr_py.utils.key import (
 def build_structures(
     clean_gtfs_dir: Annotated[str, typer.Argument(help="Path to clean GTFS directory")],
     output_file: Annotated[str, typer.Argument(help="Path to output file")],
-):
+) -> None:
     trips_df = storage.read_df(
         os.path.join(clean_gtfs_dir, storage.get_df_filename_for_name(TRIPS_KEY))
     )

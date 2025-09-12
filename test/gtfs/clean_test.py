@@ -1,3 +1,5 @@
+import logging
+
 import polars as pl
 from mcr_py.gtfs.clean import (
     add_first_stop_info,
@@ -46,7 +48,7 @@ def test_add_first_stop_info(trips_df: pl.DataFrame, stop_times_df: pl.DataFrame
     expected_first_stop_departure_times = pl.Series(
         values=["00:00:00", "01:00:00", "02:00:00"], name="trip_departure_time"
     )
-    print(trips_df.columns)
+    logging.info(trips_df.columns)
     assert (trips_df.get_column("first_stop_id") == expected_first_stop_ids).all()
     assert (
         trips_df.get_column("trip_departure_time") == expected_first_stop_departure_times

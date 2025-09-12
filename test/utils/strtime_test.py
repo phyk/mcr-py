@@ -4,31 +4,31 @@ import pytest
 from mcr_py.utils.strtime import seconds_to_str_time, str_time_to_seconds
 
 
-def test_str_time_to_seconds():
+def test_str_time_to_seconds() -> None:
     assert str_time_to_seconds("00:00:00") == 0
     assert str_time_to_seconds("01:30:45") == 5445
     assert str_time_to_seconds("12:00:00") == 43200
     assert str_time_to_seconds("23:59:59") == 86399
 
 
-def test_str_time_to_seconds_handles_past_midnight():
+def test_str_time_to_seconds_handles_past_midnight() -> None:
     assert str_time_to_seconds("24:00:00") == 86400
     assert str_time_to_seconds("25:30:45") == 91845
     assert str_time_to_seconds("36:00:00") == 129600
 
 
-def test_seconds_to_str_time():
+def test_seconds_to_str_time() -> None:
     assert seconds_to_str_time(0) == "00:00:00"
     assert seconds_to_str_time(5445) == "01:30:45"
     assert seconds_to_str_time(43200) == "12:00:00"
     assert seconds_to_str_time(86399) == "23:59:59"
 
 
-def test_seconds_to_str_time_handles_maxsize():
+def test_seconds_to_str_time_handles_maxsize() -> None:
     assert seconds_to_str_time(sys.maxsize) == "--:--:--"
 
 
-def test_conversions_are_inverse():
+def test_conversions_are_inverse() -> None:
     test_cases = [
         "00:00:00",
         "01:30:45",
@@ -43,7 +43,7 @@ def test_conversions_are_inverse():
         assert seconds_to_str_time(seconds) == time_str
 
 
-def test_invalid_time_format():
+def test_invalid_time_format() -> None:
     with pytest.raises(ValueError):
         str_time_to_seconds("12:00")  # Missing seconds
     with pytest.raises(ValueError):

@@ -15,7 +15,7 @@ class McRaptorSingle(Generic[L, S, T]):
         structs_dict: dict,
         default_transfer_time: int,
         label_class: type[L],
-    ):
+    ) -> None:
         """
         Initializes the McRaptorSingle algorithm with structured data, default transfer time, and label class.
 
@@ -181,7 +181,7 @@ class McRaptorSingle(Generic[L, S, T]):
         bag: Bag,
         route_id: str,
         stop_id: str,
-    ):
+    ) -> None:
         """
         Merges a bag into the route bag by finding the earliest trip for each label.
 

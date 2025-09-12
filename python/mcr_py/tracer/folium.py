@@ -7,7 +7,7 @@ from mcr_py.utils import strtime
 
 def add_tracer_list_to_folium_map(
     tracers: list[Trace], folium_map: folium.Map, stops_df: pl.DataFrame
-):
+) -> None:
     """
     Adds a list of tracer objects to a Folium map, visualizing their locations and paths.
 
@@ -76,4 +76,5 @@ def add_tracer_list_to_folium_map(
                 **circle_marker_kwargs,
             ).add_to(folium_map)
         else:
-            raise ValueError(f"Unknown tracer type {type(tracer).__name__}")
+            msg = f"Unknown tracer type {type(tracer).__name__}"
+            raise ValueError(msg)

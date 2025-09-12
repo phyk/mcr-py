@@ -19,5 +19,5 @@ def read_stops(
             help="Path to the GTFS feed to read. Either a the GTFS zip file or a directory containing the unzipped GTFS files",
         ),
     ],
-):
+) -> None:
     read.print_stops(path)

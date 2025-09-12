@@ -14,7 +14,7 @@ def create_area(
     geometa_path: Annotated[
         str, typer.Option(help="The path for the geometa state file")
     ] = "data/",
-):
+) -> None:
     crs = "EPSG:4326"
     boundary_polygon = mcr_py.overpass.query.fetch_boundary_polygon(
         city_name_german, admin_level

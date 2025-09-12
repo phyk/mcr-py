@@ -57,7 +57,7 @@ def mock_data(tmp_path):
 
 
 @patch("mcr_py.gtfs.archive.read_dfs")
-def test_crop(mock_read_dfs, mock_data, geo_meta, tmp_path):
+def test_crop(mock_read_dfs, mock_data, geo_meta, tmp_path) -> None:
     # Mock the read_dfs function to return the mock data
     mock_read_dfs.return_value = {
         "trips": pl.read_csv(mock_data["trips"]),
@@ -78,7 +78,7 @@ def test_crop(mock_read_dfs, mock_data, geo_meta, tmp_path):
     # Additional checks can be added here based on the expected output
 
 
-def test_reconcile_trips_and_stop_times_with_stops(mock_data):
+def test_reconcile_trips_and_stop_times_with_stops(mock_data) -> None:
     trips_df = pl.read_csv(mock_data["trips"])
     stop_times_df = pl.read_csv(mock_data["stop_times"])
     stops_df = pl.read_csv(mock_data["stops"])
@@ -91,7 +91,7 @@ def test_reconcile_trips_and_stop_times_with_stops(mock_data):
     assert len(filtered_stop_times) == 2  # Expecting valid stop times
 
 
-def test_crop_trips(mock_data):
+def test_crop_trips(mock_data) -> None:
     trips_df = pl.read_csv(mock_data["trips"])
     calendar_df = pl.read_csv(mock_data["calendar"])
     time_start = datetime(2023, 1, 1, 0, 0)
@@ -103,7 +103,7 @@ def test_crop_trips(mock_data):
     assert len(cropped_calendar) == 2  # Expecting both services to be returned
 
 
-def test_reconcile_stop_times_with_trips(mock_data):
+def test_reconcile_stop_times_with_trips(mock_data) -> None:
     stop_times_df = pl.read_csv(mock_data["stop_times"])
     trips_df = pl.read_csv(mock_data["trips"])
 
@@ -112,7 +112,7 @@ def test_reconcile_stop_times_with_trips(mock_data):
     assert len(reconciled_stop_times) == 4
 
 
-def test_reconcile_stops_with_stop_times(mock_data):
+def test_reconcile_stops_with_stop_times(mock_data) -> None:
     stops_df = pl.read_csv(mock_data["stops"])
     stop_times_df = pl.read_csv(mock_data["stop_times"])
 

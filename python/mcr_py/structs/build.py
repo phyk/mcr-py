@@ -214,7 +214,7 @@ def create_times_by_stop_by_trip(
     }
 
 
-def validate_structs_dict(structs: dict):
+def validate_structs_dict(structs: dict) -> None:
     """
     Validates that the required keys are present in the structures dictionary.
 
@@ -223,7 +223,8 @@ def validate_structs_dict(structs: dict):
     """
     for key in STRUCTS_KEYS:
         if key not in structs:
-            raise Exception(f"Structs dict missing key {key}")
+            msg = f"Structs dict missing key {key}"
+            raise Exception(msg)
 
 
 def unpack_structs(

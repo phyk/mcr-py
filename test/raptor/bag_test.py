@@ -7,31 +7,31 @@ from mcr_py.raptor.bag import (
 
 
 # Test for BaseLabel
-def test_base_label_initialization():
+def test_base_label_initialization() -> None:
     label = BaseLabel(10, "stop_1")
     assert label.arrival_time == 10
     assert label.__repr__() == "Label(10)"
 
 
-def test_base_label_update_along_trip():
+def test_base_label_update_along_trip() -> None:
     label = BaseLabel(10)
     label.update_along_trip(15, "stop_1", "trip_1")
     assert label.arrival_time == 15
 
 
-def test_base_label_update_along_footpath():
+def test_base_label_update_along_footpath() -> None:
     label = BaseLabel(10)
     label.update_along_footpath(5, "stop_2")
     assert label.arrival_time == 15
 
 
 # Test for Bag
-def test_bag_initialization():
+def test_bag_initialization() -> None:
     bag = Bag()
     assert len(bag._bag) == 0
 
 
-def test_bag_add_and_iter():
+def test_bag_add_and_iter() -> None:
     bag = Bag()
     label = BaseLabel(10)
     bag.add(label)
@@ -39,7 +39,7 @@ def test_bag_add_and_iter():
     assert list(bag)[0] == label
 
 
-def test_bag_merge():
+def test_bag_merge() -> None:
     bag1 = Bag()
     bag2 = Bag()
     label2 = BaseLabel(15)
@@ -51,13 +51,13 @@ def test_bag_merge():
 
 
 # Test for RouteBag
-def test_route_bag_initialization():
+def test_route_bag_initialization() -> None:
     dq = None
     route_bag = RouteBag(dq)  # type: ignore
     assert len(route_bag._bag) == 0
 
 
-def test_route_bag_add_if_necessary():
+def test_route_bag_add_if_necessary() -> None:
     dq = None
     route_bag = RouteBag(dq)  # type: ignore
     label = TraceLabel(10, "stop_1")
@@ -66,14 +66,14 @@ def test_route_bag_add_if_necessary():
 
 
 # Test for TraceLabel
-def test_trace_label_initialization():
+def test_trace_label_initialization() -> None:
     trace_label = TraceLabel(10, "stop_1")
     assert trace_label.arrival_time == 10
     assert trace_label.stops == ["stop_1"]
     assert len(trace_label.traces) == 1
 
 
-def test_trace_label_update_along_trip():
+def test_trace_label_update_along_trip() -> None:
     trace_label = TraceLabel(10, "stop_1")
     trace_label.update_along_trip(15, "stop_2", "trip_1")
     assert trace_label.arrival_time == 15
@@ -81,7 +81,7 @@ def test_trace_label_update_along_trip():
     assert len(trace_label.traces) == 2
 
 
-def test_trace_label_update_along_footpath():
+def test_trace_label_update_along_footpath() -> None:
     trace_label = TraceLabel(10, "stop_1")
     trace_label.update_along_footpath(5, "stop_2")
     assert trace_label.arrival_time == 15

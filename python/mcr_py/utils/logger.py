@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.logging import RichHandler
 
 
-def setup(log_level: str):
+def setup(log_level: str) -> None:
     """
     Sets up logging configuration using RichHandler with a specified log level.
 
@@ -40,7 +40,7 @@ nlog.addHandler(null_handler)
 
 
 class Timer:
-    def __init__(self, logger=rlog):
+    def __init__(self, logger=rlog) -> None:
         """
         Initializes a Timer instance with a specified logger.
 
@@ -99,7 +99,7 @@ class Timer:
 
 
 class Timed:
-    def __init__(self, level, msg, logger=rlog, *args, **kwargs):
+    def __init__(self, level, msg, logger=rlog, *args, **kwargs) -> None:
         """
         Initializes a Timed instance for logging with timing information.
 
@@ -120,7 +120,7 @@ class Timed:
         trace = inspect.getframeinfo(calling_frame)
 
         class UpStackFilter(logging.Filter):
-            def filter(self, record):
+            def filter(self, record) -> bool:
                 record.lineno = trace.lineno
                 record.pathname = trace.filename
                 record.filename = pathlib.Path(trace.filename).name
@@ -246,7 +246,7 @@ def make_string_stream_logger(name: str | None, level: int = logging.INFO):
     return logger, log_stream
 
 
-def copy_settings_to_root_logger(logger: logging.Logger):
+def copy_settings_to_root_logger(logger: logging.Logger) -> None:
     """
     Copies settings from a specified logger to the root logger.
 

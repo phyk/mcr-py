@@ -12,13 +12,13 @@ def gtfs_zip(testdata_path):
     return os.path.join(testdata_path, "gtfs.zip")
 
 
-def test_get_gtfs_filename():
+def test_get_gtfs_filename() -> None:
     assert get_gtfs_filename("stops") == "stops.txt"
     assert get_gtfs_filename("trips") == "trips.txt"
     assert get_gtfs_filename("stop_times") == "stop_times.txt"
 
 
-def test_read_dfs(gtfs_zip):
+def test_read_dfs(gtfs_zip) -> None:
     dfs = read_dfs(gtfs_zip)
 
     # Check that the expected DataFrames are returned
@@ -37,7 +37,7 @@ def test_read_dfs(gtfs_zip):
     assert isinstance(dfs["routes"], pl.DataFrame)
 
 
-def test_read_dfs_missing_file(gtfs_zip, tmp_path):
+def test_read_dfs_missing_file(gtfs_zip, tmp_path) -> None:
     # Create a zip file with a missing expected file for testing
     with zipfile.ZipFile(gtfs_zip, "r") as zip_ref:
         # Create a temporary zip file without one of the expected files
@@ -50,7 +50,7 @@ def test_read_dfs_missing_file(gtfs_zip, tmp_path):
         read_dfs(tmp_path / "test_missing.zip")
 
 
-def test_write_dfs(gtfs_zip, tmp_path):
+def test_write_dfs(gtfs_zip, tmp_path) -> None:
     # Read existing dataframes from the zip file
     dfs = read_dfs(gtfs_zip)
 

@@ -27,16 +27,14 @@ class WalkingStepBuilder(StepBuilder):
         osm_nodes: pl.DataFrame,
         osm_edges: pl.DataFrame,
         pois: pl.DataFrame,
-    ):
+    ) -> None:
         osm_nodes = osm_nodes.rename({"rx_node_id": "id"})
         osm_edges = osm_edges.select("source_rx_node_id", "dest_rx_node_id", "length").rename(
             {"source_rx_node_id": "source_osm", "dest_rx_node_id": "dest_osm"}
         )
         self.walking_nodes, self.walking_edges = create_walking_graph(osm_nodes, osm_edges)
 
-        from_internal = {
-            key: value for (key, value) in self.walking_nodes.select("id", "osm_id").rows()
-        }
+        from_internal = dict(self.walking_nodes.select("id", "osm_id").rows())
         to_internal = {
             value: key for (key, value) in self.walking_nodes.select("id", "osm_id").rows()
         }

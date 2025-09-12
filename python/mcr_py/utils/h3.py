@@ -31,7 +31,7 @@ def plot_h3_cells_discrete_colors_on_folium(
     folium_map: folium.Map,
     color_scheme: dict[str, str],
     fill_opacity: float = 1,
-):
+) -> None:
     """
     Plot H3 cells on a Folium map using discrete colors.
 

@@ -26,7 +26,7 @@ class MCR5:
         repeating_steps: StepBuilderMatrix,
         min_free_memory: float = 3.0,
         max_processes: int = key.DEFAULT_N_PROCESSES,
-    ):
+    ) -> None:
         self.initial_steps = initial_steps
         self.repeating_steps = repeating_steps
         self.min_free_memory = min_free_memory
@@ -62,7 +62,8 @@ class MCR5:
             ):
                 errors_list.extend([errors.get() for _ in range(errors.qsize())])
                 if errors.full():
-                    raise Exception("Error queue is full.")
+                    msg = "Error queue is full."
+                    raise Exception(msg)
                 if verbose:
                     self.print_status(processes, pbar)
 
@@ -90,7 +91,8 @@ class MCR5:
                 self.print_status(processes, pbar)
             errors_list.extend([errors.get() for _ in range(errors.qsize())])
             if errors.full():
-                raise Exception("Error queue is full.")
+                msg = "Error queue is full."
+                raise Exception(msg)
             time.sleep(1)
         pbar.update(len(location_mappings) - pbar.n)
         pbar.close()
@@ -159,7 +161,7 @@ class MCR5:
         self,
         processes: list[Process],
         pbar: tqdm,
-    ):
+    ) -> None:
         available_memory = pretty_bytes(get_available_memory())
         active_processes_count = self.get_active_process_count(processes)
 

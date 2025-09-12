@@ -3,7 +3,7 @@ from rich.tree import Tree
 from typing_extensions import Any
 
 
-def print_tree_from_any(data: Any, root_name: str = ":root:"):
+def print_tree_from_any(data: Any, root_name: str = ":root:") -> None:
     """
     Prints a tree structure from the given data, which can be a dictionary or a list.
 
@@ -17,7 +17,8 @@ def print_tree_from_any(data: Any, root_name: str = ":root:"):
     elif isinstance(data, list):
         tree = _build_tree_from_list(data, parent=Tree(root_name))
     else:
-        raise ValueError(f"Cannot print tree from type {type(data)}")
+        msg = f"Cannot print tree from type {type(data)}"
+        raise ValueError(msg)
     print(tree)
 
 

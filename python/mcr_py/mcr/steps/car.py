@@ -36,7 +36,7 @@ class PersonalCarStep(MLCStep):
         graph_cache: GraphCache,
         to_internal: dict,
         from_internal: dict,
-    ):
+    ) -> None:
         self.logger = logger
         self.timer = timer
         self.path_manager = path_manager
@@ -71,7 +71,7 @@ class PersonalCarStepBuilder(StepBuilder):
         driving_nodes: pl.DataFrame,
         driving_edges: pl.DataFrame,
         pois: pl.DataFrame,
-    ):
+    ) -> None:
         multi_modal_nodes, multi_modal_edges = create_multi_modal_graph(
             walking_nodes, walking_edges, driving_nodes, driving_edges, AVG_CAR_SPEED
         )
@@ -102,7 +102,7 @@ class PersonalCarStepBuilder(StepBuilder):
             multi_modal_edges, [TRAVEL_TIME_DRIVING_COLUMN], hidden=True
         )
 
-        raw_edges = to_mlc_edges(multi_modal_edges)
+        to_mlc_edges(multi_modal_edges)
         self.osm_nodes = walking_nodes
         self.mm_graph_cache = GraphCache()
         # self.mm_graph_cache.set_graph(raw_edges)
@@ -114,7 +114,7 @@ class PersonalCarStepBuilder(StepBuilder):
             # "from_internal": self.mm_walking_node_resetted_to_osm_node_map,
         }
 
-    def save_translations(self, output_path: str):
+    def save_translations(self, output_path: str) -> None:
         return
         storage.write_any_dict(
             {
@@ -124,7 +124,7 @@ class PersonalCarStepBuilder(StepBuilder):
             output_path,
         )
 
-    def add_pois_to_mm_graph(self, pois: pl.DataFrame):
+    def add_pois_to_mm_graph(self, pois: pl.DataFrame) -> None:
         """
         Adds POIs to the multi modal graph cache.
 

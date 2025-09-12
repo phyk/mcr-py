@@ -8,7 +8,7 @@ from typing_extensions import Any
 from mcr_py.utils import key
 
 
-def write_dfs_dict(dfs_dict: dict[str, pl.DataFrame], output_path: str):
+def write_dfs_dict(dfs_dict: dict[str, pl.DataFrame], output_path: str) -> None:
     """
     Writes a dictionary of Polars DataFrames to separate Parquet files in the specified output directory.
 
@@ -22,7 +22,7 @@ def write_dfs_dict(dfs_dict: dict[str, pl.DataFrame], output_path: str):
         df.write_parquet(os.path.join(output_path, filename))
 
 
-def write_df(df: pl.DataFrame, output_path: str):
+def write_df(df: pl.DataFrame, output_path: str) -> None:
     """
     Writes a single Polars DataFrame to a Parquet file at the specified output path.
 
@@ -53,7 +53,7 @@ def read_df(path: str) -> pl.DataFrame:
     return pl.read_parquet(path)  # type: ignore
 
 
-def write_any_dict(data: dict[str, Any], output_path: str):
+def write_any_dict(data: dict[str, Any], output_path: str) -> None:
     """
     Serializes and writes a dictionary to a file using pickle.
 
@@ -87,7 +87,7 @@ def get_tmp_path(*paths: str) -> str:
     return os.path.join(key.TMP_DIR_LOCATION, key.ROOT_TMP_DIR_NAME, *paths)
 
 
-def download_file(url: str, path: str):
+def download_file(url: str, path: str) -> None:
     """
     Downloads a file from a specified URL and saves it to a specified path.
 

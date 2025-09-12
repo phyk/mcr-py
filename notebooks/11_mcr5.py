@@ -1,5 +1,7 @@
 import itertools
+import logging
 import os
+import pathlib
 import pickle
 import tracemalloc
 from datetime import datetime
@@ -35,7 +37,7 @@ key.TMP_DIR_LOCATION = "../tmp"
 city_id = "cologne"  # 'Koeln'
 city_id_osm = "Koeln"
 date = "20240530"
-geo_meta_path = f"../data/stateful_variables/{city_id.lower()}_geometa.pkl"
+geo_meta_path = pathlib.Path("../data/stateful_variables") / f"{city_id.lower()}_geometa.pkl"
 stops = f"../data/gtfs-cleaned/{city_id.lower()}_{date}/stops.csv"
 structs = f"../data/gtfs-cleaned/{city_id.lower()}_{date}/structs.pkl"
 location_mapping_path = f"../data/city_data/location_mappings_{city_id.lower()}.pkl"
@@ -163,18 +165,19 @@ for i, (time, bicycle_location_path) in enumerate(bicycle_public_transport_confi
     )
 
 for i, time in enumerate(times):
-    print(i, time)
+    logging.info(i, time)
     configs[f"public_transport_{i}"] = partial(get_public_transport_only_config_ready, time)
 
 for i, bicycle_location_path in enumerate(bicycle_location_paths):
-    print(i, bicycle_location_path)
+    logging.info(i, bicycle_location_path)
     configs[f"bicycle_{i}"] = partial(get_bicycle_only_config_ready, bicycle_location_path)
 
 configs["car"] = get_car_only_config_ready
 configs["walking"] = get_walking_only_config_ready
 
 if os.path.exists(mcr5_output_path):
-    raise Exception("Output path already exists")
+    msg = "Output path already exists"
+    raise Exception(msg)
 
 pre_loop_memory = psutil.Process().memory_info().vms
 rlog.info("Pre Loop Memory : %s", pretty_bytes(pre_loop_memory))
@@ -192,9 +195,9 @@ for key, config in configs.items():
 
     snapshot2 = tracemalloc.take_snapshot()
     top_stats = snapshot2.compare_to(snapshot1, "lineno")
-    print("[ Top 10 differences ]")
+    logging.info("[ Top 10 differences ]")
     for stat in top_stats[:10]:
-        print(stat)
+        logging.info(stat)
     snapshot1 = snapshot2
 
     memory_pre_loop = psutil.Process().memory_info().vms

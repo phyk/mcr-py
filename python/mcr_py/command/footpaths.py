@@ -73,7 +73,7 @@ def generate(
             help=f"Method to use for generating footpaths ({', '.join(GenerationMethod.all())})."
         ),
     ] = GenerationMethod.RUSTWORKX.name,
-):
+) -> None:
     validate_flags(
         city_id,
         osm,
@@ -103,24 +103,29 @@ def validate_flags(
     avg_walking_speed: float,
     max_walking_duration: int,
     output: str,
-):
+) -> None:
     if not city_id and not osm:
+        msg = "Either '--city-id' or '--osm' must be provided."
         raise typer.BadParameter(
-            "Either '--city-id' or '--osm' must be provided.",
+            msg,
         )
 
     if osm and not os.path.isfile(osm):
-        raise typer.BadParameter(f"File '{osm}' does not exist.")
+        msg = f"File '{osm}' does not exist."
+        raise typer.BadParameter(msg)
 
     if not os.path.isfile(stops):
-        raise typer.BadParameter(f"File '{stops}' does not exist.")
+        msg = f"File '{stops}' does not exist."
+        raise typer.BadParameter(msg)
 
     if avg_walking_speed <= 0:
+        msg = f"Average walking speed must be positive, got {avg_walking_speed}."
         raise typer.BadParameter(
-            f"Average walking speed must be positive, got {avg_walking_speed}.",
+            msg,
         )
 
     if max_walking_duration <= 0:
+        msg = f"Maximum walking duration must be positive, got {max_walking_duration}."
         raise typer.BadParameter(
-            f"Maximum walking duration must be positive, got {max_walking_duration}.",
+            msg,
         )

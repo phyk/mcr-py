@@ -14,7 +14,7 @@ from mcr_py.structs.build import (
 from mcr_py.utils import strtime
 
 
-def test_create_stops_by_route_ordered(cleaned_trips_df, stop_times_df):
+def test_create_stops_by_route_ordered(cleaned_trips_df, stop_times_df) -> None:
     trip_ids_by_route = create_trip_ids_by_route_sorted_by_departure(cleaned_trips_df)
     stop_times_by_trip = create_stop_times_by_trip(stop_times_df)
     result = create_stops_by_route_ordered(trip_ids_by_route, stop_times_by_trip)
@@ -22,7 +22,7 @@ def test_create_stops_by_route_ordered(cleaned_trips_df, stop_times_df):
     assert len(result) == 3
 
 
-def test_validate_structs_dict():
+def test_validate_structs_dict() -> None:
     valid_structs = {
         "stop_times_by_trip": {},
         "trip_ids_by_route": {},
@@ -45,7 +45,7 @@ def test_validate_structs_dict():
         validate_structs_dict(invalid_structs)
 
 
-def test_unpack_structs():
+def test_unpack_structs() -> None:
     structs = {
         "stop_times_by_trip": {},
         "trip_ids_by_route": {},
@@ -61,7 +61,7 @@ def test_unpack_structs():
     assert len(result) == 6
 
 
-def test_create_stop_times_by_trip(stop_times_df: pl.DataFrame):
+def test_create_stop_times_by_trip(stop_times_df: pl.DataFrame) -> None:
     expected_stop_times_by_trip = {
         "trip1": [
             {
@@ -129,7 +129,7 @@ def test_create_stop_times_by_trip(stop_times_df: pl.DataFrame):
     assert stop_times_by_trip == expected_stop_times_by_trip
 
 
-def test_create_trip_ids_by_route_sorted_by_departure(cleaned_trips_df: pl.DataFrame):
+def test_create_trip_ids_by_route_sorted_by_departure(cleaned_trips_df: pl.DataFrame) -> None:
     expected_trip_ids_by_route = {
         "route1_1": ["trip1"],
         "route1_2": ["trip2"],
@@ -142,7 +142,7 @@ def test_create_trip_ids_by_route_sorted_by_departure(cleaned_trips_df: pl.DataF
 def test_create_stops_by_route(
     trip_ids_by_route: dict[str, list[str]],
     stop_times_by_trip: dict[str, list[dict[str, str]]],
-):
+) -> None:
     stops_by_route = create_stops_by_route_ordered(trip_ids_by_route, stop_times_by_trip)
 
     expected_stops_by_route = {
@@ -153,26 +153,27 @@ def test_create_stops_by_route(
     assert stops_by_route == expected_stops_by_route
 
 
-def test_create_routes_by_stop(stops_by_route: dict[str, list[str]]):
+def test_create_routes_by_stop(stops_by_route: dict[str, list[str]]) -> None:
     routes_by_stop = create_routes_by_stop(stops_by_route)
 
     expected_routes_by_stop = {
-        "stop1": set(["route1_3", "route1_1", "route1_2"]),
-        "stop2": set(["route1_3", "route1_1"]),
-        "stop3": set(["route1_3", "route1_1", "route1_2"]),
-        "stop4": set(["route1_2"]),
+        "stop1": {"route1_3", "route1_1", "route1_2"},
+        "stop2": {"route1_3", "route1_1"},
+        "stop3": {"route1_3", "route1_1", "route1_2"},
+        "stop4": {"route1_2"},
     }
-    print(routes_by_stop)
 
     assert routes_by_stop == expected_routes_by_stop
 
 
-def test_create_id_sets(cleaned_trips_df: pl.DataFrame, routes_by_stop: dict[str, set[str]]):
+def test_create_id_sets(
+    cleaned_trips_df: pl.DataFrame, routes_by_stop: dict[str, set[str]]
+) -> None:
     stop_id_set, route_id_set, trip_id_set = create_id_sets(cleaned_trips_df, routes_by_stop)
 
-    stop_id_set_expected = set(["stop1", "stop2", "stop3", "stop4"])
-    route_id_set_expected = set(["route1_1", "route1_2", "route1_3"])
-    trip_id_set_expected = set(["trip1", "trip2", "trip3"])
+    stop_id_set_expected = {"stop1", "stop2", "stop3", "stop4"}
+    route_id_set_expected = {"route1_1", "route1_2", "route1_3"}
+    trip_id_set_expected = {"trip1", "trip2", "trip3"}
 
     assert stop_id_set == stop_id_set_expected
     assert route_id_set == route_id_set_expected
@@ -181,7 +182,7 @@ def test_create_id_sets(cleaned_trips_df: pl.DataFrame, routes_by_stop: dict[str
 
 def test_create_idx_by_stop_by_route(
     stops_by_route: dict[str, list[str]],
-):
+) -> None:
     idx_by_stop_by_route = create_idx_by_stop_by_route(stops_by_route)
 
     expected_idx_by_stop_by_route = {
@@ -206,7 +207,7 @@ def test_create_idx_by_stop_by_route(
 
 def test_create_times_by_stop_by_trip(
     stop_times_by_trip: dict[str, list[dict[str, str]]],
-):
+) -> None:
     times_by_stop_by_trip = create_times_by_stop_by_trip(stop_times_by_trip)
 
     expected_times_by_stop_by_trip = {

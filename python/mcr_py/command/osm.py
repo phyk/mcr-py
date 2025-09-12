@@ -1,3 +1,5 @@
+import pathlib
+
 import typer
 from typing_extensions import Annotated
 
@@ -19,8 +21,9 @@ def prep_osm_networks(
     location: Annotated[
         str, typer.Option(help="Target directory for saving the protobuf file")
     ] = "/tmp/pyrosm",
-):
-    geometa = GeoMeta.load(geometa_path)
+) -> None:
+    path_ = pathlib.Path(geometa_path)
+    GeoMeta.load(path_)
     # reader = osm.get_osm_reader_for_city_id_or_osm_path(
     #     city_id=city_id, osm_path=f"{location}/{city_id}.osm.pbf"
     # )
@@ -29,5 +32,5 @@ def prep_osm_networks(
 
 
 @app.callback(invoke_without_command=True, no_args_is_help=True)
-def main():
+def main() -> None:
     pass

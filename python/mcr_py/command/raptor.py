@@ -36,7 +36,7 @@ def raptor(
     default_transfer_time: Annotated[
         int, typer.Option(help="Transfer time used when tranfering at the same stop")
     ] = 180,
-):
+) -> None:
     validate_flags(
         footpaths,
         structs,
@@ -50,7 +50,8 @@ def raptor(
 
     footpaths_dict = storage.read_any_dict(footpaths)
     if "footpaths" not in footpaths_dict:
-        raise typer.BadParameter(f"Footpaths file {footpaths} has unexpected format.")
+        msg = f"Footpaths file {footpaths} has unexpected format."
+        raise typer.BadParameter(msg)
     footpaths_dict = footpaths_dict["footpaths"]
 
     structs_dict = storage.read_any_dict(structs)
@@ -92,15 +93,19 @@ def validate_flags(
     end_stop_id: Optional[str],
     start_time: str,
     output: str,
-):
+) -> None:
     if not os.path.exists(footpaths):
-        raise typer.BadParameter(f"Footpaths file {footpaths} does not exist.")
+        msg = f"Footpaths file {footpaths} does not exist."
+        raise typer.BadParameter(msg)
 
     if not os.path.exists(structs):
-        raise typer.BadParameter(f"Structs file {structs} does not exist.")
+        msg = f"Structs file {structs} does not exist."
+        raise typer.BadParameter(msg)
 
     if max_transfers < 0:
-        raise typer.BadParameter("Max transfers must be non-negative.")
+        msg = "Max transfers must be non-negative."
+        raise typer.BadParameter(msg)
 
     if default_transfer_time < 0:
-        raise typer.BadParameter("Default transfer time must be non-negative.")
+        msg = "Default transfer time must be non-negative."
+        raise typer.BadParameter(msg)

@@ -23,7 +23,7 @@ class McRaptor(Generic[L, S, T]):
         additional_stop_information: dict[str, S],
         additional_trip_information: dict[str, T],
         label_class: type[L],
-    ):
+    ) -> None:
         """
         Initializes the McRaptor algorithm with structured data, footpaths, transfer limits,
         and additional information for stops and trips.
@@ -219,7 +219,7 @@ class McRaptor(Generic[L, S, T]):
         bag: Bag,
         route_id: str,
         stop_id: str,
-    ):
+    ) -> None:
         """
         Merges a bag into the route bag by finding the earliest trip for each label.
 

@@ -11,7 +11,7 @@ class MCRConfig:
         logger: Logger = rlog,
         enable_limit: bool = False,
         disable_paths: bool = False,
-    ):
+    ) -> None:
         self.logger = logger
         self.timer = Timer(self.logger)
         self.path_manager: Optional[PathManager] = None

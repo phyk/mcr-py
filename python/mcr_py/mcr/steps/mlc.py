@@ -32,7 +32,7 @@ class MLCStep(Step):
         graph_cache: GraphCache,
         to_internal: dict,
         from_internal: dict,
-    ):
+    ) -> None:
         self.logger = logger
         self.timer = timer
         self.path_manager = path_manager
@@ -52,7 +52,8 @@ class MLCStep(Step):
 
     def run(self, input_bags: IntermediateBags, offset: int = 0) -> IntermediateBags:
         if not input_bags:
-            raise ValueError("No input bags")
+            msg = "No input bags"
+            raise ValueError(msg)
 
         with self.timer.info(f"Preparing input for {self.NAME} step"):
             prepared_input_bags = self.prepare_input(input_bags)

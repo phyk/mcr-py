@@ -52,7 +52,8 @@ def read_dfs(gtfs_zip_path: str) -> dict[str, pl.DataFrame]:
 
         for expected_file in EXPECTED_FILES:
             if expected_file not in contained:
-                raise Exception(f"Expected file {expected_file} not in zip file")
+                msg = f"Expected file {expected_file} not in zip file"
+                raise Exception(msg)
 
         for file in EXPECTED_FILES:
             df = read_file(zip_ref, file)
@@ -78,7 +79,7 @@ def read_file(zip_ref: zipfile.ZipFile, file: str) -> pl.DataFrame:
         return df
 
 
-def write_dfs(dfs: dict[str, pl.DataFrame], output: str):
+def write_dfs(dfs: dict[str, pl.DataFrame], output: str) -> None:
     """
     Writes a dictionary of dataframes to a GTFS zip file.
 
@@ -92,7 +93,7 @@ def write_dfs(dfs: dict[str, pl.DataFrame], output: str):
             write_file(zip_ref, file, df)
 
 
-def write_file(zip_ref: zipfile.ZipFile, file: str, df: pl.DataFrame):
+def write_file(zip_ref: zipfile.ZipFile, file: str, df: pl.DataFrame) -> None:
     """
     Writes a DataFrame to a file within the GTFS zip.
 

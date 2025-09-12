@@ -87,7 +87,7 @@ def run(
             help=f"Step config preconfiguration id. Possible values: {', '.join(ALL_CONFIGS)}.",
         ),
     ] = ALL_CONFIGS[0],
-):
+) -> None:
     validate_flags(
         stops,
         structs,
@@ -133,8 +133,9 @@ def run(
             )
 
         else:
+            msg = f"Invalid step config '{step_config}'. Possible values: {', '.join(ALL_CONFIGS)}."
             raise typer.BadParameter(
-                f"Invalid step config '{step_config}'. Possible values: {', '.join(ALL_CONFIGS)}.",
+                msg,
             )
 
         config = MCRConfig(
@@ -156,8 +157,9 @@ def validate_flags(
     structs: str,
     city_id: str,
     osm: str,
-):
+) -> None:
     if not city_id and not osm:
+        msg = "Either '--city-id' or '--osm' must be provided."
         raise typer.BadParameter(
-            "Either '--city-id' or '--osm' must be provided.",
+            msg,
         )
