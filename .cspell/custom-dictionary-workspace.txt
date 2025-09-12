@@ -1,8 +1,10 @@
 EPSG
 gbfs
 geometa
+geospatial
 gtfs
 Koeln
 Köln
 pois
 rlog
+serde

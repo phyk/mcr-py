@@ -115,7 +115,7 @@ class MCR:
         elif self.output_format == OutputFormat.DF_FEATHER:
             self.save_feather(bags_i, output_path)
 
-    def save_pickle(self, bags_i: dict[int, IntermediateBags], output_path: str):
+    def save_pickle(self, bags_i: dict[int, IntermediateBags], output_path: str) -> None:
         results: dict[str, Any] = {
             "bags_i": bags_i,
         }
@@ -127,7 +127,7 @@ class MCR:
             output_path,
         )
 
-    def save_feather(self, bags_i: dict[int, IntermediateBags], output_path: str):
+    def save_feather(self, bags_i: dict[int, IntermediateBags], output_path: str) -> None:
         labels = pd.DataFrame(
             [
                 (label.node_id, label.values[0], label.values[1], n_transfers)
