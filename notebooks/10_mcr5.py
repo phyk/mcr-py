@@ -101,7 +101,7 @@ if __name__ == "__main__":
         settings = tomllib.load(f)
 
     setup(settings["run_type"]["run_type"])
-    city_name = settings["city"].keys()[0]
+    city_name = "cologne"
     data_directory = pathlib.Path(__file__).parent.parent.resolve() / "data"
     base_directory = data_directory / settings["timestamp"]["timestamp"]
     cache_path = base_directory / "cache/"
@@ -157,9 +157,9 @@ if __name__ == "__main__":
         run_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - loaded_at
         total_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - start
         runtimes[key] = {
-            "load_time": load_time,
-            "run_time": run_time,
-            "total_time": total_time,
+            "load_time": str(load_time),
+            "run_time": str(run_time),
+            "total_time": str(total_time),
         }
 
     with open(mcr5_output_path / "runtimes.json", "w") as f:

@@ -1,5 +1,5 @@
 [run_type]
-run_type="DEBUG"
+run_type="INFO"
 
 [geography]
 crs_sink_name="EPSG:4839"
