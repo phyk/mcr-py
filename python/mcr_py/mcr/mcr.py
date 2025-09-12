@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-import pandas as pd
+import polars as pl
 from typing_extensions import Sequence
 
 from mcr_py.mcr.bag import IntermediateBags
@@ -23,9 +23,11 @@ class MCR:
         self,
         initial_steps: StepBuilderMatrix,
         repeating_steps: StepBuilderMatrix,
-        config: MCRConfig = MCRConfig(),
+        config: Optional[MCRConfig] = None,
         output_format: OutputFormat = OutputFormat.CLASS_PICKLE,
-    ):
+    ) -> None:
+        if config is None:
+            config = MCRConfig()
         self.disable_paths = config.disable_paths
         self.path_manager: Optional[PathManager] = None
         if not self.disable_paths:
@@ -51,12 +53,15 @@ class MCR:
             for step_builders in step_builders
         ]
 
-    def run(self, start_node_id: int, start_time: str, max_transfers: int, output_path: str):
+    def run(
+        self, start_node_id: int, start_time: str, max_transfers: int, output_path: str
+    ) -> None:
         start_time_in_seconds = strtime.str_time_to_seconds(start_time)
 
         bags_i: dict[int, IntermediateBags] = {}
 
-        self.logger.debug(f"Starting MCR with config: {self.__dict__}")
+        msg = f"Starting MCR with config: {self.__dict__}"
+        self.logger.debug(msg)
 
         start_bags = self.create_start_bags(start_node_id, start_time_in_seconds)
 
@@ -71,7 +76,8 @@ class MCR:
 
         stop_early = False
         for i in range(1, max_transfers + 1):
-            self.logger.info(f"Running iteration {i}")
+            msg = f"Running iteration {i}"
+            self.logger.info(msg)
             offset = i * 2 - 1
 
             repeated_bags = bags_i[i - 1]
@@ -81,7 +87,8 @@ class MCR:
                     result_bags.append(step.run(repeated_bags, offset))
                 repeated_bags = self.merge_bags(*result_bags)
                 if len(repeated_bags) == 0:
-                    self.logger.warning(f"No bags found in iteration {i} - stopping")
+                    msg = f"No bags found in iteration {i} - stopping"
+                    self.logger.warning(msg)
                     stop_early = True
                     break
 
@@ -109,7 +116,7 @@ class MCR:
         self,
         bags_i: dict[int, IntermediateBags],
         output_path: str,
-    ):
+    ) -> None:
         if self.output_format == OutputFormat.CLASS_PICKLE:
             self.save_pickle(bags_i, output_path)
         elif self.output_format == OutputFormat.DF_FEATHER:
@@ -128,19 +135,32 @@ class MCR:
         )
 
     def save_feather(self, bags_i: dict[int, IntermediateBags], output_path: str) -> None:
-        labels = pd.DataFrame(
+        labels = pl.DataFrame(
             [
                 (label.node_id, label.values[0], label.values[1], n_transfers)
                 for n_transfers, bags in bags_i.items()
                 for bag in bags.values()
                 for label in bag
             ],
-            columns=pd.Index(["osm_node_id", "time", "cost", "n_transfers"]),
+            orient="row",
+            schema=pl.Schema(
+                {
+                    "osm_node_id": pl.Int64,
+                    "time": pl.Int64,
+                    "cost": pl.Int64,
+                    "n_transfers": pl.Int64,
+                }
+            ),
+        )
+        labels = labels.with_columns(
+            (pl.col("time") // 3600).cast(pl.String).str.pad_start(2, "0")
+            + pl.lit(":")
+            + (pl.col("time") % 3600 // 60).cast(pl.String).str.pad_start(2, "0")
+            + pl.lit(":")
+            + (pl.col("time") % 60).cast(pl.String).str.pad_start(2, "0")
         )
 
-        labels["human_readable_time"] = labels["time"].apply(strtime.seconds_to_str_time)
-
-        labels.to_feather(output_path)
+        labels.write_ipc(output_path)
 
     def merge_bags(
         self,

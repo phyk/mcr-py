@@ -13,7 +13,8 @@ def str_time_to_seconds(str_time: str) -> int:
     hours, minutes, seconds = map(int, str_time.split(":"))
 
     if minutes >= 60 or seconds >= 60:
-        raise ValueError("Invalid time format")
+        msg = "Invalid time format"
+        raise ValueError(msg)
 
     total_seconds = hours * 3600 + minutes * 60 + seconds
     return total_seconds
