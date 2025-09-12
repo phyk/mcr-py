@@ -1,19 +1,19 @@
 [package]
-name = "_mcr_py"
-version = "0.1.0"
-edition = "2021"
+name="_mcr_py"
+version="0.1.0"
+edition="2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "_mcr_py"
-crate-type = ["cdylib"]
+name="_mcr_py"
+crate-type=["cdylib"]
 
 [dependencies]
-mlc = { version = "0.1.0", path = "mlc" }
-osmtools = { version = "0.1.0", path = "osmtools" }
-log = "0.4.20"
-pyo3 = "0.25"
-pyo3-log = "0.12.3"
-pyo3-polars = "0.22"
-polars = { version = "0.49", features = ["lazy", "dtype-struct"] }
-petgraph = "0.8.1"
+mlc={ version="0.1.0", path="mlc" }
+osmtools={ version="0.1.0", path="osmtools" }
+log="0.4.28"
+pyo3="0.25"
+pyo3-log="0.12.4"
+pyo3-polars="0.23"                                           # on version 0.24, can remove python dependency version lock
+polars={ version="0.50", features=["dtype-struct", "lazy"] }
+petgraph="0.8.2"
