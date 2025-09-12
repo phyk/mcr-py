@@ -1,4 +1,5 @@
 import os.path
+import pathlib
 import shutil
 
 import polars as pl
@@ -21,7 +22,7 @@ DEFAULT_TRANFER_TIME = 180
 
 
 def test_raptor(testdata_path: str) -> None:
-    output_dir = os.path.join(testdata_path, "output")
+    output_dir = pathlib.Path(testdata_path) / "output"
 
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
@@ -31,17 +32,17 @@ def test_raptor(testdata_path: str) -> None:
         structs=os.path.join(testdata_path, "structs.pkl"),
         start_stop_id=NESSELRODE_STR_STOP_ID,
         start_time="15:00:00",
-        output_dir=output_dir,
+        output_dir=str(output_dir),
         max_transfers=MAX_TRANSFERS,
         default_transfer_time=DEFAULT_TRANFER_TIME,
     )
 
     tracer_map = enrich_raptor_trace_results(
-        output_dir,
+        str(output_dir),
         os.path.join(testdata_path, "gtfs.zip"),
     )
 
-    arrival_times = storage.read_df(os.path.join(output_dir, "arrival_times.parquet"))
+    arrival_times = storage.read_df(output_dir / "arrival_times.parquet")
 
     # all stops are reachable
     assert len(arrival_times.filter(pl.col("arrival_time") == "--:--:--")) == 0

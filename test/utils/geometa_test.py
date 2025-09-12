@@ -32,7 +32,7 @@ def test_get_bounding_box_as_coord_list(geo_meta: GeoMeta) -> None:
 def test_load_and_save(geo_meta: GeoMeta, tmp_path: pathlib.Path) -> None:
     # Test saving
     save_path = tmp_path / "geometa_data.json"
-    geo_meta.save(str(save_path))
+    geo_meta.save(save_path)
 
     # Test loading
     loaded_geo_meta = GeoMeta.load(save_path)
