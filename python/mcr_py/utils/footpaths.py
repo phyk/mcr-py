@@ -16,7 +16,8 @@ class GenerationMethod(Enum):
     @classmethod
     def from_str(cls, method: str) -> "GenerationMethod":
         if method.upper() not in cls.all():
-            raise ValueError(f"Unknown generation method: {method}")
+            msg = f"Unknown generation method: {method}"
+            raise ValueError(msg)
         return cls[method.upper()]
 
     @classmethod

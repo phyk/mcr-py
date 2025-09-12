@@ -59,7 +59,9 @@ def remove_circular_trips(
         pl.col("stop_id").is_duplicated().over("trip_id").alias("duplicated")
     )
     stop_times_df = stop_times_df.filter(~pl.col("duplicated").any().over("trip_id"))
-    trips_df = trips_df.filter(pl.col("trip_id").is_in(stop_times_df.get_column("trip_id")))
+    trips_df = trips_df.filter(
+        pl.col("trip_id").is_in(stop_times_df.get_column("trip_id").to_list())
+    )
     return trips_df, stop_times_df
 
 
@@ -213,7 +215,9 @@ def remove_unused_stops(stop_times_df: pl.DataFrame, stops_df: pl.DataFrame) -> 
     :param stops_df: pl.DataFrame - The DataFrame containing stops information.
     :returns: pl.DataFrame - The updated stops DataFrame with unused stops removed.
     """
-    stops_df = stops_df.filter(pl.col("stop_id").is_in(stop_times_df.get_column("stop_id")))
+    stops_df = stops_df.filter(
+        pl.col("stop_id").is_in(stop_times_df.get_column("stop_id").to_list())
+    )
     return stops_df
 
 
@@ -228,5 +232,5 @@ def add_geometry(stops_df: pl.DataFrame) -> pl.DataFrame:
     :returns: pl.DataFrame - The updated stops DataFrame with a new column for geometry.
     """
     return stops_df.with_columns(
-        st.from_coords(pl.concat_arr(["stop_lon", "stop_lat"])).alias("geometry")
+        st.point(pl.concat_arr(["stop_lon", "stop_lat"])).alias("geometry")
     )

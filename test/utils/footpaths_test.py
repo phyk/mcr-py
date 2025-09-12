@@ -1,4 +1,5 @@
-from unittest.mock import patch
+import logging
+from unittest.mock import MagicMock, patch
 
 import polars as pl
 import pytest
@@ -9,7 +10,7 @@ from mcr_py.utils.footpaths import (
 
 
 @pytest.fixture
-def mock_data():
+def mock_data() -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
     # Mock data for nodes, edges, and stops
     nodes = pl.DataFrame(
         {
@@ -98,9 +99,9 @@ def mock_data():
 
 @patch("mcr_py.utils.storage.read_df")
 def test_generate_rustworkx(
-    mock_read_df,
-    mock_data,
-):
+    mock_read_df: MagicMock,
+    mock_data: tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame],
+) -> None:
     # Arrange
     nodes, edges, stops_df = mock_data
     mock_read_df.side_effect = [nodes, edges, stops_df]  # Mock return values
@@ -112,7 +113,7 @@ def test_generate_rustworkx(
         avg_walking_speed=1.4,
         method=GenerationMethod.RUSTWORKX,
     )
-    print(footpaths)
+    logging.info(footpaths)
     # Assert
     result = {
         1: {4: 1, 5: 2, 6: 2, 7: 4, 8: 3, 9: 2, 10: 4, 3: 4},
@@ -126,16 +127,14 @@ def test_generate_rustworkx(
         10: {4: 2, 5: 4, 6: 4, 7: 5, 8: 5, 9: 4, 1: 1, 3: 6},
     }
     assert all(
-        [
-            footpaths[node][other_node] == result[node][other_node]  # type: ignore
-            for node in footpaths
-            for other_node in footpaths[node]
-        ]
+        footpaths[node][other_node] == result[node][other_node]  # type: ignore
+        for node in footpaths
+        for other_node in footpaths[node]
     )
     mock_read_df.assert_called()  # Ensure read_df was called
 
 
-def test_generation_method_from_str():
+def test_generation_method_from_str() -> None:
     # Test valid method conversion
     assert GenerationMethod.from_str("rustworkx") == GenerationMethod.RUSTWORKX
     assert GenerationMethod.from_str("FAST_PATH") == GenerationMethod.FAST_PATH
@@ -145,6 +144,6 @@ def test_generation_method_from_str():
         GenerationMethod.from_str("invalid_method")
 
 
-def test_generation_method_all():
+def test_generation_method_all() -> None:
     # Test all available methods
     assert GenerationMethod.all() == ["RUSTWORKX", "FAST_PATH"]

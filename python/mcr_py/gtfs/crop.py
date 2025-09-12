@@ -15,7 +15,7 @@ def crop(
     geo_meta: GeoMeta,
     time_start: datetime,
     time_end: datetime,
-):
+) -> None:
     """
     Crops GTFS data based on geographic and temporal constraints.
 
@@ -63,9 +63,8 @@ def crop(
 
     n_trips_after_bbox, n_stops_after_bbox = len(trips_df), len(stops_df)
     if n_trips_after_bbox == 0 or n_stops_after_bbox == 0:
-        raise ValueError(
-            f"Bounding box is too small, no trips or stops remain: {n_trips_after_bbox} trips, {n_stops_after_bbox} stops"
-        )
+        msg = f"Bounding box is too small, no trips or stops remain: {n_trips_after_bbox} trips, {n_stops_after_bbox} stops"
+        raise ValueError(msg)
 
     trips_df, calendar_df = crop_trips(trips_df, calendar_df, time_start, time_end)
     stop_times_df = reconcile_stop_times_with_trips(stop_times_df, trips_df)
@@ -114,10 +113,13 @@ def reconcile_trips_and_stop_times_with_stops(
     """
     stop_ids = stops_df.get_column(key.STOP_ID_KEY).unique()
     stop_times_df = stop_times_df.filter(
-        pl.col(key.STOP_ID_KEY).is_in(stop_ids) & (pl.col(key.TRIP_ID_KEY).is_duplicated())
+        pl.col(key.STOP_ID_KEY).is_in(stop_ids.implode())
+        & (pl.col(key.TRIP_ID_KEY).is_duplicated())
     )
     trips_df = trips_df.filter(
-        pl.col(key.TRIP_ID_KEY).is_in(stop_times_df.get_column(key.TRIP_ID_KEY).unique())
+        pl.col(key.TRIP_ID_KEY).is_in(
+            stop_times_df.get_column(key.TRIP_ID_KEY).unique().implode()
+        )
     )  # type: ignore
 
     return trips_df, stop_times_df
@@ -154,7 +156,7 @@ def crop_trips(
     )
 
     service_ids = calendar_df.get_column(key.SERVICE_ID_KEY).unique()
-    trips_df = trips_df.filter(pl.col(key.SERVICE_ID_KEY).is_in(service_ids))  # type: ignore
+    trips_df = trips_df.filter(pl.col(key.SERVICE_ID_KEY).is_in(service_ids.implode()))  # type: ignore
 
     return trips_df, calendar_df
 
@@ -171,7 +173,7 @@ def reconcile_stop_times_with_trips(
     :returns: pl.DataFrame - The cropped stop times DataFrame.
     """
     trip_ids = trips_df.get_column(key.TRIP_ID_KEY).unique()
-    stop_times_df = stop_times_df.filter(pl.col(key.TRIP_ID_KEY).is_in(trip_ids))
+    stop_times_df = stop_times_df.filter(pl.col(key.TRIP_ID_KEY).is_in(trip_ids.implode()))
 
     return stop_times_df
 
@@ -188,6 +190,6 @@ def reconcile_stops_with_stop_times(
     :returns: pl.DataFrame - The cropped stops DataFrame.
     """
     stop_ids = stop_times_df.get_column(key.STOP_ID_KEY).unique()
-    stops_df = stops_df.filter(pl.col(key.STOP_ID_KEY).is_in(stop_ids))
+    stops_df = stops_df.filter(pl.col(key.STOP_ID_KEY).is_in(stop_ids.implode()))
 
     return stops_df

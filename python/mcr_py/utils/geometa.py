@@ -1,6 +1,6 @@
-import os
 import pathlib
 from dataclasses import dataclass
+from enum import Enum
 
 import folium
 import polars as pl
@@ -16,7 +16,18 @@ from shapely.geometry import MultiPolygon, Polygon
 from mcr_py.utils import cache
 
 
-def convert_to_crs(geometry: shapely.geometry.base.BaseGeometry, crs: str, crs_target: str):
+class Buffering(Enum):
+    """
+    Enum class for buffering options.
+    """
+
+    UNBUFFERED = 0
+    BUFFERED = 1
+
+
+def convert_to_crs(
+    geometry: shapely.geometry.base.BaseGeometry, crs: str, crs_target: str
+) -> shapely.geometry.base.BaseGeometry:
     """
     Convert the geometry from one coordinate reference system (CRS) to another.
 
@@ -48,7 +59,7 @@ class GeoMeta:
     buffer: int = 10000  # roughly 5km
 
     @staticmethod
-    def create(boundary: Polygon, crs: str, crs_target: str, buffer: int = 10000):
+    def create(boundary: Polygon, crs: str, crs_target: str, buffer: int = 10000) -> "GeoMeta":
         """
         Initialize the GeoMeta object with a boundary, source CRS, and target CRS.
 
@@ -66,7 +77,7 @@ class GeoMeta:
             unbuffered_boundary_wkt=boundary.wkt,
         )
 
-    def hash_boundary(self):
+    def hash_boundary(self) -> int:
         """
         Generate a hash string for the boundary geometry.
 
@@ -74,20 +85,24 @@ class GeoMeta:
         """
         return cache.hash_str(self.boundary_wkt)
 
-    def get_bounding_box(self, use_buffer: bool = True):
+    def get_bounding_box(
+        self, buffering: Buffering = Buffering.BUFFERED
+    ) -> tuple[float, float, float, float]:
         """
         Get the bounding box of the boundary.
 
         use_buffer: Whether to use the buffered boundary or the unbuffered boundary.
 
-        :returns: A tuple representing the bounding box (minx, miny, maxx, maxy).
+        :returns: A tuple representing the bounding box (min_x, min_y, max_x, max_y).
         """
-        if use_buffer:
+        if buffering == Buffering.BUFFERED:
             return shapely.from_wkt(self.boundary_wkt).bounds
         else:
             return shapely.from_wkt(self.unbuffered_boundary_wkt).bounds
 
-    def get_convex_hull_coord_list(self, use_buffer: bool = True) -> list[tuple[float, float]]:
+    def get_convex_hull_coord_list(
+        self, buffering: Buffering = Buffering.BUFFERED
+    ) -> list[tuple[float, float]]:
         """
         Get the coordinates of the boundary as a list.
 
@@ -95,7 +110,7 @@ class GeoMeta:
 
         :returns: A list of tuples representing the coordinates of the boundary.
         """
-        if use_buffer:
+        if buffering == Buffering.BUFFERED:
             return list(shapely.from_wkt(self.boundary_wkt).convex_hull.boundary.coords)
         else:
             return list(
@@ -103,7 +118,7 @@ class GeoMeta:
             )
 
     def get_bounding_box_as_coord_list(
-        self, use_buffer: bool = True
+        self, buffering: Buffering = Buffering.BUFFERED
     ) -> List[Tuple[float, float]]:
         """
         Get the bounding box as a list of coordinates.
@@ -112,7 +127,7 @@ class GeoMeta:
 
         :returns: A list of tuples representing the corners of the bounding box.
         """
-        bounding_box = self.get_bounding_box(use_buffer=use_buffer)
+        bounding_box = self.get_bounding_box(buffering=buffering)
         return [
             (bounding_box[0], bounding_box[1]),
             (bounding_box[0], bounding_box[3]),
@@ -121,7 +136,7 @@ class GeoMeta:
         ]
 
     @staticmethod
-    def load(path: pathlib.Path):
+    def load(path: pathlib.Path) -> "GeoMeta":
         """
         Load a GeoMeta object from a pickle file.
 
@@ -135,7 +150,7 @@ class GeoMeta:
             loaded = from_json(GeoMeta, read_)
             return loaded
 
-    def set_residential_area(self, residential_area: MultiPolygon):
+    def set_residential_area(self, residential_area: MultiPolygon) -> None:
         """
         Set the residential area for the GeoMeta object.
 
@@ -143,18 +158,21 @@ class GeoMeta:
         """
         self.residential_area = residential_area
 
-    def save(self, path: str):
+    def save(self, path: str) -> None:
         """
-        Save the GeoMeta object to a pickle file.
+        Save the GeoMeta object to a json file.
 
         path: The path where the GeoMeta object will be saved.
         """
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        path_ = pathlib.Path(path)
+        path_.parent.mkdir(parents=True, exist_ok=True)
 
         with open(path, "w") as f:
             f.write(to_json(self))
 
-    def crop_gdf(self, locations: pl.DataFrame, use_buffer: bool = True) -> pl.DataFrame:
+    def crop_gdf(
+        self, locations: pl.DataFrame, buffering: Buffering = Buffering.BUFFERED
+    ) -> pl.DataFrame:
         """
         Crop a GeoDataFrame to the boundaries defined in the GeoMeta object.
 
@@ -164,7 +182,7 @@ class GeoMeta:
         :returns: A cropped GeoDataFrame containing only the locations within the boundary.
         """
         boundary = self.unbuffered_boundary_wkt
-        if use_buffer:
+        if buffering == Buffering.BUFFERED:
             boundary = self.boundary_wkt
         locations = locations.filter(
             st.geom("geometry").st.within(st.from_wkt(pl.lit(boundary)))
@@ -177,7 +195,7 @@ class GeoMeta:
         locations: pl.DataFrame,
         lat_col: str,
         lon_col: str,
-        use_buffer: bool = True,
+        buffering: Buffering = Buffering.BUFFERED,
     ) -> pl.DataFrame:
         """
         Crop a DataFrame of locations to the boundaries defined in the GeoMeta object.
@@ -190,13 +208,11 @@ class GeoMeta:
         :returns: A cropped DataFrame containing only the locations within the boundary.
         """
         boundary = self.unbuffered_boundary_wkt
-        if use_buffer:
+        if buffering == Buffering.BUFFERED:
             boundary = self.boundary_wkt
 
         locations = locations.filter(
-            st.from_coords(pl.concat_arr(lon_col, lat_col)).st.within(
-                st.from_wkt(pl.lit(boundary))
-            )
+            st.point(pl.concat_arr(lon_col, lat_col)).st.within(st.from_wkt(pl.lit(boundary)))
         )
 
         return locations
