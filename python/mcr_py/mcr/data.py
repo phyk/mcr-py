@@ -18,7 +18,7 @@ from mcr_py.osm import graph
 from mcr_py.utils.geometa import Buffering, GeoMeta
 from mcr_py.utils.logger import Timed, rlog
 
-ACCURACY = 1
+ACCURACY = 2
 ACCURACY_MULTIPLIER = 10 ** (ACCURACY - 1)
 
 AVG_WALKING_SPEED = 1.4  # m/s
@@ -276,7 +276,12 @@ TRAVEL_TIME_DRIVING_COLUMN = "travel_time_driving"
 
 
 def add_travel_time(edges: pl.DataFrame, speed: float) -> pl.DataFrame:
-    edges = edges.with_columns((pl.col("length") / speed).alias(TRAVEL_TIME_COLUMN))
+    edges = edges.with_columns(
+        (pl.col("length") / speed * ACCURACY_MULTIPLIER)
+        .round()
+        .cast(pl.UInt64)
+        .alias(TRAVEL_TIME_COLUMN)
+    )
     return edges
 
 
@@ -315,7 +320,12 @@ def reset_node_ids(df: pl.DataFrame, id_df: pl.DataFrame) -> pl.DataFrame:
     )
 
 
-def prefix_id(gdf: pl.DataFrame, prefix: str, column: str, save_old=False) -> pl.DataFrame:
+def prefix_id(
+    gdf: pl.DataFrame,
+    prefix: str,
+    column: str,
+    save_old: bool = False,  # noqa: FBT001, FBT002
+) -> pl.DataFrame:
     if save_old:
         gdf = gdf.with_columns(pl.col(column).alias(f"{column}_old"))
     gdf = gdf.select(prefix + pl.col(column).cast(pl.String))
@@ -323,7 +333,9 @@ def prefix_id(gdf: pl.DataFrame, prefix: str, column: str, save_old=False) -> pl
     return gdf
 
 
-def create_transfer_edges(walking_nodes: pl.DataFrame, driving_nodes: pl.DataFrame):
+def create_transfer_edges(
+    walking_nodes: pl.DataFrame, driving_nodes: pl.DataFrame
+) -> pl.DataFrame:
     intersection_node_ids = walking_nodes.select(pl.col("osm_id").alias("walking_id")).join(
         driving_nodes.select(pl.col("osm_id").alias("driving_id")),
         left_on="walking_id",
@@ -339,19 +351,16 @@ def create_transfer_edges(walking_nodes: pl.DataFrame, driving_nodes: pl.DataFra
     return transfer_edges
 
 
-def add_weights(edges: pl.DataFrame, columns: list[str], hidden=False) -> pl.DataFrame:
+def add_weights(edges: pl.DataFrame, columns: list[str], hidden: bool = False) -> pl.DataFrame:  # noqa: FBT001, FBT002
     col_name = "hidden_weights" if hidden else "weights"
     n_padding = N_TOTAL_HIDDEN_WEIGHTS if hidden else N_TOTAL_WEIGHTS
 
-    mid_seperator = "," if len(columns) > 0 and n_padding > 0 else ""
-    expr = pl.lit("(")
-    if len(columns) > 0:
-        expr += pl.concat_str(
-            (pl.col(columns).round(1) * 1).cast(int).cast(str), separator=","
-        ).alias(col_name)
     edges = edges.with_columns(
         (
-            expr + pl.lit(mid_seperator + ",".join(["0"] * (n_padding - len(columns))) + ")")
+            pl.concat_list(
+                pl.col(columns),
+                *[pl.lit(0, dtype=pl.UInt64) for _ in range(n_padding - len(columns))],
+            )
         ).alias(col_name)
     )
 
