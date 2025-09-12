@@ -49,7 +49,6 @@ class WalkingStepBuilder(StepBuilder):
 
         rlog.debug("MLC Edges created")
 
-        print(raw_walking_edges)
         self.walking_graph_cache = GraphCache()
         self.walking_graph_cache.set_graph(raw_walking_edges)  # type: ignore
 

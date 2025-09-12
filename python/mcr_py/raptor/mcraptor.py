@@ -23,6 +23,7 @@ class McRaptor(Generic[L, S, T]):
         additional_stop_information: dict[str, S],
         additional_trip_information: dict[str, T],
         label_class: type[L],
+        accuracy_multiplier: int,
     ) -> None:
         """
         Initializes the McRaptor algorithm with structured data, footpaths, transfer limits,
@@ -47,6 +48,7 @@ class McRaptor(Generic[L, S, T]):
         self.default_transfer_time = default_transfer_time
 
         self.label_class = label_class
+        self.accuracy_multiplier = accuracy_multiplier
 
     def run(
         self, start_stop_id: str, end_stop_id: Optional[str], start_time_str: str
@@ -60,7 +62,9 @@ class McRaptor(Generic[L, S, T]):
         :param start_time_str: str - The start time in string format.
         :returns: dict[str, Any] - A dictionary of human-readable bags after processing.
         """
-        start_time = strtime.str_time_to_seconds(start_time_str)
+        start_time = strtime.str_time_to_seconds(
+            start_time_str, accuracy_multiplier=self.accuracy_multiplier
+        )
 
         b_i, b_best, marked_stops, tracers_map = self.init_vars(start_stop_id, start_time)
 

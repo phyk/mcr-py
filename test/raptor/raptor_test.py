@@ -35,6 +35,7 @@ def test_raptor(testdata_path: str) -> None:
         output_dir=str(output_dir),
         max_transfers=MAX_TRANSFERS,
         default_transfer_time=DEFAULT_TRANFER_TIME,
+        accuracy_multiplier=1,
     )
 
     tracer_map = enrich_raptor_trace_results(
@@ -62,21 +63,33 @@ def test_raptor(testdata_path: str) -> None:
 
     assert isinstance(start_trace, EnrichedTraceStart), f"type: {type(start_trace).__name__}"
     assert start_trace.start_stop_id == NESSELRODE_STR_STOP_ID
-    assert start_trace.start_time == strtime.str_time_to_seconds("15:00:00")
+    assert start_trace.start_time == strtime.str_time_to_seconds(
+        "15:00:00", accuracy_multiplier=1
+    )
 
     assert isinstance(t16_trace, EnrichedTraceTrip)
     assert t16_trace.start_stop_id == NESSELRODE_STR_STOP_ID
     assert t16_trace.end_stop_id == AMSTERDAMER_STR_STOP_ID
-    assert t16_trace.departure_time == strtime.str_time_to_seconds("15:08:00")
-    assert t16_trace.arrival_time == strtime.str_time_to_seconds("15:09:00")
+    assert t16_trace.departure_time == strtime.str_time_to_seconds(
+        "15:08:00", accuracy_multiplier=1
+    )
+    assert t16_trace.arrival_time == strtime.str_time_to_seconds(
+        "15:09:00", accuracy_multiplier=1
+    )
 
     assert isinstance(t13_trace, EnrichedTraceTrip)
     assert t13_trace.start_stop_id == AMSTERDAMER_STR_STOP_ID
     assert t13_trace.end_stop_id == VENLOER_STR_STOP_ID
-    assert t13_trace.departure_time == strtime.str_time_to_seconds("15:13:00")
-    assert t13_trace.arrival_time == strtime.str_time_to_seconds("15:25:00")
+    assert t13_trace.departure_time == strtime.str_time_to_seconds(
+        "15:13:00", accuracy_multiplier=1
+    )
+    assert t13_trace.arrival_time == strtime.str_time_to_seconds(
+        "15:25:00", accuracy_multiplier=1
+    )
 
     assert isinstance(footpath_trace, EnrichedTraceFootpath)
     assert footpath_trace.start_stop_id == VENLOER_STR_STOP_ID
     assert footpath_trace.end_stop_id == EHRENFELD_BF_STOP_ID
-    assert footpath_trace.walking_time == strtime.str_time_to_seconds("00:02:27")
+    assert footpath_trace.walking_time == strtime.str_time_to_seconds(
+        "00:02:27", accuracy_multiplier=1
+    )

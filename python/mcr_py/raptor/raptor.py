@@ -25,6 +25,7 @@ class Raptor:
         footpaths: dict,
         max_transfers: int,
         default_transfer_time: int,
+        accuracy_multiplier: int,
     ) -> None:
         """
         Initializes the Raptor algorithm with structured data, footpaths, transfer limits,
@@ -39,6 +40,7 @@ class Raptor:
 
         self.max_transfers = max_transfers
         self.default_transfer_time = default_transfer_time
+        self.accuracy_multiplier = accuracy_multiplier
 
     def run(self, start_stop_id: str, end_stop_id: Optional[str], start_time_str: str):
         """
@@ -51,7 +53,9 @@ class Raptor:
         :returns: tuple[dict[str, str], TracerMap] - A tuple containing a dictionary of best arrival times
                  in human-readable format and the tracer map.
         """
-        start_time = strtime.str_time_to_seconds(start_time_str)
+        start_time = strtime.str_time_to_seconds(
+            start_time_str, accuracy_multiplier=self.accuracy_multiplier
+        )
 
         tau_i, tau_best, marked_stops, tracers_map = self.init_vars(start_stop_id, start_time)
 

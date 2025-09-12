@@ -213,44 +213,44 @@ def test_create_times_by_stop_by_trip(
     expected_times_by_stop_by_trip = {
         "trip1": {
             "stop1": (
-                strtime.str_time_to_seconds("00:00:00"),
-                strtime.str_time_to_seconds("00:00:00"),
+                strtime.str_time_to_seconds("00:00:00", accuracy_multiplier=10),
+                strtime.str_time_to_seconds("00:00:00", accuracy_multiplier=10),
             ),
             "stop2": (
-                strtime.str_time_to_seconds("00:10:00"),
-                strtime.str_time_to_seconds("00:10:00"),
+                strtime.str_time_to_seconds("00:10:00", accuracy_multiplier=10),
+                strtime.str_time_to_seconds("00:10:00", accuracy_multiplier=10),
             ),
             "stop3": (
-                strtime.str_time_to_seconds("00:20:00"),
-                strtime.str_time_to_seconds("00:20:00"),
+                strtime.str_time_to_seconds("00:20:00", accuracy_multiplier=10),
+                strtime.str_time_to_seconds("00:20:00", accuracy_multiplier=10),
             ),
         },
         "trip2": {
             "stop1": (
-                strtime.str_time_to_seconds("01:00:00"),
-                strtime.str_time_to_seconds("01:00:00"),
+                strtime.str_time_to_seconds("01:00:00", accuracy_multiplier=10),
+                strtime.str_time_to_seconds("01:00:00", accuracy_multiplier=10),
             ),
             "stop4": (
-                strtime.str_time_to_seconds("01:10:00"),
-                strtime.str_time_to_seconds("01:10:00"),
+                strtime.str_time_to_seconds("01:10:00", accuracy_multiplier=10),
+                strtime.str_time_to_seconds("01:10:00", accuracy_multiplier=10),
             ),
             "stop3": (
-                strtime.str_time_to_seconds("01:20:00"),
-                strtime.str_time_to_seconds("01:20:00"),
+                strtime.str_time_to_seconds("01:20:00", accuracy_multiplier=10),
+                strtime.str_time_to_seconds("01:20:00", accuracy_multiplier=10),
             ),
         },
         "trip3": {
             "stop3": (
-                strtime.str_time_to_seconds("02:00:00"),
-                strtime.str_time_to_seconds("02:00:00"),
+                strtime.str_time_to_seconds("02:00:00", accuracy_multiplier=10),
+                strtime.str_time_to_seconds("02:00:00", accuracy_multiplier=10),
             ),
             "stop2": (
-                strtime.str_time_to_seconds("02:10:00"),
-                strtime.str_time_to_seconds("02:10:00"),
+                strtime.str_time_to_seconds("02:10:00", accuracy_multiplier=10),
+                strtime.str_time_to_seconds("02:10:00", accuracy_multiplier=10),
             ),
             "stop1": (
-                strtime.str_time_to_seconds("02:20:00"),
-                strtime.str_time_to_seconds("02:20:00"),
+                strtime.str_time_to_seconds("02:20:00", accuracy_multiplier=10),
+                strtime.str_time_to_seconds("02:20:00", accuracy_multiplier=10),
             ),
         },
     }

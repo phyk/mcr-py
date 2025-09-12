@@ -1,5 +1,6 @@
 import logging
 import os
+import pathlib
 import pickle
 import time
 from multiprocessing import Process, Queue
@@ -122,9 +123,9 @@ class MCR5:
         repeating_steps: StepBuilderMatrix,
         start_time: str,
         max_transfers: int,
-        output_dir: str,
+        output_dir: pathlib.Path,
     ) -> None:
-        output = os.path.join(output_dir, f"{h3_cell}.feather")
+        output = output_dir / f"{h3_cell}.feather"
 
         logger_copy, log_stream = make_string_stream_logger(f"mcr5-{h3_cell}", logging.DEBUG)
         copy_settings_to_root_logger(logger_copy)

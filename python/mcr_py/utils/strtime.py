@@ -1,7 +1,7 @@
 import sys
 
 
-def str_time_to_seconds(str_time: str) -> int:
+def str_time_to_seconds(str_time: str, accuracy_multiplier: int) -> int:
     """
     Converts a string representing time in the format HH:MM:SS to seconds since midnight.
     Can handle times that go past midnight.
@@ -17,7 +17,7 @@ def str_time_to_seconds(str_time: str) -> int:
         raise ValueError(msg)
 
     total_seconds = hours * 3600 + minutes * 60 + seconds
-    return total_seconds
+    return total_seconds * accuracy_multiplier
 
 
 def seconds_to_str_time(seconds: int) -> str:

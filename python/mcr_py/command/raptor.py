@@ -1,4 +1,5 @@
 import os
+import pathlib
 from typing import Optional
 
 import polars as pl
@@ -36,6 +37,7 @@ def raptor(
     default_transfer_time: Annotated[
         int, typer.Option(help="Transfer time used when tranfering at the same stop")
     ] = 180,
+    accuracy_multiplier: int = 1,
 ) -> None:
     validate_flags(
         footpaths,
@@ -63,6 +65,7 @@ def raptor(
             footpaths_dict,
             max_transfers,
             default_transfer_time,
+            accuracy_multiplier,
         )
         arrival_times, tracer_map = r.run(
             start_stop_id,
@@ -80,7 +83,7 @@ def raptor(
     )
     storage.write_any_dict(
         {key.TRACER_MAP_KEY: tracer_map},
-        os.path.join(output_dir, key.RAPTOR_TRACE_FILE_NAME),
+        pathlib.Path(output_dir) / key.RAPTOR_TRACE_FILE_NAME,
     )
 
 

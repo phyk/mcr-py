@@ -2,6 +2,7 @@ from typing import Any
 
 import polars as pl
 
+from mcr_py.mcr.data import ACCURACY_MULTIPLIER
 from mcr_py.utils.key import (
     IDX_BY_STOP_BY_ROUTE_KEY,
     ROUTE_ID_SET_KEY,
@@ -205,8 +206,12 @@ def create_times_by_stop_by_trip(
     return {
         trip_id: {
             stop["stop_id"]: (
-                str_time_to_seconds(stop["arrival_time"]),
-                str_time_to_seconds(stop["departure_time"]),
+                str_time_to_seconds(
+                    stop["arrival_time"], accuracy_multiplier=ACCURACY_MULTIPLIER
+                ),
+                str_time_to_seconds(
+                    stop["departure_time"], accuracy_multiplier=ACCURACY_MULTIPLIER
+                ),
             )
             for stop in stops
         }

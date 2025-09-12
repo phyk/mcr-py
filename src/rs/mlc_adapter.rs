@@ -199,7 +199,10 @@ pub fn run_mlc_with_bags<'py>(
     }
     mlc.set_bags(converted_bags);
 
-    let bags: &Bags<usize> = mlc.run().unwrap();
+    log::info!("Starting run");
+
+    let bags: &Bags<usize> = _py.allow_threads(|| mlc.run().unwrap());
+    log::info!("Finished, copying bags");
 
     PyBags(bags.clone()).into_py_dict(_py).unwrap()
 }

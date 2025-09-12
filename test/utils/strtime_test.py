@@ -5,16 +5,16 @@ from mcr_py.utils.strtime import seconds_to_str_time, str_time_to_seconds
 
 
 def test_str_time_to_seconds() -> None:
-    assert str_time_to_seconds("00:00:00") == 0
-    assert str_time_to_seconds("01:30:45") == 5445
-    assert str_time_to_seconds("12:00:00") == 43200
-    assert str_time_to_seconds("23:59:59") == 86399
+    assert str_time_to_seconds("00:00:00", accuracy_multiplier=1) == 0
+    assert str_time_to_seconds("01:30:45", accuracy_multiplier=1) == 5445
+    assert str_time_to_seconds("12:00:00", accuracy_multiplier=1) == 43200
+    assert str_time_to_seconds("23:59:59", accuracy_multiplier=1) == 86399
 
 
 def test_str_time_to_seconds_handles_past_midnight() -> None:
-    assert str_time_to_seconds("24:00:00") == 86400
-    assert str_time_to_seconds("25:30:45") == 91845
-    assert str_time_to_seconds("36:00:00") == 129600
+    assert str_time_to_seconds("24:00:00", accuracy_multiplier=1) == 86400
+    assert str_time_to_seconds("25:30:45", accuracy_multiplier=1) == 91845
+    assert str_time_to_seconds("36:00:00", accuracy_multiplier=1) == 129600
 
 
 def test_seconds_to_str_time() -> None:
@@ -39,14 +39,14 @@ def test_conversions_are_inverse() -> None:
         "36:00:00",
     ]
     for time_str in test_cases:
-        seconds = str_time_to_seconds(time_str)
+        seconds = str_time_to_seconds(time_str, accuracy_multiplier=1)
         assert seconds_to_str_time(seconds) == time_str
 
 
 def test_invalid_time_format() -> None:
     with pytest.raises(ValueError):
-        str_time_to_seconds("12:00")  # Missing seconds
+        str_time_to_seconds("12:00", accuracy_multiplier=1)  # Missing seconds
     with pytest.raises(ValueError):
-        str_time_to_seconds("12:00:60")  # Invalid seconds
+        str_time_to_seconds("12:00:60", accuracy_multiplier=1)  # Invalid seconds
     with pytest.raises(ValueError):
-        str_time_to_seconds("12:00:00:00")  # Extra field
+        str_time_to_seconds("12:00:00:00", accuracy_multiplier=1)  # Extra field

@@ -1,10 +1,12 @@
+import pathlib
 from typing import Any, Optional
 
-import polars as pl
+import pandas as pd
 from typing_extensions import Sequence
 
 from mcr_py.mcr.bag import IntermediateBags
 from mcr_py.mcr.config import MCRConfig
+from mcr_py.mcr.data import ACCURACY_MULTIPLIER
 from mcr_py.mcr.label import (
     IntermediateLabel,
     merge_intermediate_bags,
@@ -54,18 +56,24 @@ class MCR:
         ]
 
     def run(
-        self, start_node_id: int, start_time: str, max_transfers: int, output_path: str
+        self,
+        start_node_id: int,
+        start_time: str,
+        max_transfers: int,
+        output_path: pathlib.Path,
     ) -> None:
-        start_time_in_seconds = strtime.str_time_to_seconds(start_time)
+        start_time_in_seconds = strtime.str_time_to_seconds(
+            start_time, accuracy_multiplier=ACCURACY_MULTIPLIER
+        )
 
         bags_i: dict[int, IntermediateBags] = {}
 
         msg = f"Starting MCR with config: {self.__dict__}"
-        self.logger.debug(msg)
+        self.logger.info(msg)
 
         start_bags = self.create_start_bags(start_node_id, start_time_in_seconds)
 
-        self.logger.info("Running initial step")
+        self.logger.debug("Running initial step")
         for steps in self.initial_steps:
             result_bags = []
             for step in steps:
@@ -77,7 +85,7 @@ class MCR:
         stop_early = False
         for i in range(1, max_transfers + 1):
             msg = f"Running iteration {i}"
-            self.logger.info(msg)
+            self.logger.debug(msg)
             offset = i * 2 - 1
 
             repeated_bags = bags_i[i - 1]
@@ -115,14 +123,16 @@ class MCR:
     def save_bags(
         self,
         bags_i: dict[int, IntermediateBags],
-        output_path: str,
+        output_path: pathlib.Path,
     ) -> None:
         if self.output_format == OutputFormat.CLASS_PICKLE:
             self.save_pickle(bags_i, output_path)
         elif self.output_format == OutputFormat.DF_FEATHER:
             self.save_feather(bags_i, output_path)
 
-    def save_pickle(self, bags_i: dict[int, IntermediateBags], output_path: str) -> None:
+    def save_pickle(
+        self, bags_i: dict[int, IntermediateBags], output_path: pathlib.Path
+    ) -> None:
         results: dict[str, Any] = {
             "bags_i": bags_i,
         }
@@ -134,33 +144,29 @@ class MCR:
             output_path,
         )
 
-    def save_feather(self, bags_i: dict[int, IntermediateBags], output_path: str) -> None:
-        labels = pl.DataFrame(
+    def save_feather(
+        self, bags_i: dict[int, IntermediateBags], output_path: pathlib.Path
+    ) -> None:
+        labels = pd.DataFrame(
             [
                 (label.node_id, label.values[0], label.values[1], n_transfers)
                 for n_transfers, bags in bags_i.items()
                 for bag in bags.values()
                 for label in bag
             ],
-            orient="row",
-            schema=pl.Schema(
-                {
-                    "osm_node_id": pl.Int64,
-                    "time": pl.Int64,
-                    "cost": pl.Int64,
-                    "n_transfers": pl.Int64,
-                }
-            ),
+            columns=pd.Index(["osm_node_id", "time", "cost", "n_transfers"]),
         )
-        labels = labels.with_columns(
-            (pl.col("time") // 3600).cast(pl.String).str.pad_start(2, "0")
-            + pl.lit(":")
-            + (pl.col("time") % 3600 // 60).cast(pl.String).str.pad_start(2, "0")
-            + pl.lit(":")
-            + (pl.col("time") % 60).cast(pl.String).str.pad_start(2, "0")
+        labels["time"] = labels["time"] // ACCURACY_MULTIPLIER
+
+        labels["human_readable_time"] = (
+            (labels["time"] // 3600).astype(str).str.pad(2, "left", fillchar="0")
+            + ":"
+            + (labels["time"] % 3600 // 60).astype(str).str.pad(2, "left", fillchar="0")
+            + ":"
+            + (labels["time"] % 60).astype(str).str.pad(2, fillchar="0")
         )
 
-        labels.write_ipc(output_path)
+        labels.to_feather(output_path)
 
     def merge_bags(
         self,
