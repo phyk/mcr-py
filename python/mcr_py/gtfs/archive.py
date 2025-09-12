@@ -1,4 +1,4 @@
-import os
+import pathlib
 import zipfile
 
 import polars as pl
@@ -37,7 +37,7 @@ EXPECTED_FILES = [
 ]
 
 
-def read_dfs(gtfs_zip_path: str) -> dict[str, pl.DataFrame]:
+def read_dfs(gtfs_zip_path: pathlib.Path) -> dict[str, pl.DataFrame]:
     """
     Reads GTFS zip file and returns a dictionary of dataframes.
 
@@ -79,14 +79,14 @@ def read_file(zip_ref: zipfile.ZipFile, file: str) -> pl.DataFrame:
         return df
 
 
-def write_dfs(dfs: dict[str, pl.DataFrame], output: str) -> None:
+def write_dfs(dfs: dict[str, pl.DataFrame], output: pathlib.Path) -> None:
     """
     Writes a dictionary of dataframes to a GTFS zip file.
 
     :param dfs: dict[str, pl.DataFrame] - The dictionary of DataFrames to write.
     :param output: str - The path where the output zip file will be saved.
     """
-    os.makedirs(os.path.dirname(output), exist_ok=True)
+    output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, "w") as zip_ref:
         for name, df in dfs.items():
             file = get_gtfs_filename(name)

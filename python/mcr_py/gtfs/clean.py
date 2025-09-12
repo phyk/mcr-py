@@ -1,3 +1,5 @@
+import pathlib
+
 import polars as pl
 import polars_st as st
 
@@ -6,7 +8,7 @@ from mcr_py.utils import key
 from mcr_py.utils.logger import Timed
 
 
-def clean(gtfs_zip_path: str) -> dict[str, pl.DataFrame]:
+def clean(gtfs_zip_path: pathlib.Path) -> dict[str, pl.DataFrame]:
     """
     Cleans the GTFS data and writes the cleaned data to the output path.
     The resulting files are `trips.csv` and `stop_times.csv`, other files are

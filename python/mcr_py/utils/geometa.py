@@ -158,14 +158,13 @@ class GeoMeta:
         """
         self.residential_area = residential_area
 
-    def save(self, path: str) -> None:
+    def save(self, path: pathlib.Path) -> None:
         """
         Save the GeoMeta object to a json file.
 
         path: The path where the GeoMeta object will be saved.
         """
-        path_ = pathlib.Path(path)
-        path_.parent.mkdir(parents=True, exist_ok=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(path, "w") as f:
             f.write(to_json(self))

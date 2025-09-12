@@ -1,3 +1,4 @@
+import pathlib
 from datetime import datetime
 from typing import Tuple
 
@@ -10,8 +11,8 @@ from mcr_py.utils.logger import Timed, rlog
 
 
 def crop(
-    path: str,
-    output: str,
+    path: pathlib.Path,
+    output: pathlib.Path,
     geo_meta: GeoMeta,
     time_start: datetime,
     time_end: datetime,

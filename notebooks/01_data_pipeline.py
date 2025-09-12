@@ -6,13 +6,16 @@ import typing
 import zoneinfo
 
 import mcr_py
-import mcr_py.command.area
-import mcr_py.command.build
-import mcr_py.command.gtfs.gtfs
+import mcr_py.gtfs.clean
+import mcr_py.gtfs.crop
 import mcr_py.mcr.data
+import mcr_py.overpass.query
+import mcr_py.structs.build
 import mcr_py.utils.cache
 import mcr_py.utils.geometa
+import mcr_py.utils.key
 import mcr_py.utils.logger
+import mcr_py.utils.storage
 import polars as pl
 import tomllib
 from fsspec.implementations.http import HTTPFileSystem
@@ -47,8 +50,9 @@ def load_data_for_city(
         now = datetime.datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")).strftime(
             "%Y%m%d-%H%M%S"
         )
-    start_time = "01.01.1970-00:00:00"
-    end_time = "01.01.2050-00:00:00"
+    start_time = "01.01.1970-00:00:00 +0200"
+    end_time = "01.01.2050-00:00:00 +0200"
+    crs = "EPSG:4326"
     cache_path = data_directory / f"{timestamp}/cache/"
     gtfs_path = data_directory / f"gtfs_raw/{gtfs_timestamp}/latest.zip"
     gtfs_crop_path = data_directory / f"{timestamp}/gtfs_clean/{city_name}.zip"
@@ -57,28 +61,53 @@ def load_data_for_city(
     gbfs_path = data_directory / f"{timestamp}/gbfs_raw/{city_name}_{now}.csv"
     osm_path = data_directory / f"{timestamp}/osm_raw"
     geometa_path = data_directory / f"{timestamp}/cache/{city_name}_geometa.pkl"
+    time_start_datetime = datetime.datetime.strptime(start_time, "%d.%m.%Y-%H:%M:%S %z")
+    time_end_datetime = datetime.datetime.strptime(end_time, "%d.%m.%Y-%H:%M:%S %z")
+
     mcr_py.utils.logger.setup("INFO")
 
     mcr_py.utils.cache.overwrite_tempdir(cache_path)
-    mcr_py.command.area.create_area(
-        city_name_german, admin_level, crs_sink_name, geometa_path=str(geometa_path)
+
+    # Create the GeoMeta object
+    boundary_polygon = mcr_py.overpass.query.fetch_boundary_polygon(
+        city_name_german, admin_level
     )
-    mcr_py.command.gtfs.gtfs.crop_command(
-        str(gtfs_path),
-        str(gtfs_crop_path),
-        start_time,
-        end_time,
-        geometa_path=geometa_path,
+    geometa = mcr_py.utils.geometa.GeoMeta.create(boundary_polygon, crs, crs_sink_name)
+    geometa.save(geometa_path)
+
+    # Crop the GTFS data to the timeframe and geometa boundary
+    mcr_py.gtfs.crop.crop(
+        gtfs_path,
+        gtfs_crop_path,
+        geometa,
+        time_start=time_start_datetime,
+        time_end=time_end_datetime,
     )
-    mcr_py.command.gtfs.gtfs.clean_gtfs(str(gtfs_crop_path), str(gtfs_clean_dir))
-    mcr_py.command.build.build_structures(str(gtfs_clean_dir), str(gtfs_clean_struct))
+    # Clean the GTFS data
+    with mcr_py.utils.logger.Timed.info("Cleaning GTFS data"):
+        dfs_dict = mcr_py.gtfs.clean.clean(gtfs_crop_path)
+        mcr_py.utils.logger.rlog.info("Writing cleaned GTFS data")
+        mcr_py.utils.storage.write_dfs_dict(dfs_dict, gtfs_clean_dir)
+
+    # Build the structs from the cleaned GTFS data
+    trips_df = mcr_py.utils.storage.read_df(
+        gtfs_clean_dir
+        / mcr_py.utils.storage.get_df_filename_for_name(mcr_py.utils.key.TRIPS_KEY),
+    )
+    stop_times_df = mcr_py.utils.storage.read_df(
+        gtfs_clean_dir
+        / mcr_py.utils.storage.get_df_filename_for_name(mcr_py.utils.key.STOP_TIMES_KEY)
+    )
+    data = mcr_py.structs.build.build_structures(trips_df, stop_times_df)
+    mcr_py.utils.storage.write_any_dict(data, gtfs_clean_struct)
+
+    # Fetch the GBFS data
     if gbfs_url is not None:
         fetch_gbfs_to_csv(gbfs_url, gbfs_path)
 
-    geo_meta = mcr_py.utils.geometa.GeoMeta.load(geometa_path)
-
+    # Load the OSM data
     _ = mcr_py.mcr.data.OSMData(
-        geo_meta=geo_meta,
+        geo_meta=geometa,
         city_id=city_name_german_alt,
         osm_path=osm_path,
         cache_path=cache_path,

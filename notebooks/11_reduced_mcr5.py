@@ -4,12 +4,12 @@ import typing
 import zoneinfo
 from datetime import datetime
 
+import mcr_py.helper_functions
 import polars as pl
 import tomllib
 from mcr_py.command.step_config import (
     get_walking_only_config_with_data,
 )
-from mcr_py.command.utils import load_auxiliary_classes
 from mcr_py.mcr.data import OSMData
 from mcr_py.mcr5.mcr5 import MCR5
 from mcr_py.utils.logger import rlog, setup
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     mcr5_output_path = base_directory / f"mcr5_results/{city_name}_{first_n_rows}_rows"
     bicycle_base_path = f"../data/sharing_locations_clustered/{city_name.lower()}_bikes/"
 
-    geo_meta, geo_data = load_auxiliary_classes(
+    geo_meta, geo_data = mcr_py.helper_functions.load_auxiliary_classes(
         geo_meta_path=geometa_path,
         city_id=settings["city"][city_name]["german_alt"],
         osm_path=osm_path,

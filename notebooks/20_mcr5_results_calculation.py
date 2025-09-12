@@ -2,10 +2,10 @@ import itertools
 import os
 import pathlib
 
+import mcr_py.helper_functions
 import mcr_py.utils.logger
 import polars as pl
 import tomllib
-from mcr_py.command.utils import load_auxiliary_classes
 from mcr_py.mcr5.labels import read_labels_for_nodes
 from mcr_py.minute_city import minute_city
 from mcr_py.minute_city.profile import fill_columns_by_left
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     geometa_path = base_directory / f"cache/{city_name}_geometa.pkl"
     mcr5_output_path = base_directory / f"mcr5_results/{city_name}"
 
-    geo_meta, geo_data = load_auxiliary_classes(
+    geo_meta, geo_data = mcr_py.helper_functions.load_auxiliary_classes(
         geo_meta_path=geometa_path,
         city_id=settings["city"][city_name]["german_alt"],
         osm_path=osm_path,

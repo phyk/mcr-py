@@ -1,4 +1,5 @@
 import os
+import pathlib
 import pickle
 
 import polars as pl
@@ -8,14 +9,14 @@ from typing_extensions import Any
 from mcr_py.utils import key
 
 
-def write_dfs_dict(dfs_dict: dict[str, pl.DataFrame], output_path: str) -> None:
+def write_dfs_dict(dfs_dict: dict[str, pl.DataFrame], output_path: pathlib.Path) -> None:
     """
     Writes a dictionary of Polars DataFrames to separate Parquet files in the specified output directory.
 
     :param dfs_dict: dict[str, pl.DataFrame] - A dictionary where keys are names and values are DataFrames to be written.
     :param output_path: str - The directory path where the Parquet files will be saved.
     """
-    os.makedirs(output_path, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     for name, df in dfs_dict.items():
         filename = get_df_filename_for_name(name)
@@ -43,7 +44,7 @@ def get_df_filename_for_name(name: str) -> str:
     return f"{name}.parquet"
 
 
-def read_df(path: str) -> pl.DataFrame:
+def read_df(path: pathlib.Path) -> pl.DataFrame:
     """
     Reads a Parquet file into a Polars DataFrame using a predefined schema.
 
@@ -53,7 +54,7 @@ def read_df(path: str) -> pl.DataFrame:
     return pl.read_parquet(path)  # type: ignore
 
 
-def write_any_dict(data: dict[str, Any], output_path: str) -> None:
+def write_any_dict(data: dict[str, Any], output_path: pathlib.Path) -> None:
     """
     Serializes and writes a dictionary to a file using pickle.
 
