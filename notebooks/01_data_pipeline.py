@@ -133,6 +133,7 @@ if __name__ == "__main__":
             city_name=city,
             city_name_german=settings["city"][city]["german"],
             city_name_german_alt=settings["city"][city]["german_alt"],
+            timestamp=settings["timestamp"]["timestamp"],
             admin_level=settings["city"][city]["admin_level"],
             crs_sink_name=settings["geography"]["crs_sink_name"],
             gtfs_timestamp=settings["gtfs"]["timestamp"],
