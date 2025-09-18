@@ -20,7 +20,7 @@ def write_dfs_dict(dfs_dict: dict[str, pl.DataFrame], output_path: pathlib.Path)
 
     for name, df in dfs_dict.items():
         filename = get_df_filename_for_name(name)
-        df.write_parquet(os.path.join(output_path, filename))
+        df.write_parquet(output_path / filename)
 
 
 def write_df(df: pl.DataFrame, output_path: str) -> None:
