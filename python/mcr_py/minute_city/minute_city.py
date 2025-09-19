@@ -19,10 +19,11 @@ def add_pois_to_labels(labels: pl.LazyFrame, pois: pl.LazyFrame) -> pl.LazyFrame
     poi_types = pois.collect().get_column("poi_type").unique().to_list()
     for t in poi_types:
         pois = pois.with_columns((pl.col("poi_type") == t).alias(t).cast(pl.Int8()))
-    pois = pois.select("nearest_osm_node", *poi_types)
+    pois = pois.select("nearest_osm_node", *poi_types).unique()
 
     labels = labels.join(
         pois,
+        how="inner",
         left_on="target_id_osm",
         right_on="nearest_osm_node",
     )

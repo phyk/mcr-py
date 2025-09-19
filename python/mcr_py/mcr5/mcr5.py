@@ -39,7 +39,7 @@ class MCR5:
         start_time: str,
         output_dir: str,
         max_transfers: int = 2,
-        verbose=False,
+        verbose: bool = False,  # noqa: FBT001, FBT002
     ) -> list[tuple[str, Exception]]:
         """
         Run a MCR5 analysis for each location mapping.
@@ -55,8 +55,8 @@ class MCR5:
         os.makedirs(output_dir, exist_ok=True)
 
         errors_list = []
-        pbar = tqdm(location_mappings, desc="Starting")
-        for osm_node_id, h3_cell in location_mappings.rows():
+        progress_bar = tqdm(location_mappings, desc="Starting")
+        for idx, (osm_node_id, h3_cell) in enumerate(location_mappings.rows()):
             while (
                 self.get_active_process_count(processes) >= self.max_processes
                 or get_available_memory() < self.min_free_memory
@@ -66,8 +66,7 @@ class MCR5:
                     msg = "Error queue is full."
                     raise Exception(msg)
                 if verbose:
-                    self.print_status(processes, pbar)
-
+                    self.print_status(processes, progress_bar)
                 time.sleep(1)
             p = Process(
                 target=self.run_mcr,
@@ -86,17 +85,20 @@ class MCR5:
             p.start()
             processes.append(p)
             p_id_hex_id_map[p.pid] = h3_cell
+            if verbose and idx % 50 == 0:
+                self.print_status(processes, progress_bar)
 
         while self.get_active_process_count(processes) > 0:
             if verbose:
-                self.print_status(processes, pbar)
+                self.print_status(processes, progress_bar)
             errors_list.extend([errors.get() for _ in range(errors.qsize())])
             if errors.full():
                 msg = "Error queue is full."
                 raise Exception(msg)
+            rlog.info("Sleeping")
             time.sleep(1)
-        pbar.update(len(location_mappings) - pbar.n)
-        pbar.close()
+        progress_bar.update(len(location_mappings) - progress_bar.n)
+        progress_bar.close()
 
         for p in processes:
             p.join()

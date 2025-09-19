@@ -74,6 +74,7 @@ if __name__ == "__main__":
         if not entry.is_dir():
             continue
 
+        # Reduce labels to target nodes that are in the POIs
         labels = read_labels_for_nodes(
             entry.path,
             geo_data.pois.with_columns(pl.col("nearest_osm_node").alias("osm_node_id")).lazy(),
