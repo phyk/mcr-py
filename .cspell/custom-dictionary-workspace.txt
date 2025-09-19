@@ -25,6 +25,7 @@ Koeln
 Köln
 matplotlib
 maturin
+MCRAPTOR
 minversion
 networkx
 osmpbfreader

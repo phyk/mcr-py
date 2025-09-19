@@ -1,8 +1,10 @@
+import pathlib
 from logging import Logger
 from typing import Optional
 
 import polars as pl
 
+import mcr_py.utils.key
 from mcr_py._mcr_py import add_nearest_node_to_df
 from mcr_py.mcr.bag import (
     IntermediateBags,
@@ -29,8 +31,8 @@ class PublicTransportStep(Step):
         logger: Logger,
         timer: Timer,
         path_manager: Optional[PathManager],
-        enable_limit: bool,
-        disable_paths: bool,
+        enable_limit: bool,  # noqa: FBT001
+        disable_paths: bool,  # noqa: FBT001
         structs_dict: dict,
         osm_node_to_stop_map: dict[int, str],
         stop_to_osm_node_map: dict[str, int],
@@ -66,7 +68,7 @@ class PublicTransportStep(Step):
                 raw_public_transport_result_bags, path_index_offset=offset
             )
             self.logger.debug(
-                f"Extracted {len(raw_public_transport_result_bags)} bags from MCRAPTOR step"
+                "Extracted %s bags from MCRAPTOR step", len(raw_public_transport_result_bags)
             )
             if len(raw_public_transport_result_bags) == 0:
                 self.logger.warning("No MCRAPTOR bags found")
@@ -135,17 +137,24 @@ class PublicTransportStepBuilder(StepBuilder):
     step = PublicTransportStep
 
     def __init__(
-        self, structs_path: str, stops_path: str, walking_nodes: pl.DataFrame
+        self, structs_path: pathlib.Path, stops_path: pathlib.Path, walking_nodes: pl.DataFrame
     ) -> None:
         structs_dict = storage.read_any_dict(structs_path)
         with Timed.info("Reading stops"):
             self.stops_df = storage.read_df(stops_path)
 
-        self.stops_df = add_nearest_node_to_df(self.stops_df, walking_nodes, 4839)
+        self.stops_df = add_nearest_node_to_df(
+            self.stops_df.with_columns(
+                pl.col(mcr_py.utils.key.STOP_LAT_KEY).alias("lat"),
+                pl.col(mcr_py.utils.key.STOP_LON_KEY).alias("long"),
+            ),
+            walking_nodes,
+            4839,
+        )
 
         stop_to_osm_node_map: dict[str, int] = self.stops_df.select(
-            pl.col("stop_id", "nearest_osm_node")
-        ).rows_by_key("nearest_osm_node", unique=True)
+            pl.col("stop_id", "nearest_node_osm_id")
+        ).rows_by_key("nearest_node_osm_id", unique=True)
         osm_node_to_stop_map: dict[int, str] = {v: k for k, v in stop_to_osm_node_map.items()}
         self.kwargs = {
             "structs_dict": structs_dict,

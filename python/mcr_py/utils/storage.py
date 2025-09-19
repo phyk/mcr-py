@@ -67,7 +67,7 @@ def write_any_dict(data: dict[str, Any], output_path: pathlib.Path) -> None:
         pickle.dump(data, f)
 
 
-def read_any_dict(path: str) -> dict[str, Any]:
+def read_any_dict(path: pathlib.Path) -> dict[str, Any]:
     """
     Reads and deserializes a dictionary from a file using pickle.
 

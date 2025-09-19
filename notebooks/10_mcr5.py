@@ -1,14 +1,13 @@
+import functools
 import json
 import pathlib
 import typing
 import zoneinfo
 from datetime import datetime
 
+import mcr_py.command.step_config
 import mcr_py.helper_functions
 import tomllib
-from mcr_py.command.step_config import (
-    get_walking_only_config_with_data,
-)
 from mcr_py.mcr.data import OSMData
 from mcr_py.mcr5.mcr5 import MCR5
 from mcr_py.utils.logger import rlog, setup
@@ -48,43 +47,55 @@ from mcr_py.utils.logger import rlog, setup
 #     }
 
 
-# def get_bicycle_only_config_ready(bicycle_location_path):
-#     initial_steps, repeating_steps = get_bicycle_only_config(
-#         geo_meta_path=geo_meta_path,
-#         city_id=city_id_osm,
-#         bicycle_price_function="next_bike_no_tariff",
-#         bicycle_location_path=bicycle_location_path,
-#     )
-#     return {
-#         "init_kwargs": {
-#             "initial_steps": initial_steps,
-#             "repeating_steps": repeating_steps,
-#         },
-#         "location_mappings": location_mappings,
-#         "max_transfers": 2,
-#     }
+def get_bicycle_only_config_ready(
+    geo_data: OSMData, bicycle_location_path: pathlib.Path
+) -> dict[str, typing.Any]:
+    initial_steps, repeating_steps = (
+        mcr_py.command.step_config.get_bicycle_only_config_with_data(
+            geo_data=geo_data,
+            bicycle_price_function="next_bike_no_tariff",
+            bicycle_location_path=bicycle_location_path,
+        )
+    )
+    return {
+        "init_kwargs": {
+            "initial_steps": initial_steps,
+            "repeating_steps": repeating_steps,
+        },
+        "location_mappings": location_mappings,
+        "max_transfers": 2,
+    }
 
 
-# def get_public_transport_only_config_ready(start_time):
-#     initial_steps, repeating_steps = get_public_transport_only_config(
-#         geo_meta_path=geo_meta_path,
-#         city_id=city_id_osm,
-#         structs_path=structs,
-#         stops_path=stops,
-#     )
-#     return {
-#         "init_kwargs": {
-#             "initial_steps": initial_steps,
-#             "repeating_steps": repeating_steps,
-#         },
-#         "location_mappings": location_mappings,
-#         "max_transfers": 2,
-#         "start_time": start_time,
-#     }
+def get_public_transport_only_config_ready(
+    geo_data: OSMData,
+    start_time: str,
+    structs_path: pathlib.Path,
+    stops_path: pathlib.Path,
+    **_: str,
+) -> dict[str, typing.Any]:
+    initial_steps, repeating_steps = (
+        mcr_py.command.step_config.get_public_transport_only_config_with_data(
+            geo_data=geo_data,
+            structs_path=structs_path,
+            stops_path=stops_path,
+        )
+    )
+    return {
+        "init_kwargs": {
+            "initial_steps": initial_steps,
+            "repeating_steps": repeating_steps,
+        },
+        "location_mappings": geo_data.location_mapping,
+        "max_transfers": 5,
+        "start_time": start_time,
+    }
 
 
-def get_walking_only_config_ready(geo_data: OSMData) -> dict[str, typing.Any]:
-    initial_steps, repeating_steps = get_walking_only_config_with_data(geo_data)
+def get_walking_only_config_ready(geo_data: OSMData, **_: str) -> dict[str, typing.Any]:
+    initial_steps, repeating_steps = (
+        mcr_py.command.step_config.get_walking_only_config_with_data(geo_data)
+    )
     rlog.info("Walking step configured")
     return {
         "init_kwargs": {
@@ -105,9 +116,9 @@ if __name__ == "__main__":
     data_directory = pathlib.Path(__file__).parent.parent.resolve() / "data"
     base_directory = data_directory / settings["timestamp"]["timestamp"]
     cache_path = base_directory / "cache/"
-    gtfs_clean_dir = base_directory / f"/gtfs_clean/{city_name}/"
+    gtfs_clean_dir = base_directory / f"gtfs_clean/{city_name}/"
     gtfs_clean_struct = gtfs_clean_dir / "structs.pkl"
-    gtfs_clean_stops = gtfs_clean_dir / "stops.csv"
+    gtfs_clean_stops = gtfs_clean_dir / "stops.parquet"
 
     gbfs_path = base_directory / f"gbfs_raw/{city_name}_{settings['timestamp']['now']}.csv"
     osm_path = base_directory / "osm_raw"
@@ -124,14 +135,27 @@ if __name__ == "__main__":
     )
 
     configs = {}
-    configs["walking"] = get_walking_only_config_ready
+    if "public_transport" in settings["mcr5_types"]["mcr5_types"]:
+        for idx, time in enumerate(settings["public_transport"]["start_times"]):
+            configs[f"public_transport_{idx}"] = functools.partial(
+                get_public_transport_only_config_ready,
+                start_time=time,
+                structs_path=gtfs_clean_struct,
+                stops_path=gtfs_clean_stops,
+            )
+    if "walking" in settings["mcr5_types"]["mcr5_types"]:
+        configs["walking"] = functools.partial(
+            get_walking_only_config_ready, start_time="08:00:00"
+        )
 
     runtimes = {}
     for key, config in configs.items():
         start = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
         rlog.info(f"Running MCR5 for {key}")
 
-        config = config(geo_data)
+        config = config(
+            geo_data=geo_data,
+        )
         mcr5 = MCR5(**config["init_kwargs"])
 
         loaded_at = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))

@@ -1,3 +1,4 @@
+import pathlib
 from logging import Logger
 from typing import Optional
 
@@ -72,7 +73,7 @@ class BicycleStepBuilder(StepBuilder):
     def __init__(
         self,
         update_label_func: str,
-        bicycle_location_path: str,
+        bicycle_location_path: pathlib.Path,
         geo_meta: GeoMeta,
         walking_nodes: pl.DataFrame,
         walking_edges: pl.DataFrame,

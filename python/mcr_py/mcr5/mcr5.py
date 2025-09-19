@@ -51,7 +51,7 @@ class MCR5:
 
         p_id_hex_id_map = {}
 
-        # ensure ouptput directory exists
+        # ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
 
         errors_list = []
@@ -95,7 +95,6 @@ class MCR5:
             if errors.full():
                 msg = "Error queue is full."
                 raise Exception(msg)
-            rlog.info("Sleeping")
             time.sleep(1)
         progress_bar.update(len(location_mappings) - progress_bar.n)
         progress_bar.close()
@@ -155,7 +154,7 @@ class MCR5:
                     "start_time": start_time,
                     "max_transfers": max_transfers,
                     "output_path": output,
-                    "error": e.__repr__(),  # the exception object might not be pickable
+                    "error": e.__repr__(),  # the exception object might not be picklable
                     "logs": log_stream_value,
                 },
             )
@@ -163,7 +162,7 @@ class MCR5:
     def print_status(
         self,
         processes: list[Process],
-        pbar: tqdm,
+        progress_bar: tqdm,
     ) -> None:
         available_memory = pretty_bytes(get_available_memory())
         active_processes_count = self.get_active_process_count(processes)
@@ -171,8 +170,8 @@ class MCR5:
         started_processes = len(processes)
         finished_processes = started_processes - active_processes_count
 
-        pbar.update(finished_processes - pbar.n)
-        pbar.set_description(
+        progress_bar.update(finished_processes - progress_bar.n)
+        progress_bar.set_description(
             f"Available memory: {available_memory} | active: {active_processes_count}         ",
         )
 
@@ -190,6 +189,3 @@ def pretty_bytes(b: float) -> str:
             return f"{b:.2f}{unit}"
         b /= 1024
     return f"{b:.2f}EiB"
-
-
-# run()
