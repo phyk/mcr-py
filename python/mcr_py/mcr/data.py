@@ -48,7 +48,7 @@ class OSMData:
         city_id: str = "",
         osm_path: pathlib.Path = pathlib.Path(),
         cache_path: pathlib.Path = pathlib.Path(),
-        resolution: int = 8,
+        resolution: int = 9,
         additional_network_types: Optional[list[NetworkType]] = None,
         redownload: RedownloadMode = RedownloadMode.REUSE,
     ) -> None:
