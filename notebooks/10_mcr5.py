@@ -1,51 +1,60 @@
 import functools
 import json
 import pathlib
+import tomllib
 import typing
 import zoneinfo
 from datetime import datetime
 
 import mcr_py.command.step_config
 import mcr_py.helper_functions
-import tomllib
 from mcr_py.mcr.data import OSMData
 from mcr_py.mcr5.mcr5 import MCR5
 from mcr_py.utils.geometa import GeoMeta
 from mcr_py.utils.logger import rlog, setup
 
-# def get_bicycle_public_transport_config_ready(bicycle_location_path, start_time):
-#     initial_steps, repeating_steps = get_bicycle_public_transport_config(
-#         geo_meta_path=geometa_path,
-#         city_id=city_id_osm,
-#         bicycle_price_function="next_bike_no_tariff",
-#         bicycle_location_path=bicycle_location_path,
-#         structs_path=structs,
-#         stops_path=stops,
-#     )
-#     return {
-#         "init_kwargs": {
-#             "initial_steps": initial_steps,
-#             "repeating_steps": repeating_steps,
-#         },
-#         "location_mappings": location_mappings,
-#         "max_transfers": 2,
-#         "start_time": start_time,
-#     }
+
+def get_bicycle_public_transport_config_ready(
+    geo_data: OSMData,
+    geo_meta: GeoMeta,
+    bicycle_location_path: pathlib.Path,
+    structs: pathlib.Path,
+    stops: pathlib.Path,
+    start_time: str,
+) -> dict[str, typing.Any]:
+    initial_steps, repeating_steps = (
+        mcr_py.command.step_config.get_bicycle_public_transport_config_with_data(
+            geo_data=geo_data,
+            geo_meta=geo_meta,
+            bicycle_price_function="next_bike_no_tariff",
+            bicycle_location_path=bicycle_location_path,
+            structs_path=structs,
+            stops_path=stops,
+        )
+    )
+    return {
+        "init_kwargs": {
+            "initial_steps": initial_steps,
+            "repeating_steps": repeating_steps,
+        },
+        "location_mappings": geo_data.location_mapping,
+        "max_transfers": 5,
+        "start_time": start_time,
+    }
 
 
-# def get_car_only_config_ready():
-#     initial_steps, repeating_steps = get_car_only_config(
-#         geo_meta_path=geo_meta_path,
-#         city_id=city_id_osm,
-#     )
-#     return {
-#         "init_kwargs": {
-#             "initial_steps": initial_steps,
-#             "repeating_steps": repeating_steps,
-#         },
-#         "location_mappings": car_location_mappings,
-#         "max_transfers": 1,
-#     }
+def get_car_only_config_ready(geo_data: OSMData) -> dict[str, typing.Any]:
+    initial_steps, repeating_steps = mcr_py.command.step_config.get_car_only_config_with_data(
+        geo_data=geo_data
+    )
+    return {
+        "init_kwargs": {
+            "initial_steps": initial_steps,
+            "repeating_steps": repeating_steps,
+        },
+        "location_mappings": geo_data.location_mapping,
+        "max_transfers": 1,
+    }
 
 
 def get_bicycle_only_config_ready(
@@ -65,7 +74,7 @@ def get_bicycle_only_config_ready(
             "repeating_steps": repeating_steps,
         },
         "location_mappings": geo_data.location_mapping,
-        "max_transfers": 2,
+        "max_transfers": 5,
     }
 
 
@@ -155,6 +164,8 @@ if __name__ == "__main__":
             geo_meta=geo_meta,
             bicycle_location_path=gbfs_path,
         )
+    if "car" in settings["mcr5_types"]["mcr5_types"]:
+        configs["car"] = get_car_only_config_ready
 
     runtimes = {}
     for key, config in configs.items():

@@ -7,9 +7,7 @@ from mcr_py.mcr.steps.car import PersonalCarStepBuilder
 from mcr_py.mcr.steps.interface import StepBuilder
 from mcr_py.mcr.steps.public_transport import PublicTransportStepBuilder
 from mcr_py.mcr.steps.walking import WalkingStepBuilder
-from mcr_py.minute_city import minute_city
 from mcr_py.utils.geometa import GeoMeta
-from mcr_py.utils.logger import Timed
 
 CAR_CONFIG = "car"
 BICYCLE_AND_PUBLIC_TRANSPORT_CONFIG = "bicycle_public_transport"
@@ -31,17 +29,14 @@ type StepBuilderMatrix = tuple[
 ]
 
 
-def get_car_only_config_with_data(geo_meta, geo_data):
-    with Timed.info("Fetching POI for runtime optimization"):
-        pois = minute_city.fetch_pois_for_area(geo_meta.boundary, geo_data.osm_nodes)  # type: ignore
-
+def get_car_only_config_with_data(geo_data: OSMData) -> StepBuilderMatrix:
     driving_nodes, driving_edges, _ = geo_data.additional_networks[NetworkType.DRIVING]
     car_step = PersonalCarStepBuilder(
-        geo_data.osm_nodes,  # type: ignore
-        geo_data.osm_edges,  # type: ignore
-        driving_nodes,  # type: ignore
-        driving_edges,  # type: ignore
-        pois,
+        geo_data.osm_nodes,
+        geo_data.osm_edges,
+        driving_nodes,
+        driving_edges,
+        geo_data.pois,
     )
 
     initial_steps = []
@@ -50,38 +45,35 @@ def get_car_only_config_with_data(geo_meta, geo_data):
 
 
 def get_bicycle_public_transport_config_with_data(
-    geo_meta,
-    geo_data,
+    geo_meta: GeoMeta,
+    geo_data: OSMData,
     bicycle_price_function: str,
     bicycle_location_path: pathlib.Path,
     structs_path: pathlib.Path,
     stops_path: pathlib.Path,
-):
-    with Timed.info("Fetching POI for runtime optimization"):
-        pois = minute_city.fetch_pois_for_area(geo_meta.boundary, geo_data.osm_nodes)  # type: ignore
-
+) -> StepBuilderMatrix:
     cycling_nodes, cycling_edges, _ = geo_data.additional_networks[NetworkType.CYCLING]
     bicycle_step = BicycleStepBuilder(
         bicycle_price_function,
         bicycle_location_path,
         geo_meta,
-        geo_data.osm_nodes,  # type: ignore
-        geo_data.osm_edges,  # type: ignore
-        cycling_nodes,  # type: ignore
-        cycling_edges,  # type: ignore
-        pois,
+        geo_data.osm_nodes,
+        geo_data.osm_edges,
+        cycling_nodes,
+        cycling_edges,
+        geo_data.pois,
     )
 
     public_transport_step = PublicTransportStepBuilder(
         structs_path,
         stops_path,
-        geo_data.nxgraph,
+        geo_data.osm_nodes,
     )
 
     walking_step = WalkingStepBuilder(
         geo_data.osm_nodes,
         geo_data.osm_edges,
-        pois,
+        geo_data.pois,
     )
 
     initial_steps = [[walking_step]]

@@ -75,7 +75,7 @@ class WalkingStepBuilder(StepBuilder):
             pl.col("poi_type").replace(type_map).alias("type_internal").cast(pl.UInt8)
         )
         osm_nodes = osm.list_column_to_osm_nodes(self.walking_nodes, pois, "type_internal")
-        resetted_walking_node_id_to_type_map = {
+        reset_walking_node_id_to_type_map = {
             key: value[0]
             for key, value in osm_nodes.select(
                 pl.col("id"),
@@ -85,4 +85,4 @@ class WalkingStepBuilder(StepBuilder):
             .items()
         }
 
-        self.walking_graph_cache.set_node_weights(resetted_walking_node_id_to_type_map)
+        self.walking_graph_cache.set_node_weights(reset_walking_node_id_to_type_map)
