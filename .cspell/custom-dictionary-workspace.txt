@@ -27,6 +27,7 @@ matplotlib
 maturin
 MCRAPTOR
 minversion
+ndarray
 networkx
 osmpbfreader
 pandera

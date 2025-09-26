@@ -58,7 +58,7 @@ def load_data_for_city(
     gtfs_crop_path = data_directory / f"{timestamp}/gtfs_clean/{city_name}.zip"
     gtfs_clean_dir = data_directory / f"{timestamp}/gtfs_clean/{city_name}/"
     gtfs_clean_struct = data_directory / f"{timestamp}/gtfs_clean/{city_name}/structs.pkl"
-    gbfs_path = data_directory / f"{timestamp}/gbfs_raw/{city_name}_{now}.csv"
+    gbfs_path = data_directory / f"{timestamp}/gbfs_raw/{city_name}_{now}.parquet"
     osm_path = data_directory / f"{timestamp}/osm_raw"
     geometa_path = data_directory / f"{timestamp}/cache/{city_name}_geometa.pkl"
     time_start_datetime = datetime.datetime.strptime(start_time, "%d.%m.%Y-%H:%M:%S %z")
