@@ -21,13 +21,13 @@ import tomllib
 from fsspec.implementations.http import HTTPFileSystem
 
 
-def fetch_gbfs_to_csv(gbfs_url: str, target_path: pathlib.Path) -> None:
+def fetch_gbfs_to_parquet(gbfs_url: str, target_path: pathlib.Path) -> None:
     fs = HTTPFileSystem()
     with fs.open(gbfs_url) as file:
         content = json.load(file)
         df = pl.read_json(io.StringIO(json.dumps(content["data"]["bikes"])))
     target_path.parent.mkdir(parents=True, exist_ok=True)
-    df.write_csv(target_path)
+    df.write_parquet(target_path)
 
 
 def load_data_for_city(
@@ -103,7 +103,7 @@ def load_data_for_city(
 
     # Fetch the GBFS data
     if gbfs_url is not None:
-        fetch_gbfs_to_csv(gbfs_url, gbfs_path)
+        fetch_gbfs_to_parquet(gbfs_url, gbfs_path)
 
     # Load the OSM data
     _ = mcr_py.mcr.data.OSMData(

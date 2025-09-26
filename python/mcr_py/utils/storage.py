@@ -16,7 +16,7 @@ def write_dfs_dict(dfs_dict: dict[str, pl.DataFrame], output_path: pathlib.Path)
     :param dfs_dict: dict[str, pl.DataFrame] - A dictionary where keys are names and values are DataFrames to be written.
     :param output_path: str - The directory path where the Parquet files will be saved.
     """
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.mkdir(parents=True, exist_ok=True)
 
     for name, df in dfs_dict.items():
         filename = get_df_filename_for_name(name)
@@ -75,7 +75,7 @@ def read_any_dict(path: pathlib.Path) -> dict[str, Any]:
     :returns: dict[str, Any] - The deserialized dictionary.
     """
     with open(path, "rb") as f:
-        return pickle.load(f)
+        return pickle.load(f)  # noqa: S301
 
 
 def get_tmp_path(*paths: str) -> str:
@@ -98,4 +98,4 @@ def download_file(url: str, path: str) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
     with open(path, "wb") as f:
-        f.write(requests.get(url).content)
+        f.write(requests.get(url, timeout=20).content)
