@@ -351,15 +351,19 @@ def create_transfer_edges(
     walking_nodes: pl.DataFrame, driving_nodes: pl.DataFrame
 ) -> pl.DataFrame:
     intersection_node_ids = walking_nodes.with_columns(
-        pl.col("osm_id").alias("walking_id")
+        pl.col("osm_id").alias("walking_id"),
+        pl.col("osm_id").str.strip_chars_start(WALKING_PREFIX).cast(pl.UInt64),
     ).join(
-        driving_nodes.with_columns(pl.col("osm_id").alias("driving_id")),
+        driving_nodes.with_columns(
+            pl.col("osm_id").alias("driving_id"),
+            pl.col("osm_id").str.strip_chars_start(DRIVING_PREFIX).cast(pl.UInt64),
+        ),
         on="osm_id",
     )
     rlog.debug(f"Found {len(intersection_node_ids)} intersection nodes")
     transfer_edges = intersection_node_ids.select(
-        pl.lit("D").alias("source_osm") + pl.col("driving_id").cast(pl.String),
-        pl.lit("W").alias("dest_osm") + pl.col("walking_id").cast(pl.String),
+        pl.col("driving_id").cast(pl.String).alias("source_osm"),
+        pl.col("walking_id").cast(pl.String).alias("dest_osm"),
         pl.lit(0.0).alias("length"),
         pl.col("rx_node_id_right").alias("source_rx_node_id"),
         pl.col("rx_node_id").alias("dest_rx_node_id"),

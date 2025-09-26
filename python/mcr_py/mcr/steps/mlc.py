@@ -108,7 +108,7 @@ class MLCStep(Step):
             raise MLCStepError(
                 e.args[0],
                 f"Node {e.args[0]} not found in graph cache - aborting {self.NAME} step. Current number of Bags is {len(bags)}",
-            )
+            ) from e
 
         return bags
 

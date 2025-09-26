@@ -100,22 +100,36 @@ class BicycleStepBuilder(StepBuilder):
         else:
             cycling_nodes = mark_bicycles_random(cycling_nodes, 100)
 
-        bicycle_transfer_osm_node_ids = cycling_nodes.filter(pl.col("has_bicycle")).get_column(
-            "osm_id"
+        bicycle_transfer_osm_node_ids = (
+            cycling_nodes.filter(pl.col("has_bicycle")).get_column("osm_id").to_numpy()
         )
 
         multi_modal_nodes, multi_modal_edges = create_multi_modal_graph(
             walking_nodes, walking_edges, cycling_nodes, cycling_edges, AVG_BIKING_SPEED
         )
-        multi_modal_nodes = multi_modal_nodes.rename({"rx_node_id": "id"})
-        multi_modal_edges = multi_modal_edges.drop("source_osm", "dest_osm").rename(
-            {"source_rx_node_id": "source_osm", "dest_rx_node_id": "dest_osm"}
+        multi_modal_nodes = multi_modal_nodes.with_columns(
+            pl.int_range(pl.len(), dtype=pl.UInt64).alias("id")
+        )
+        multi_modal_edges = (
+            multi_modal_edges.join(
+                multi_modal_nodes.select(["id", "osm_id"]),
+                left_on="source_osm",
+                right_on="osm_id",
+            )
+            .with_columns(pl.col("id").alias("source_osm"))
+            .join(
+                multi_modal_nodes.select(["id", "osm_id"]),
+                left_on="dest_osm",
+                right_on="osm_id",
+            )
+            .with_columns(pl.col("id").alias("dest_osm"))
         )
 
         from_internal = dict(multi_modal_nodes.select("id", "osm_id").rows())
         to_internal = {
             value: key for (key, value) in multi_modal_nodes.select("id", "osm_id").rows()
         }
+        to_internal_walking = {int(key[1:]): value for (key, value) in to_internal.items()}
 
         # Filter the graph to only map to bicycle nodes
         self.osm_node_to_mm_bicycle_reset_map = {
@@ -133,7 +147,9 @@ class BicycleStepBuilder(StepBuilder):
         )
 
         raw_edges = to_mlc_edges(multi_modal_edges)
-        self.osm_nodes = walking_nodes.rename({"rx_node_id": "id"})
+        self.osm_nodes = walking_nodes.with_columns(
+            pl.col("osm_id").replace(to_internal_walking).alias("id")
+        )
         self.mm_graph_cache = GraphCache()
         self.mm_graph_cache.set_graph(raw_edges)  # type: ignore
         self.add_pois_to_mm_graph(pois)
