@@ -8,6 +8,7 @@ from mcr_py.mcr.steps.interface import StepBuilder
 from mcr_py.mcr.steps.public_transport import PublicTransportStepBuilder
 from mcr_py.mcr.steps.walking import WalkingStepBuilder
 from mcr_py.minute_city import minute_city
+from mcr_py.utils.geometa import GeoMeta
 from mcr_py.utils.logger import Timed
 
 CAR_CONFIG = "car"
@@ -93,6 +94,7 @@ def get_bicycle_public_transport_config_with_data(
 
 
 def get_bicycle_only_config_with_data(
+    geo_meta: GeoMeta,
     geo_data: OSMData,
     bicycle_price_function: str,
     bicycle_location_path: pathlib.Path,
@@ -101,11 +103,11 @@ def get_bicycle_only_config_with_data(
     bicycle_step = BicycleStepBuilder(
         bicycle_price_function,
         bicycle_location_path,
-        "geo_meta",  # type: ignore
-        geo_data.osm_nodes,  # type: ignore
-        geo_data.osm_edges,  # type: ignore
-        cycling_nodes,  # type: ignore
-        cycling_edges,  # type: ignore
+        geo_meta,
+        geo_data.osm_nodes,
+        geo_data.osm_edges,
+        cycling_nodes,
+        cycling_edges,
         geo_data.pois,
     )
 

@@ -10,6 +10,7 @@ import mcr_py.helper_functions
 import tomllib
 from mcr_py.mcr.data import OSMData
 from mcr_py.mcr5.mcr5 import MCR5
+from mcr_py.utils.geometa import GeoMeta
 from mcr_py.utils.logger import rlog, setup
 
 # def get_bicycle_public_transport_config_ready(bicycle_location_path, start_time):
@@ -48,11 +49,12 @@ from mcr_py.utils.logger import rlog, setup
 
 
 def get_bicycle_only_config_ready(
-    geo_data: OSMData, bicycle_location_path: pathlib.Path
+    geo_data: OSMData, geo_meta: GeoMeta, bicycle_location_path: pathlib.Path
 ) -> dict[str, typing.Any]:
     initial_steps, repeating_steps = (
         mcr_py.command.step_config.get_bicycle_only_config_with_data(
             geo_data=geo_data,
+            geo_meta=geo_meta,
             bicycle_price_function="next_bike_no_tariff",
             bicycle_location_path=bicycle_location_path,
         )
@@ -62,7 +64,7 @@ def get_bicycle_only_config_ready(
             "initial_steps": initial_steps,
             "repeating_steps": repeating_steps,
         },
-        "location_mappings": location_mappings,
+        "location_mappings": geo_data.location_mapping,
         "max_transfers": 2,
     }
 
@@ -120,7 +122,7 @@ if __name__ == "__main__":
     gtfs_clean_struct = gtfs_clean_dir / "structs.pkl"
     gtfs_clean_stops = gtfs_clean_dir / "stops.parquet"
 
-    gbfs_path = base_directory / f"gbfs_raw/{city_name}_{settings['timestamp']['now']}.csv"
+    gbfs_path = base_directory / f"gbfs_raw/{city_name}_{settings['timestamp']['now']}.parquet"
     osm_path = base_directory / "osm_raw"
     geometa_path = base_directory / f"cache/{city_name}_geometa.pkl"
 
@@ -146,6 +148,12 @@ if __name__ == "__main__":
     if "walking" in settings["mcr5_types"]["mcr5_types"]:
         configs["walking"] = functools.partial(
             get_walking_only_config_ready, start_time="08:00:00"
+        )
+    if "bicycle" in settings["mcr5_types"]["mcr5_types"]:
+        configs["bicycle"] = functools.partial(
+            get_bicycle_only_config_ready,
+            geo_meta=geo_meta,
+            bicycle_location_path=gbfs_path,
         )
 
     runtimes = {}

@@ -267,7 +267,16 @@ def create_multi_modal_graph(
     transfer_edges = create_transfer_edges(walking_osm_nodes, driving_osm_nodes)
 
     multi_modal_edges = combine_edges(walking_osm_edges, driving_osm_edges, transfer_edges)
-    multi_modal_nodes = pl.concat([walking_osm_nodes, driving_osm_nodes])
+    multi_modal_nodes = pl.concat(
+        [
+            walking_osm_nodes.select(
+                pl.col(["osm_id", "lat", "long", "rx_node_id"]),
+                pl.lit(False).alias("has_bicycle"),  # noqa: FBT003
+                pl.col("osm_id_old"),
+            ),
+            driving_osm_nodes,
+        ]
+    )
     return multi_modal_nodes, multi_modal_edges
 
 
@@ -290,11 +299,16 @@ def combine_edges(
     bike_edges: pl.DataFrame,
     transfer_edges: pl.DataFrame,
 ) -> pl.DataFrame:
-    edges = pl.concat([walking_edges, bike_edges, transfer_edges], how="vertical")
-
-    # fill travel_time for transfer edges and
-    # travel_time_bike for walking and transfer edges
-    edges = edges.fill_nan(0)
+    edges = pl.concat(
+        [
+            walking_edges.with_columns(
+                pl.lit(0).cast(pl.UInt64).alias(TRAVEL_TIME_DRIVING_COLUMN)
+            ),
+            bike_edges,
+            transfer_edges,
+        ],
+        how="vertical",
+    )
 
     return edges
 
@@ -328,7 +342,7 @@ def prefix_id(
 ) -> pl.DataFrame:
     if save_old:
         gdf = gdf.with_columns(pl.col(column).alias(f"{column}_old"))
-    gdf = gdf.select(prefix + pl.col(column).cast(pl.String))
+    gdf = gdf.with_columns(pl.lit(prefix).alias(column) + pl.col(column).cast(pl.String))
 
     return gdf
 
@@ -336,16 +350,21 @@ def prefix_id(
 def create_transfer_edges(
     walking_nodes: pl.DataFrame, driving_nodes: pl.DataFrame
 ) -> pl.DataFrame:
-    intersection_node_ids = walking_nodes.select(pl.col("osm_id").alias("walking_id")).join(
-        driving_nodes.select(pl.col("osm_id").alias("driving_id")),
-        left_on="walking_id",
-        right_on="driving_id",
+    intersection_node_ids = walking_nodes.with_columns(
+        pl.col("osm_id").alias("walking_id")
+    ).join(
+        driving_nodes.with_columns(pl.col("osm_id").alias("driving_id")),
+        on="osm_id",
     )
     rlog.debug(f"Found {len(intersection_node_ids)} intersection nodes")
     transfer_edges = intersection_node_ids.select(
-        "D" + pl.col("driving_id").alias("source_osm").cast(pl.String),
-        "W" + pl.col("walking_id").alias("dest_osm").cast(pl.String),
-        pl.lit(0).alias("length"),
+        pl.lit("D").alias("source_osm") + pl.col("driving_id").cast(pl.String),
+        pl.lit("W").alias("dest_osm") + pl.col("walking_id").cast(pl.String),
+        pl.lit(0.0).alias("length"),
+        pl.col("rx_node_id_right").alias("source_rx_node_id"),
+        pl.col("rx_node_id").alias("dest_rx_node_id"),
+        pl.lit(0).cast(pl.UInt64).alias("travel_time"),
+        pl.lit(0).cast(pl.UInt64).alias("travel_time_driving"),
     )
 
     return transfer_edges
@@ -368,7 +387,6 @@ def add_weights(edges: pl.DataFrame, columns: list[str], hidden: bool = False) -
 
 
 def to_mlc_edges(edges: pl.DataFrame) -> list[tuple]:
-    # type: ignore
     return edges.select(
         pl.col("source_osm"), pl.col("dest_osm"), pl.col(["weights", "hidden_weights"])
     ).rows()

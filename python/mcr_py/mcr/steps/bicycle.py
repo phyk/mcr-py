@@ -6,6 +6,7 @@ import numpy as np
 import polars as pl
 import polars_st as st
 
+import mcr_py.mcr.data
 from mcr_py import GraphCache
 from mcr_py._mcr_py import add_nearest_node_to_df
 from mcr_py.mcr.bag import IntermediateBags
@@ -36,8 +37,8 @@ class BicycleStep(MLCStep):
         logger: Logger,
         timer: Timer,
         path_manager: Optional[PathManager],
-        enable_limit: bool,
-        disable_paths: bool,
+        enable_limit: bool,  # noqa: FBT001
+        disable_paths: bool,  # noqa: FBT001
         graph_cache: GraphCache,
         to_internal: dict,
         from_internal: dict,
@@ -85,7 +86,8 @@ class BicycleStepBuilder(StepBuilder):
         if bicycle_location_path != "":
             bicycle_locations = storage.read_df(bicycle_location_path)
             bicycle_locations = bicycle_locations.with_columns(
-                st.point(pl.concat_arr(["lon", "lat"])).alias("geometry")
+                st.point(pl.concat_arr(["lon", "lat"])).alias("geometry"),
+                pl.col("lon").alias("long"),
             )
             bicycle_locations = geo_meta.crop_gdf(bicycle_locations)
             # max distance = 1000,
@@ -105,43 +107,41 @@ class BicycleStepBuilder(StepBuilder):
         multi_modal_nodes, multi_modal_edges = create_multi_modal_graph(
             walking_nodes, walking_edges, cycling_nodes, cycling_edges, AVG_BIKING_SPEED
         )
+        multi_modal_nodes = multi_modal_nodes.rename({"rx_node_id": "id"})
+        multi_modal_edges = multi_modal_edges.drop("source_osm", "dest_osm").rename(
+            {"source_rx_node_id": "source_osm", "dest_rx_node_id": "dest_osm"}
+        )
 
-        # (
-        #     multi_modal_nodes,
-        #     multi_modal_edges,
-        #     self.multi_modal_node_to_resetted_map,
-        # ) = reset_node_ids(multi_modal_nodes, multi_modal_edges)
+        from_internal = dict(multi_modal_nodes.select("id", "osm_id").rows())
+        to_internal = {
+            value: key for (key, value) in multi_modal_nodes.select("id", "osm_id").rows()
+        }
 
-        # self.resetted_to_multi_modal_node_map = get_reverse_map(
-        #     self.multi_modal_node_to_resetted_map
-        # )
-
-        # self.osm_node_to_mm_bicycle_resetted_map = {
-        #     int(k[1:]): v
-        #     for k, v in self.multi_modal_node_to_resetted_map.items()
-        #     if k[0] == DRIVING_PREFIX
-        # }
-        # self.mm_walking_node_resetted_to_osm_node_map = {
-        #     k: int(v[1:])
-        #     for k, v in self.resetted_to_multi_modal_node_map.items()
-        #     if v[0] == WALKING_PREFIX
-        # }
+        # Filter the graph to only map to bicycle nodes
+        self.osm_node_to_mm_bicycle_reset_map = {
+            int(k[1:]): v
+            for k, v in to_internal.items()
+            if k[0] == mcr_py.mcr.data.DRIVING_PREFIX
+        }
+        self.mm_walking_node_reset_to_osm_node_map = {
+            k: int(v[1:]) for k, v in from_internal.items() if v[0] == WALKING_PREFIX
+        }
 
         multi_modal_edges = add_weights(multi_modal_edges, [TRAVEL_TIME_COLUMN])
         multi_modal_edges = add_weights(
             multi_modal_edges, [TRAVEL_TIME_DRIVING_COLUMN], hidden=True
         )
 
-        to_mlc_edges(multi_modal_edges)
-        self.osm_nodes = walking_nodes
+        raw_edges = to_mlc_edges(multi_modal_edges)
+        self.osm_nodes = walking_nodes.rename({"rx_node_id": "id"})
         self.mm_graph_cache = GraphCache()
-        # self.mm_graph_cache.set_graph(raw_edges)
+        self.mm_graph_cache.set_graph(raw_edges)  # type: ignore
         self.add_pois_to_mm_graph(pois)
 
         self.kwargs = {
             "graph_cache": self.mm_graph_cache,
-            # "to_internal": self.osm_node_to_mm_bicycle_resetted_map,
-            # "from_internal": self.mm_walking_node_resetted_to_osm_node_map,
+            "to_internal": self.osm_node_to_mm_bicycle_reset_map,
+            "from_internal": self.mm_walking_node_reset_to_osm_node_map,
             "bicycle_transfer_osm_node_ids": bicycle_transfer_osm_node_ids,
             "update_label_func": update_label_func,
         }
@@ -153,23 +153,25 @@ class BicycleStepBuilder(StepBuilder):
         Args:
             pois: A dataframe containing POIs. Must have the columns "nearest_osm_node_id" and "type".
         """
-        self.osm_nodes = osm.list_column_to_osm_nodes(self.osm_nodes, pois, "poi_type")
-        self.type_map: dict[str, int] = {}
+        type_map: dict[str, int] = {}
         for t in pois.get_column("poi_type").unique():
-            self.type_map[t] = len(self.type_map)
-
-        self.osm_nodes = self.osm_nodes.with_columns(
-            pl.col("poi_type").replace(self.type_map).alias("type_internal")
+            type_map[t] = len(type_map)
+        pois = pois.with_columns(
+            pl.col("poi_type").replace(type_map).alias("type_internal").cast(pl.UInt8)
         )
+        self.osm_nodes = osm.list_column_to_osm_nodes(self.osm_nodes, pois, "type_internal")
 
-        resetted_mm_walking_node_id_to_type_map = self.osm_nodes.select(
-            (WALKING_PREFIX + pl.col("nearest_osm_node").cast(pl.String)).alias(
-                "resetted_mm_walking_node_id"
-            ),
-            pl.col("type_internal"),
-        ).rows_by_key(key="resetted_mm_walking_node_id", unique=True)
+        reset_mm_walking_node_id_to_type_map = {
+            key: value[0]
+            for key, value in self.osm_nodes.select(
+                pl.col("id"),
+                pl.col("type_internal"),
+            )
+            .rows_by_key(key="id", unique=True)
+            .items()
+        }
 
-        self.mm_graph_cache.set_node_weights(resetted_mm_walking_node_id_to_type_map)
+        self.mm_graph_cache.set_node_weights(reset_mm_walking_node_id_to_type_map)
 
 
 def mark_bicycles(
@@ -178,7 +180,7 @@ def mark_bicycles(
 ) -> pl.DataFrame:
     nodes = nodes.with_columns(
         pl.col("osm_id")
-        .is_in(bicycle_locations.get_column("nearest_osm_node"))
+        .is_in(bicycle_locations.get_column("nearest_node_osm_id").to_list())
         .alias("has_bicycle")
     )
 
