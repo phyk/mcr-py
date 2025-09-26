@@ -1,18 +1,12 @@
 import typer
 from typing_extensions import Annotated
 
-from .command import area, build, footpaths, mcr, osm, raptor
-from .command.gtfs import gtfs
+from .command import footpaths, raptor
 from .utils import key, logger
 
 app = typer.Typer(pretty_exceptions_show_locals=False)
-app.command(key.BUILD_STRUCTURES_COMMAND_NAME)(build.build_structures)
 app.command(key.FOOTPATHS_COMMAND_NAME)(footpaths.generate)
 app.command(key.RAPTOR_COMMAND_NAME)(raptor.raptor)
-app.command(key.MCR_COMMAND_NAME)(mcr.run)
-app.command(key.AREA_COMMAND_NAME)(area.create_area)
-app.add_typer(gtfs.app, name=key.GTFS_UPPER_COMMAND_NAME)
-app.add_typer(osm.app, name=key.OSM_UPPER_COMMAND_NAME)
 
 
 @app.callback(invoke_without_command=True, no_args_is_help=True)
