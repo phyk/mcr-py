@@ -107,23 +107,6 @@ class BicycleStepBuilder(StepBuilder):
         multi_modal_nodes, multi_modal_edges = create_multi_modal_graph(
             walking_nodes, walking_edges, cycling_nodes, cycling_edges, AVG_BIKING_SPEED
         )
-        multi_modal_nodes = multi_modal_nodes.with_columns(
-            pl.int_range(pl.len(), dtype=pl.UInt64).alias("id")
-        )
-        multi_modal_edges = (
-            multi_modal_edges.join(
-                multi_modal_nodes.select(["id", "osm_id"]),
-                left_on="source_osm",
-                right_on="osm_id",
-            )
-            .with_columns(pl.col("id").alias("source_osm"))
-            .join(
-                multi_modal_nodes.select(["id", "osm_id"]),
-                left_on="dest_osm",
-                right_on="osm_id",
-            )
-            .with_columns(pl.col("id").alias("dest_osm"))
-        )
 
         from_internal = dict(multi_modal_nodes.select("id", "osm_id").rows())
         to_internal = {

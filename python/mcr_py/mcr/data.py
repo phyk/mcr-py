@@ -266,17 +266,11 @@ def create_multi_modal_graph(
 
     transfer_edges = create_transfer_edges(walking_osm_nodes, driving_osm_nodes)
 
-    multi_modal_edges = combine_edges(walking_osm_edges, driving_osm_edges, transfer_edges)
-    multi_modal_nodes = pl.concat(
-        [
-            walking_osm_nodes.select(
-                pl.col(["osm_id", "lat", "long", "rx_node_id"]),
-                pl.lit(False).alias("has_bicycle"),  # noqa: FBT003
-                pl.col("osm_id_old"),
-            ),
-            driving_osm_nodes,
-        ]
+    multi_modal_nodes = combine_nodes(walking_osm_nodes, driving_osm_nodes)
+    multi_modal_edges = combine_edges(
+        walking_osm_edges, driving_osm_edges, transfer_edges, multi_modal_nodes
     )
+
     return multi_modal_nodes, multi_modal_edges
 
 
@@ -298,19 +292,54 @@ def combine_edges(
     walking_edges: pl.DataFrame,
     bike_edges: pl.DataFrame,
     transfer_edges: pl.DataFrame,
+    multi_modal_nodes: pl.DataFrame,
 ) -> pl.DataFrame:
     edges = pl.concat(
         [
             walking_edges.with_columns(
                 pl.lit(0).cast(pl.UInt64).alias(TRAVEL_TIME_DRIVING_COLUMN)
-            ),
-            bike_edges,
+            ).drop(["source_rx_node_id", "dest_rx_node_id"]),
+            bike_edges.drop(["source_rx_node_id", "dest_rx_node_id"]),
             transfer_edges,
         ],
-        how="vertical",
+        how="diagonal",
     )
 
+    edges = (
+        edges.join(
+            multi_modal_nodes.select(pl.col("id").alias("source_id"), pl.col("osm_id")),
+            how="left",
+            left_on="source_osm",
+            right_on="osm_id",
+        )
+        .join(
+            multi_modal_nodes.select(pl.col("id").alias("dest_id"), pl.col("osm_id")),
+            how="left",
+            left_on="dest_osm",
+            right_on="osm_id",
+        )
+        .with_columns(
+            pl.col("source_id").alias("source_osm"), pl.col("dest_id").alias("dest_osm")
+        )
+    )
+    if len(edges.drop_nans().drop_nulls()) != len(edges):
+        msg = "Error in concatenating edges"
+        raise ValueError(msg)
+
     return edges
+
+
+def combine_nodes(walking_nodes: pl.DataFrame, driving_nodes: pl.DataFrame) -> pl.DataFrame:
+    if "has_bicycle" in driving_nodes.columns:
+        walking_nodes = walking_nodes.with_columns(
+            pl.lit(False).alias("has_bicycle"),  # noqa: FBT003
+        )
+    df = pl.concat([walking_nodes, driving_nodes], how="diagonal")
+    df = df.with_row_index(name="id").drop("rx_node_id")
+    if len(df.drop_nans().drop_nulls()) != len(df):
+        msg = "Error in concatenating nodes"
+        raise ValueError(msg)
+    return df
 
 
 A = TypeVar("A")
@@ -323,15 +352,6 @@ def get_reverse_map(d: dict[A, B]) -> dict[B, A]:
 
 def add_id_column(df: pl.DataFrame) -> pl.DataFrame:
     return df.with_row_index(name="id")
-
-
-def reset_node_ids(df: pl.DataFrame, id_df: pl.DataFrame) -> pl.DataFrame:
-    return (
-        df.join(id_df, left_on="source_osm", right_on="osm_id")
-        .with_columns(pl.col("id").alias("source_osm"))
-        .join(id_df, left_on="dest_osm", right_on="osm_id")
-        .with_columns(pl.col("id").alias("dest_osm"))
-    )
 
 
 def prefix_id(
@@ -365,8 +385,6 @@ def create_transfer_edges(
         pl.col("driving_id").cast(pl.String).alias("source_osm"),
         pl.col("walking_id").cast(pl.String).alias("dest_osm"),
         pl.lit(0.0).alias("length"),
-        pl.col("rx_node_id_right").alias("source_rx_node_id"),
-        pl.col("rx_node_id").alias("dest_rx_node_id"),
         pl.lit(0).cast(pl.UInt64).alias("travel_time"),
         pl.lit(0).cast(pl.UInt64).alias("travel_time_driving"),
     )
