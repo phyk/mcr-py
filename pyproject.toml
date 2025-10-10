@@ -14,6 +14,7 @@ classifiers=[
 ]
 dependencies=[
     "aiohttp>=3.11.11",
+    "altair>=5.5.0",
     "folium>=0.19.4",
     "fsspec>=2024.12.0",
     "h3>=4.2.0",
@@ -47,6 +48,7 @@ dependencies=[
     "shapely>=2.0.6",
     "tqdm>=4.67.1",
     "typer>=0.15.1",
+    "vl-convert-python>=1.8.0",
 ]
 
 [tool.maturin]
