@@ -166,6 +166,16 @@ if __name__ == "__main__":
         )
     if "car" in settings["mcr5_types"]["mcr5_types"]:
         configs["car"] = get_car_only_config_ready
+    if "bicycle_public_transport" in settings["mcr5_types"]["mcr5_types"]:
+        for idx, time in enumerate(settings["public_transport"]["start_times"]):
+            configs[f"bicycle_public_transport_{idx}"] = functools.partial(
+                get_bicycle_public_transport_config_ready,
+                geo_meta=geo_meta,
+                bicycle_location_path=gbfs_path,
+                structs=gtfs_clean_struct,
+                stops=gtfs_clean_stops,
+                start_time=time,
+            )
 
     runtimes = {}
     for key, config in configs.items():
