@@ -1,4 +1,4 @@
-import os
+import pathlib
 
 import polars as pl
 
@@ -123,17 +123,17 @@ class TraceEnricher:
         )
 
 
-def enrich_raptor_trace_results(results_dir_path: str, gtfs_dir_path: str) -> TracerMap:
+def enrich_raptor_trace_results(
+    results_dir_path: pathlib.Path, gtfs_dir_path: pathlib.Path
+) -> TracerMap:
     """
     Enriches raptor trace results by reading tracer map and GTFS data, then enriching traces with additional information.
 
-    :param results_dir_path: str - The directory path containing raptor trace result files.
-    :param gtfs_dir_path: str - The directory path containing GTFS data files.
+    :param results_dir_path: pathlib.Path - The directory path containing raptor trace result files.
+    :param gtfs_dir_path: pathlib.Path - The directory path containing GTFS data files.
     :returns: TracerMap - An enriched TracerMap with enriched traces.
     """
-    tracer_map_file = storage.read_any_dict(
-        os.path.join(results_dir_path, key.RAPTOR_TRACE_FILE_NAME)
-    )
+    tracer_map_file = storage.read_any_dict(results_dir_path / key.RAPTOR_TRACE_FILE_NAME)
     tracer_map: TracerMap = tracer_map_file[key.TRACER_MAP_KEY]
 
     dfs = archive.read_dfs(gtfs_dir_path)
