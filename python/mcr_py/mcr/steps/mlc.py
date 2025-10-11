@@ -7,7 +7,7 @@ from mcr_py.mcr.bag import (
     IntermediateBags,
     convert_mlc_bags_to_intermediate_bags,
 )
-from mcr_py.mcr.data import ACCURACY
+from mcr_py.mcr.data import ACCURACY_MULTIPLIER
 from mcr_py.mcr.path import PathManager, PathType
 from mcr_py.mcr.steps.interface import Step
 from mcr_py.utils.logger import Timer
@@ -75,7 +75,7 @@ class MLCStep(Step):
                 update_label_func=self.update_label_func,
                 disable_paths=self.disable_paths,
                 enable_limit=self.enable_limit,
-                accuracy=ACCURACY,
+                accuracy=ACCURACY_MULTIPLIER,
             )
         with self.timer.info(f"Extracting {self.NAME} step bags"):
             converted_result_bags = self.convert_bags(
