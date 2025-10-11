@@ -240,7 +240,6 @@ WALKING_PREFIX = "W"
 
 def create_multi_modal_graph(
     walking_osm_nodes: pl.DataFrame,
-    walking_osm_edges: pl.DataFrame,
     driving_osm_nodes: pl.DataFrame,
     driving_osm_edges: pl.DataFrame,
     avg_driving_speed: float,
@@ -258,18 +257,12 @@ def create_multi_modal_graph(
 
     # walking start
     walking_osm_nodes = prefix_id(walking_osm_nodes, WALKING_PREFIX, "osm_id", save_old=True)
-    walking_osm_edges = prefix_id(walking_osm_edges, WALKING_PREFIX, "source_osm")
-    walking_osm_edges = prefix_id(walking_osm_edges, WALKING_PREFIX, "dest_osm")
-
-    walking_osm_edges = add_travel_time(walking_osm_edges, AVG_WALKING_SPEED)
     # walking end
 
     transfer_edges = create_transfer_edges(walking_osm_nodes, driving_osm_nodes)
 
     multi_modal_nodes = combine_nodes(walking_osm_nodes, driving_osm_nodes)
-    multi_modal_edges = combine_edges(
-        walking_osm_edges, driving_osm_edges, transfer_edges, multi_modal_nodes
-    )
+    multi_modal_edges = combine_edges(driving_osm_edges, transfer_edges, multi_modal_nodes)
 
     return multi_modal_nodes, multi_modal_edges
 
@@ -289,16 +282,12 @@ def add_travel_time(edges: pl.DataFrame, speed: float) -> pl.DataFrame:
 
 
 def combine_edges(
-    walking_edges: pl.DataFrame,
     bike_edges: pl.DataFrame,
     transfer_edges: pl.DataFrame,
     multi_modal_nodes: pl.DataFrame,
 ) -> pl.DataFrame:
     edges = pl.concat(
         [
-            walking_edges.with_columns(
-                pl.lit(0).cast(pl.UInt64).alias(TRAVEL_TIME_DRIVING_COLUMN)
-            ).drop(["source_rx_node_id", "dest_rx_node_id"]),
             bike_edges.drop(["source_rx_node_id", "dest_rx_node_id"]),
             transfer_edges,
         ],

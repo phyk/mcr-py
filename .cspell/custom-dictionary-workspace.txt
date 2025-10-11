@@ -15,6 +15,7 @@ geometa
 geospatial
 groundskeeping
 gtfs
+headsign
 houseware
 ipykernel
 ipynb
@@ -23,6 +24,7 @@ kdtree
 kmedoids
 Koeln
 Köln
+levelname
 matplotlib
 maturin
 MCRAPTOR

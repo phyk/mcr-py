@@ -105,7 +105,7 @@ class BicycleStepBuilder(StepBuilder):
         )
 
         multi_modal_nodes, multi_modal_edges = create_multi_modal_graph(
-            walking_nodes, walking_edges, cycling_nodes, cycling_edges, AVG_BIKING_SPEED
+            walking_nodes, cycling_nodes, cycling_edges, AVG_BIKING_SPEED
         )
 
         from_internal = dict(multi_modal_nodes.select("id", "osm_id").rows())
