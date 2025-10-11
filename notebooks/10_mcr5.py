@@ -122,7 +122,8 @@ if __name__ == "__main__":
     with open(pathlib.Path(__file__).parent.resolve() / "config.toml", "rb") as f:
         settings = tomllib.load(f)
 
-    setup(settings["run_type"]["run_type"])
+    # setup(settings["run_type"]["run_type"])
+    setup("DEBUG")
     city_name = "cologne"
     data_directory = pathlib.Path(__file__).parent.parent.resolve() / "data"
     base_directory = data_directory / settings["timestamp"]["timestamp"]
@@ -185,7 +186,7 @@ if __name__ == "__main__":
         config = config(
             geo_data=geo_data,
         )
-        mcr5 = MCR5(**config["init_kwargs"])
+        mcr5 = MCR5(**config["init_kwargs"], max_processes=1)
 
         loaded_at = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
         load_time = loaded_at - start

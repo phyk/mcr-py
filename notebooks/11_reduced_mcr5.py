@@ -1,12 +1,12 @@
 import json
 import pathlib
+import tomllib
 import typing
 import zoneinfo
 from datetime import datetime
 
 import mcr_py.helper_functions
 import polars as pl
-import tomllib
 from mcr_py.command.step_config import (
     get_walking_only_config_with_data,
 )

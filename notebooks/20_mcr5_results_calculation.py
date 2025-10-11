@@ -1,11 +1,11 @@
 import itertools
 import os
 import pathlib
+import tomllib
 
 import mcr_py.helper_functions
 import mcr_py.utils.logger
 import polars as pl
-import tomllib
 from mcr_py.mcr5.labels import read_labels_for_nodes
 from mcr_py.minute_city import minute_city
 from mcr_py.minute_city.profile import fill_columns_by_left

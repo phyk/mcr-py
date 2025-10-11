@@ -2,6 +2,7 @@ import datetime
 import io
 import json
 import pathlib
+import tomllib
 import typing
 import zoneinfo
 
@@ -17,7 +18,6 @@ import mcr_py.utils.key
 import mcr_py.utils.logger
 import mcr_py.utils.storage
 import polars as pl
-import tomllib
 from fsspec.implementations.http import HTTPFileSystem
 
 

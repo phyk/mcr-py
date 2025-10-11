@@ -36,6 +36,6 @@ repos:
         stages: [commit-msg]
         args: [feat, fix, chore, ci, docs, refactor, test]
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.405
+    rev: v1.1.406
     hooks:
       - id: pyright
