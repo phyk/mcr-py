@@ -76,7 +76,7 @@ def crop_graph_to_largest_component(
     return nodes, edges, graph
 
 
-def shortest_paths(graph: rx.PyDiGraph, num_threads=4) -> rx.AllPairsPathLengthMapping:
+def shortest_paths(graph: rx.PyDiGraph, num_threads: int = 4) -> rx.AllPairsPathLengthMapping:
     """
     Computes shortest paths for all pairs of nodes in the directed graph using the Bellman-Ford algorithm.
 
