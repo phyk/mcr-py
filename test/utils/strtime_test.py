@@ -1,7 +1,7 @@
 import sys
 
 import pytest
-from mcr_py.utils.strtime import seconds_to_str_time, str_time_to_seconds
+from mcr_py.utils.strtime import InvalidTimeFormat, seconds_to_str_time, str_time_to_seconds
 
 
 def test_str_time_to_seconds() -> None:
@@ -44,9 +44,9 @@ def test_conversions_are_inverse() -> None:
 
 
 def test_invalid_time_format() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(InvalidTimeFormat):
         str_time_to_seconds("12:00", accuracy_multiplier=1)  # Missing seconds
-    with pytest.raises(ValueError):
+    with pytest.raises(InvalidTimeFormat):
         str_time_to_seconds("12:00:60", accuracy_multiplier=1)  # Invalid seconds
-    with pytest.raises(ValueError):
+    with pytest.raises(InvalidTimeFormat):
         str_time_to_seconds("12:00:00:00", accuracy_multiplier=1)  # Extra field

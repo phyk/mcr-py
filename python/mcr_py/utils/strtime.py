@@ -1,6 +1,10 @@
 import sys
 
 
+class InvalidTimeFormat(ValueError):
+    pass
+
+
 def str_time_to_seconds(str_time: str, accuracy_multiplier: int) -> int:
     """
     Converts a string representing time in the format HH:MM:SS to seconds since midnight.
@@ -8,13 +12,13 @@ def str_time_to_seconds(str_time: str, accuracy_multiplier: int) -> int:
 
     :param str_time: str - A time string formatted as HH:MM:SS.
     :returns: int - The total number of seconds since midnight.
-    :raises ValueError: If the time format is invalid (e.g., minutes or seconds are 60 or more).
+    :raises InvalidTimeFormat: If the time format is invalid (e.g., minutes or seconds are 60 or more).
     """
     hours, minutes, seconds = map(int, str_time.split(":"))
 
     if minutes >= 60 or seconds >= 60:
         msg = "Invalid time format"
-        raise ValueError(msg)
+        raise InvalidTimeFormat(msg)
 
     total_seconds = hours * 3600 + minutes * 60 + seconds
     return total_seconds * accuracy_multiplier

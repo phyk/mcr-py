@@ -46,6 +46,7 @@ scikit
 seaborn
 serde
 smartstring
+strtime
 testpaths
 tqdm
 typer

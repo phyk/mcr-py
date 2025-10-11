@@ -88,14 +88,14 @@ def get_tmp_path(*paths: str) -> str:
     return os.path.join(key.TMP_DIR_LOCATION, key.ROOT_TMP_DIR_NAME, *paths)
 
 
-def download_file(url: str, path: str) -> None:
+def download_file(url: str, path: pathlib.Path) -> None:
     """
     Downloads a file from a specified URL and saves it to a specified path.
 
     :param url: str - The URL from which the file is to be downloaded.
     :param path: str - The file path where the downloaded file will be saved.
     """
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(path, "wb") as f:
         f.write(requests.get(url, timeout=20).content)
