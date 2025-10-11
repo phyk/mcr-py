@@ -7,6 +7,7 @@ from mcr_py.mcr.bag import (
     IntermediateBags,
     convert_mlc_bags_to_intermediate_bags,
 )
+from mcr_py.mcr.data import ACCURACY
 from mcr_py.mcr.path import PathManager, PathType
 from mcr_py.mcr.steps.interface import Step
 from mcr_py.utils.logger import Timer
@@ -59,15 +60,14 @@ class MLCStep(Step):
             prepared_input_bags = self.prepare_input(input_bags)
             if not prepared_input_bags:
                 self.logger.warning(
-                    f"No valid starting node reached by previous step - aborting {self.NAME} step"
+                    "No valid starting node reached by previous step - aborting %s step",
+                    self.NAME,
                 )
                 return {}
 
         with self.timer.info(f"Running {self.NAME} step"):
             self.logger.debug(
-                "Prepared bags format {}:\n{}".format(
-                    type(prepared_input_bags), prepared_input_bags
-                )
+                "Prepared bags format %s:\n%s", type(prepared_input_bags), prepared_input_bags
             )
             raw_result_bags = mcr_py.run_mlc_with_bags(
                 self.graph_cache,
@@ -75,13 +75,14 @@ class MLCStep(Step):
                 update_label_func=self.update_label_func,
                 disable_paths=self.disable_paths,
                 enable_limit=self.enable_limit,
+                accuracy=ACCURACY,
             )
         with self.timer.info(f"Extracting {self.NAME} step bags"):
             converted_result_bags = self.convert_bags(
                 raw_result_bags, path_index_offset=offset
             )
             self.logger.debug(
-                f"Extracted {len(converted_result_bags)} bags from {self.NAME} step"
+                "Extracted %s bags from %s step", len(converted_result_bags), self.NAME
             )
 
         return converted_result_bags

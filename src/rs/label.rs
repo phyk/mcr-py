@@ -14,9 +14,10 @@ fn calculate_new_price(
     old_label: &bag::Label<usize>,
     new_label: &bag::Label<usize>,
     info: &PriceIncrementInfo,
+    accuracy: u64,
 ) -> bag::Label<usize> {
-    let old_duration_minutes = old_label.hidden_values[0] / 60;
-    let new_duration_minutes = new_label.hidden_values[0] / 60;
+    let old_duration_minutes = old_label.hidden_values[0] / (60 * accuracy);
+    let new_duration_minutes = new_label.hidden_values[0] / (60 * accuracy);
 
     let old_price_increment_intervals =
         calculate_price_increment_intervals(old_duration_minutes, info);
@@ -65,22 +66,25 @@ const PERSONAL_CAR_INFO: PriceIncrementInfo = PriceIncrementInfo {
 pub fn next_bike_tariff(
     old_label: &bag::Label<usize>,
     new_label: &bag::Label<usize>,
+    accuracy: u64,
 ) -> bag::Label<usize> {
-    calculate_new_price(old_label, new_label, &NEXT_BIKE_TARIFF_INFO)
+    calculate_new_price(old_label, new_label, &NEXT_BIKE_TARIFF_INFO, accuracy)
 }
 
 pub fn next_bike_without_tariff(
     old_label: &bag::Label<usize>,
     new_label: &bag::Label<usize>,
+    accuracy: u64,
 ) -> bag::Label<usize> {
-    calculate_new_price(old_label, new_label, &NEXT_BIKE_NO_TARIFF_INFO)
+    calculate_new_price(old_label, new_label, &NEXT_BIKE_NO_TARIFF_INFO, accuracy)
 }
 
 pub fn personal_car(
     old_label: &bag::Label<usize>,
     new_label: &bag::Label<usize>,
+    accuracy: u64,
 ) -> bag::Label<usize> {
-    calculate_new_price(old_label, new_label, &PERSONAL_CAR_INFO)
+    calculate_new_price(old_label, new_label, &PERSONAL_CAR_INFO, accuracy)
 }
 
 #[cfg(test)]
@@ -92,7 +96,7 @@ mod tests {
         old_hidden_values: Vec<u64>,
         new_hidden_values: Vec<u64>,
         expected_price: u64,
-        pricing_function: fn(&bag::Label<usize>, &bag::Label<usize>) -> bag::Label<usize>,
+        pricing_function: fn(&bag::Label<usize>, &bag::Label<usize>, u64) -> bag::Label<usize>,
     }
 
     #[test]
@@ -163,7 +167,7 @@ mod tests {
                 path: vec![],
             };
 
-            let result_label = (case.pricing_function)(&old_label, &new_label);
+            let result_label = (case.pricing_function)(&old_label, &new_label, 1);
             assert_eq!(
                 result_label.values[1],
                 case.expected_price.clone(),

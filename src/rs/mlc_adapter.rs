@@ -114,7 +114,7 @@ impl UpdateLabelFunc {
         }
     }
 
-    fn get_func(&self) -> Option<fn(&Label<usize>, &Label<usize>) -> Label<usize>> {
+    fn get_func(&self) -> Option<fn(&Label<usize>, &Label<usize>, u64) -> Label<usize>> {
         match self {
             UpdateLabelFunc::NextBikeTariff => Some(next_bike_tariff),
             UpdateLabelFunc::NextBikeNoTariff => Some(next_bike_without_tariff),
@@ -125,7 +125,7 @@ impl UpdateLabelFunc {
 }
 
 #[pyfunction]
-#[pyo3(signature = (graph_cache, bags, update_label_func=None, disable_paths=None, enable_limit=None))]
+#[pyo3(signature = (graph_cache, bags, update_label_func=None, disable_paths=None, enable_limit=None, accuracy=None))]
 pub fn run_mlc_with_bags<'py>(
     _py: Python<'py>,
     graph_cache: &GraphCache,
@@ -133,6 +133,7 @@ pub fn run_mlc_with_bags<'py>(
     update_label_func: Option<String>,
     disable_paths: Option<bool>,
     enable_limit: Option<bool>,
+    accuracy: Option<u64>,
 ) -> Bound<'py, PyDict> {
     // convert the PyAny's to Labels
     let mut converted_bags: Bags<usize> = HashMap::new();
@@ -198,6 +199,7 @@ pub fn run_mlc_with_bags<'py>(
         mlc.set_update_label_func(func);
     }
     mlc.set_bags(converted_bags);
+    mlc.set_accuracy(accuracy.unwrap_or(1));
 
     log::info!("Starting run");
 

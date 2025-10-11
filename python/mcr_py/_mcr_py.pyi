@@ -34,6 +34,7 @@ def run_mlc_with_bags(
     update_label_func: Optional[str] = None,
     disable_paths: Optional[bool] = None,
     enable_limit: Optional[bool] = None,
+    accuracy: Optional[int] = None,
 ) -> PyBags: ...
 def load_osm_cycling(
     city_name: str,
