@@ -14,7 +14,7 @@ from mcr_py.utils.logger import Timer
 
 
 class MLCStepError(Exception):
-    def __init__(self, node_id: int, *args) -> None:
+    def __init__(self, node_id: int, *args: object) -> None:
         self.node_id = node_id
         super().__init__(*args)
 
@@ -28,8 +28,8 @@ class MLCStep(Step):
         logger: Logger,
         timer: Timer,
         path_manager: Optional[PathManager],
-        enable_limit: bool,
-        disable_paths: bool,
+        enable_limit: bool,  # noqa: FBT001
+        disable_paths: bool,  # noqa: FBT001
         graph_cache: GraphCache,
         to_internal: dict,
         from_internal: dict,
