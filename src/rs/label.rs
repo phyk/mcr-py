@@ -1,3 +1,4 @@
+use log::debug;
 use mlc::bag;
 
 struct PriceIncrementInfo {
@@ -18,6 +19,11 @@ fn calculate_new_price(
 ) -> bag::Label<usize> {
     let old_duration_minutes = old_label.hidden_values[0] / (60 * accuracy);
     let new_duration_minutes = new_label.hidden_values[0] / (60 * accuracy);
+
+    debug!(
+        "Old duration: {} minutes, new duration: {} minutes",
+        old_duration_minutes, new_duration_minutes
+    );
 
     let old_price_increment_intervals =
         calculate_price_increment_intervals(old_duration_minutes, info);
@@ -153,14 +159,14 @@ mod tests {
         ];
 
         for (i, case) in test_cases.iter().enumerate() {
-            let old_label = bag::Label {
+            let mut old_label = bag::Label {
                 hidden_values: case.old_hidden_values.clone(),
                 values: vec![0, 0],
                 node_id: 0,
                 path: vec![],
             };
 
-            let new_label = bag::Label {
+            let mut new_label = bag::Label {
                 hidden_values: case.new_hidden_values.clone(),
                 values: vec![0, 0],
                 node_id: 0,
@@ -172,6 +178,18 @@ mod tests {
                 result_label.values[1],
                 case.expected_price.clone(),
                 "TC[{}] failed with old_label.hidden_values: {:?}, new_label.hidden_values: {:?} \n {:?}",
+                i,
+                old_label.hidden_values,
+                new_label.hidden_values,
+                case
+            );
+            old_label.hidden_values = old_label.hidden_values.iter().map(|x| x * 10).collect();
+            new_label.hidden_values = new_label.hidden_values.iter().map(|x| x * 10).collect();
+            let result_label_higher_acc = (case.pricing_function)(&old_label, &new_label, 10);
+            assert_eq!(
+                result_label_higher_acc.values[1],
+                case.expected_price.clone(),
+                "TC[{}] failed with higher acc old_label.hidden_values: {:?}, new_label.hidden_values: {:?} \n {:?}",
                 i,
                 old_label.hidden_values,
                 new_label.hidden_values,
