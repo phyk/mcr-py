@@ -58,6 +58,7 @@ class OSMData:
         self.city_id = city_id
         self.osm_path = osm_path
         self.cache_path = cache_path
+        self.location_mapping = {}
 
         with Timed.info("Loading OSM walking"):
             self.osm_nodes, self.osm_edges, self.nxgraph = self.read_walking(
@@ -72,7 +73,9 @@ class OSMData:
         with Timed.info("Loading location mapping"):
             # This uses the pruned network
             self.resolution = resolution
-            self.calculate_location_mapping()
+            self.location_mapping[NetworkType.WALKING] = self.calculate_location_mapping(
+                self.osm_nodes
+            )
 
         self.additional_networks: dict[
             NetworkType, tuple[pl.DataFrame, pl.DataFrame, rx.PyDiGraph]
@@ -89,6 +92,11 @@ class OSMData:
                     osm_nodes,
                     osm_edges,
                     nxgraph,
+                )
+
+            with Timed.info(f"Loading location mapping {network_type.value}"):
+                self.location_mapping[network_type] = self.calculate_location_mapping(
+                    osm_nodes
                 )
 
     def read_walking(
@@ -172,9 +180,9 @@ class OSMData:
             pois = pl.read_parquet(pois_path)
         return pois
 
-    def calculate_location_mapping(self) -> None:
-        self.location_mapping = (
-            self.osm_nodes.lazy()
+    def calculate_location_mapping(self, osm_nodes: pl.DataFrame) -> pl.DataFrame:
+        return (
+            osm_nodes.lazy()
             .with_columns(
                 plh3.latlng_to_cell(
                     pl.col("lat"),
