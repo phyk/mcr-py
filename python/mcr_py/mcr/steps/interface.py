@@ -41,9 +41,14 @@ class StepBuilder:
         logger: Logger,
         timer: Timer,
         path_manager: Optional[PathManager],
-        enable_limit: bool,
-        disable_paths: bool,
-    ):
+        enable_limit: bool,  # noqa: FBT001
+        disable_paths: bool,  # noqa: FBT001
+    ) -> Step:
         return self.step(
-            logger, timer, path_manager, enable_limit, disable_paths, **self.kwargs
+            logger=logger,
+            timer=timer,
+            path_manager=path_manager,
+            enable_limit=enable_limit,
+            disable_paths=disable_paths,
+            **self.kwargs,
         )
