@@ -73,7 +73,7 @@ class PersonalCarStepBuilder(StepBuilder):
         pois: pl.DataFrame,
     ) -> None:
         multi_modal_nodes, multi_modal_edges = create_multi_modal_graph(
-            walking_nodes, walking_edges, driving_nodes, driving_edges, AVG_CAR_SPEED
+            walking_nodes, driving_nodes, driving_edges, AVG_CAR_SPEED
         )
 
         from_internal = dict(multi_modal_nodes.select("id", "osm_id").rows())
