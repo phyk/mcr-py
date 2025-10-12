@@ -5,10 +5,14 @@ run_type="INFO"
 crs_sink_name="EPSG:4839"
 
 [timestamp]
-timestamp="20250926"
 # timestamp="20250718"
-now="20250926-095849"
+# timestamp="20250808"
+# timestamp="20250905"
+timestamp="20250926"
 # now="2025-07-18-114512"
+# now="2025-08-08-114512"
+# now="2025-09-05-143520"
+now="20250926-095849"
 
 [gtfs]
 timestamp="20250718"
@@ -17,7 +21,13 @@ timestamp="20250718"
 start_times=["08:00:00"]
 
 [mcr5_types]
-mcr5_types=["walking"]
+mcr5_types=[
+    # "walking",
+    # "car",
+    "public_transport",
+    # "bicycle",
+    # "bicycle_public_transport",
+]
 
 [city.cologne]
 german="K\u00F6ln"
