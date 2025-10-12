@@ -152,9 +152,12 @@ class PublicTransportStepBuilder(StepBuilder):
             4839,
         )
 
-        stop_to_osm_node_map: dict[str, int] = self.stops_df.select(
-            pl.col("stop_id", "nearest_node_osm_id")
-        ).rows_by_key("nearest_node_osm_id", unique=True)
+        stop_to_osm_node_map: dict[str, int] = {
+            key: value[0]
+            for key, value in self.stops_df.select(pl.col("stop_id", "nearest_node_osm_id"))
+            .rows_by_key("stop_id", unique=True)
+            .items()
+        }
         osm_node_to_stop_map: dict[int, str] = {v: k for k, v in stop_to_osm_node_map.items()}
         self.kwargs = {
             "structs_dict": structs_dict,
