@@ -24,7 +24,9 @@ kdtree
 kmedoids
 Koeln
 Köln
+latlng
 levelname
+lnglat
 matplotlib
 maturin
 MCRAPTOR
