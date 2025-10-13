@@ -112,7 +112,11 @@ class BicycleStepBuilder(StepBuilder):
         to_internal = {
             value: key for (key, value) in multi_modal_nodes.select("id", "osm_id").rows()
         }
-        to_internal_walking = {int(key[1:]): value for (key, value) in to_internal.items()}
+        to_internal_walking = {
+            int(key[1:]): value
+            for (key, value) in to_internal.items()
+            if key[0] == WALKING_PREFIX
+        }
 
         # Filter the graph to only map to bicycle nodes
         self.osm_node_to_mm_bicycle_reset_map = {
