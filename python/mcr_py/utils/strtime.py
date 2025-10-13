@@ -14,7 +14,10 @@ def str_time_to_seconds(str_time: str, accuracy_multiplier: int) -> int:
     :returns: int - The total number of seconds since midnight.
     :raises InvalidTimeFormat: If the time format is invalid (e.g., minutes or seconds are 60 or more).
     """
-    hours, minutes, seconds = map(int, str_time.split(":"))
+    try:
+        hours, minutes, seconds = map(int, str_time.split(":"))
+    except ValueError as v:
+        raise InvalidTimeFormat from v
 
     if minutes >= 60 or seconds >= 60:
         msg = "Invalid time format"
