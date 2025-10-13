@@ -20,11 +20,6 @@ fn calculate_new_price(
     let old_duration_minutes = old_label.hidden_values[0] / (60 * accuracy);
     let new_duration_minutes = new_label.hidden_values[0] / (60 * accuracy);
 
-    debug!(
-        "Old duration: {} minutes, new duration: {} minutes",
-        old_duration_minutes, new_duration_minutes
-    );
-
     let old_price_increment_intervals =
         calculate_price_increment_intervals(old_duration_minutes, info);
     let new_price_increment_intervals =
@@ -139,6 +134,12 @@ mod tests {
                 pricing_function: next_bike_without_tariff,
             },
             TestCase {
+                old_hidden_values: vec![0 * 60],
+                new_hidden_values: vec![59],
+                expected_price: 19,
+                pricing_function: personal_car,
+            },
+            TestCase {
                 old_hidden_values: vec![1 * 60],
                 new_hidden_values: vec![2 * 60],
                 expected_price: 0,
@@ -155,6 +156,12 @@ mod tests {
                 new_hidden_values: vec![35 * 60],
                 expected_price: 100,
                 pricing_function: next_bike_without_tariff,
+            },
+            TestCase {
+                old_hidden_values: vec![25 * 60],
+                new_hidden_values: vec![35 * 60],
+                expected_price: 190,
+                pricing_function: personal_car,
             },
         ];
 
