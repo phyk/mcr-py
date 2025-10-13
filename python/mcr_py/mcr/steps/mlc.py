@@ -1,3 +1,4 @@
+import logging
 from logging import Logger
 from typing import Callable, Collection, Optional
 
@@ -36,6 +37,7 @@ def add_pois_to_graph(
     type_map: dict[str, int] = {}
     for t in pois.get_column("poi_type").unique():
         type_map[t] = len(type_map)
+    logging.debug("Mapping POI types: %s", type_map)
     pois = pois.with_columns(
         pl.col("poi_type").replace(type_map).alias("type_internal").cast(pl.UInt8)
     )
