@@ -21,7 +21,7 @@ from mcr_py.mcr.data import (
 )
 from mcr_py.mcr.path import PathManager, PathType
 from mcr_py.mcr.steps.interface import StepBuilder
-from mcr_py.mcr.steps.mlc import MLCStep
+from mcr_py.mcr.steps.mlc import MLCStep, add_pois_to_graph
 from mcr_py.osm import osm
 from mcr_py.utils import storage
 from mcr_py.utils.geometa import GeoMeta
@@ -135,7 +135,7 @@ class BicycleStepBuilder(StepBuilder):
         )
         self.mm_graph_cache = GraphCache()
         self.mm_graph_cache.set_graph(raw_edges)  # type: ignore
-        self.add_pois_to_mm_graph(pois)
+        self.osm_nodes = add_pois_to_graph(self.osm_nodes, self.mm_graph_cache, pois)
 
         self.kwargs = {
             "graph_cache": self.mm_graph_cache,

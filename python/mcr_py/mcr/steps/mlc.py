@@ -1,7 +1,10 @@
 from logging import Logger
 from typing import Callable, Collection, Optional
 
+import polars as pl
+
 import mcr_py as mcr_py
+import mcr_py.osm.osm
 from mcr_py import GraphCache
 from mcr_py.mcr.bag import (
     IntermediateBags,
@@ -11,6 +14,44 @@ from mcr_py.mcr.data import ACCURACY_MULTIPLIER
 from mcr_py.mcr.path import PathManager, PathType
 from mcr_py.mcr.steps.interface import Step
 from mcr_py.utils.logger import Timer
+
+
+def add_pois_to_graph(
+    nodes: pl.DataFrame, graph_cache: GraphCache, pois: pl.DataFrame
+) -> pl.DataFrame:
+    """
+    Adds POIs to the walking graph cache.
+
+    Args:
+        nodes: Dataframe containing columns "id" and "osm_id".
+        graph_cache: The graph cache to add POIs to.
+        pois: A dataframe containing POIs. Must have the columns "nearest_osm_node" and "type".
+    """
+    pois = pois.join(
+        nodes.select("id", "osm_id"),
+        left_on="nearest_osm_node",
+        right_on="osm_id",
+    ).with_columns(pl.col("id").alias("nearest_osm_node"))
+
+    type_map: dict[str, int] = {}
+    for t in pois.get_column("poi_type").unique():
+        type_map[t] = len(type_map)
+    pois = pois.with_columns(
+        pl.col("poi_type").replace(type_map).alias("type_internal").cast(pl.UInt8)
+    )
+    osm_nodes = mcr_py.osm.osm.list_column_to_osm_nodes(nodes, pois, "type_internal")
+    reset_node_id_to_type_map = {
+        key: value[0]
+        for key, value in osm_nodes.select(
+            pl.col("id"),
+            pl.col("type_internal"),
+        )
+        .rows_by_key(key="id", unique=True)
+        .items()
+    }
+
+    graph_cache.set_node_weights(reset_node_id_to_type_map)
+    return osm_nodes
 
 
 class MLCStepError(Exception):

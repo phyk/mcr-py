@@ -17,8 +17,7 @@ from mcr_py.mcr.data import (
 )
 from mcr_py.mcr.path import PathManager, PathType
 from mcr_py.mcr.steps.interface import StepBuilder
-from mcr_py.mcr.steps.mlc import MLCStep
-from mcr_py.osm import osm
+from mcr_py.mcr.steps.mlc import MLCStep, add_pois_to_graph
 from mcr_py.utils.logger import Timer
 
 
@@ -102,37 +101,10 @@ class PersonalCarStepBuilder(StepBuilder):
         )
         self.mm_graph_cache = GraphCache()
         self.mm_graph_cache.set_graph(raw_edges)  # type: ignore
-        self.add_pois_to_mm_graph(pois)
+        self.osm_nodes = add_pois_to_graph(self.osm_nodes, self.mm_graph_cache, pois)
 
         self.kwargs = {
             "graph_cache": self.mm_graph_cache,
             "to_internal": self.osm_node_to_mm_car_reset_map,
             "from_internal": self.mm_walking_node_reset_to_osm_node_map,
         }
-
-    def add_pois_to_mm_graph(self, pois: pl.DataFrame) -> None:
-        """
-        Adds POIs to the multi modal graph cache.
-
-        Args:
-            pois: A dataframe containing POIs. Must have the columns "nearest_osm_node_id" and "type".
-        """
-        type_map: dict[str, int] = {}
-        for t in pois.get_column("poi_type").unique():
-            type_map[t] = len(type_map)
-        pois = pois.with_columns(
-            pl.col("poi_type").replace(type_map).alias("type_internal").cast(pl.UInt8)
-        )
-        self.osm_nodes = osm.list_column_to_osm_nodes(self.osm_nodes, pois, "type_internal")
-
-        reset_mm_walking_node_id_to_type_map = {
-            key: value[0]
-            for key, value in self.osm_nodes.select(
-                pl.col("id"),
-                pl.col("type_internal"),
-            )
-            .rows_by_key(key="id", unique=True)
-            .items()
-        }
-
-        self.mm_graph_cache.set_node_weights(reset_mm_walking_node_id_to_type_map)
