@@ -21,7 +21,7 @@ MAX_TRANSFERS = 10
 DEFAULT_TRANFER_TIME = 180
 
 
-def test_raptor(testdata_path: str) -> None:
+def test_raptor(testdata_path: pathlib.Path) -> None:
     output_dir = pathlib.Path(testdata_path) / "output"
 
     if os.path.exists(output_dir):
@@ -39,8 +39,8 @@ def test_raptor(testdata_path: str) -> None:
     )
 
     tracer_map = enrich_raptor_trace_results(
-        str(output_dir),
-        os.path.join(testdata_path, "gtfs.zip"),
+        output_dir,
+        testdata_path / "gtfs.zip",
     )
 
     arrival_times = storage.read_df(output_dir / "arrival_times.parquet")

@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 import polars as pl
 import pytest
@@ -22,8 +23,8 @@ from mcr_py.utils.geometa import GeoMeta
 
 
 @pytest.fixture(scope="session")
-def testdata_path():
-    return os.path.join(os.path.dirname(__file__), "testdata")
+def testdata_path() -> pathlib.Path:
+    return pathlib.Path(os.path.dirname(__file__)) / "testdata"
 
 
 ROUTE1_ID = "route1"

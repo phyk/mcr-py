@@ -1,5 +1,6 @@
 import logging
-from unittest.mock import patch
+import pathlib
+from unittest.mock import MagicMock, patch
 
 import polars as pl
 import pytest
@@ -37,17 +38,17 @@ trace_footpath = TraceFootpath(start_stop_id="2", end_stop_id="3", walking_time=
 
 
 @pytest.fixture
-def trace_enricher():
+def trace_enricher() -> TraceEnricher:
     return TraceEnricher(stops_df, trips_df, routes_df)
 
 
-def test_enrich_trace_start(trace_enricher) -> None:
+def test_enrich_trace_start(trace_enricher: TraceEnricher) -> None:
     enriched_trace = trace_enricher.enrich_trace_start(trace_start)
     assert isinstance(enriched_trace, EnrichedTraceStart)
     assert enriched_trace.start_stop_name == "Stop A"
 
 
-def test_enrich_trace_trip(trace_enricher) -> None:
+def test_enrich_trace_trip(trace_enricher: TraceEnricher) -> None:
     enriched_trace = trace_enricher.enrich_trace_trip(trace_trip)
     assert isinstance(enriched_trace, EnrichedTraceTrip)
     assert enriched_trace.start_stop_name == "Stop A"
@@ -55,7 +56,7 @@ def test_enrich_trace_trip(trace_enricher) -> None:
     assert enriched_trace.trip_name == "Route A Head A"
 
 
-def test_enrich_trace_footpath(trace_enricher) -> None:
+def test_enrich_trace_footpath(trace_enricher: TraceEnricher) -> None:
     enriched_trace = trace_enricher.enrich_trace_footpath(trace_footpath)
     assert isinstance(enriched_trace, EnrichedTraceFootpath)
     assert enriched_trace.start_stop_name == "Stop B"
@@ -64,7 +65,9 @@ def test_enrich_trace_footpath(trace_enricher) -> None:
 
 @patch("mcr_py.utils.storage.read_any_dict")
 @patch("mcr_py.gtfs.archive.read_dfs")
-def test_enrich_raptor_trace_results(mock_read_dfs, mock_read_any_dict) -> None:
+def test_enrich_raptor_trace_results(
+    mock_read_dfs: MagicMock, mock_read_any_dict: MagicMock
+) -> None:
     mock_read_dfs.return_value = {
         key.STOPS_KEY: stops_df,
         key.TRIPS_KEY: trips_df,
@@ -76,8 +79,8 @@ def test_enrich_raptor_trace_results(mock_read_dfs, mock_read_any_dict) -> None:
     tracer_map.add(trace_footpath)
     mock_read_any_dict.return_value = {key.TRACER_MAP_KEY: tracer_map}
 
-    results_dir_path = "results"
-    gtfs_dir_path = "gtfs"
+    results_dir_path = pathlib.Path("results")
+    gtfs_dir_path = pathlib.Path("gtfs")
 
     enriched_map = enrich_raptor_trace_results(results_dir_path, gtfs_dir_path)
     enriched_tracers = enriched_map.tracers
