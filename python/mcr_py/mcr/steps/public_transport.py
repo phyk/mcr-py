@@ -49,6 +49,7 @@ class PublicTransportStep(Step):
     def run(self, input_bags: IntermediateBags, offset: int = 0) -> IntermediateBags:
         with self.timer.info("Preparing input for MCRAPTOR step"):
             prepared_input_bags = self.prepare_public_transport_step_input(input_bags)
+            limits = self.extract_limits(input_bags)
             if len(prepared_input_bags) == 0:
                 self.logger.warning(
                     "Not a single stop is reached by the previous step - aborting MCRAPTOR step"
@@ -60,6 +61,7 @@ class PublicTransportStep(Step):
                 self.structs_dict,
                 default_transfer_time=60,
                 label_class=(McRAPTORLabel if self.disable_paths else McRAPTORLabelWithPath),
+                limits=limits,
             )
             raw_public_transport_result_bags = mc_raptor.run(prepared_input_bags)  # type: ignore
 
@@ -74,6 +76,15 @@ class PublicTransportStep(Step):
                 self.logger.warning("No MCRAPTOR bags found")
 
         return raw_public_transport_result_bags
+
+    def extract_limits(self, input_bags: IntermediateBags) -> dict[int, int]:
+        limits = {}
+        for _, bag in input_bags.items():
+            for label in bag:
+                time, cost = label.values
+                if cost not in limits or time > limits[cost]:
+                    limits[cost] = time
+        return limits
 
     # converts bags with node ids to bags with stop ids
     def prepare_public_transport_step_input(self, bags: IntermediateBags) -> McRAPTORInputBags:
