@@ -99,6 +99,15 @@ class McRAPTORLabel(McRAPTORBaseLabel):
             raise TypeError(msg)
         return self.arrival_time <= other.arrival_time and self.cost <= other.cost
 
+    def cost_after_update(self) -> int:
+        cost = self.cost
+        if self.n_stops == 0:
+            cost += COST_SHORT_DISTANCE_TICKET_INCR
+        if self.n_stops == LENGTH_SHORT_DISTANCE_TICKET:
+            cost -= COST_SHORT_DISTANCE_TICKET_INCR
+            cost += COST_LONG_DISTANCE_TICKET_INCR
+        return cost
+
     def update_along_trip(self, arrival_time: int, stop_id: str, trip_id: str) -> None:
         super().update_along_trip(arrival_time, stop_id, trip_id)
         if self.n_stops == 0:
