@@ -164,9 +164,7 @@ class McRaptor(Generic[L, S, T]):
         """
         marked_stops = set()
         for route_id, (stop_id, idx) in Q.items():
-            route_bag = RouteBag[L, S, T](
-                self.dq,
-            )
+            route_bag = RouteBag[L, S, T](self.dq, limit_cache={})
 
             for stop_id in self.dq.iterate_stops_in_route_from_idx(route_id, idx):
                 b_i, marked_stops, route_bag = self.process_route(

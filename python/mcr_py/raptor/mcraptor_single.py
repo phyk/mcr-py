@@ -1,3 +1,4 @@
+import logging
 from copy import deepcopy
 from typing import Generic, Tuple
 
@@ -15,6 +16,7 @@ class McRaptorSingle(Generic[L, S, T]):
         structs_dict: dict,
         default_transfer_time: int,
         label_class: type[L],
+        limits: dict[int, int],
     ) -> None:
         """
         Initializes the McRaptorSingle algorithm with structured data, default transfer time, and label class.
@@ -31,6 +33,8 @@ class McRaptorSingle(Generic[L, S, T]):
         self.default_transfer_time = default_transfer_time
 
         self.label_class = label_class
+        self.limit_cache = limits
+        logging.debug("Initialized with limits %s", self.limit_cache)
 
     def run(
         self,
@@ -118,9 +122,7 @@ class McRaptorSingle(Generic[L, S, T]):
         """
         marked_stops = set()
         for route_id, (stop_id, idx) in Q.items():
-            route_bag = RouteBag[L, S, T](
-                self.dq,
-            )
+            route_bag = RouteBag[L, S, T](self.dq, self.limit_cache)
 
             for stop_id in self.dq.iterate_stops_in_route_from_idx(route_id, idx):
                 output_bags, marked_stops, route_bag = self.process_route(
@@ -154,6 +156,7 @@ class McRaptorSingle(Generic[L, S, T]):
         :returns: tuple[dict[str, Bag], set[str], RouteBag] - A tuple containing updated output bags, marked stops, and the route bag.
         """
         # first step - update arrival times in route bag
+        # Uses limit_cache in route_bag
         route_bag.update_along_trip(stop_id)
 
         # second step - merge route_bag into stop_bag

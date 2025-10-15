@@ -263,6 +263,7 @@ class RouteBag(Generic[L, S, T]):
     def __init__(
         self,
         dq: ExpandedDataQuerier[S, T] | DataQuerier,
+        limit_cache: dict[int, int],
     ) -> None:
         """
         Initializes a RouteBag with a data querier.
@@ -271,6 +272,7 @@ class RouteBag(Generic[L, S, T]):
         """
         self._bag: set[tuple[L, str]] = set()
         self._dq = dq
+        self.limit_cache = limit_cache
 
     def __str__(self) -> str:
         """
@@ -344,6 +346,14 @@ class RouteBag(Generic[L, S, T]):
         """
         for label, trip in self._bag:
             arrival_time = self._dq.get_arrival_time(trip, stop_id)
+
+            cost_after_update = getattr(label, "cost_after_update", None)
+            if callable(cost_after_update):
+                expected_cost = cost_after_update()
+                if isinstance(expected_cost, int):
+                    for cost in self.limit_cache:
+                        if cost <= expected_cost and arrival_time > self.limit_cache[cost]:
+                            return self
             label.update_along_trip(arrival_time, stop_id, trip)
         return self
 

@@ -1,3 +1,4 @@
+import pathlib
 import shutil
 
 from mcr_py.raptor.example_labels import ArrivalTimeLabel
@@ -16,16 +17,16 @@ AMSTERDAMER_STR_STOP_ID = "317"
 VENLOER_STR_STOP_ID = "251"
 
 
-def test_mcraptor(testdata_path: str) -> None:
-    output_dir = os.path.join(testdata_path, "output")
+def test_mcraptor(testdata_path: pathlib.Path) -> None:
+    output_dir = testdata_path / "output"
 
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
 
-    footpaths_dict = storage.read_any_dict(os.path.join(testdata_path, "footpaths.pkl"))
+    footpaths_dict = storage.read_any_dict(testdata_path / "footpaths.pkl")
     footpaths_dict = footpaths_dict["footpaths"]
 
-    structs_dict = storage.read_any_dict(os.path.join(testdata_path, "structs.pkl"))
+    structs_dict = storage.read_any_dict(testdata_path / "structs.pkl")
 
     mc_raptor = McRaptor(
         structs_dict, footpaths_dict, 10, 180, {}, {}, ArrivalTimeLabel, accuracy_multiplier=1

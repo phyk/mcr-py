@@ -53,13 +53,15 @@ def test_bag_merge() -> None:
 # Test for RouteBag
 def test_route_bag_initialization() -> None:
     dq = None
-    route_bag = RouteBag(dq)  # type: ignore
+    limit_cache = {}
+    route_bag = RouteBag(dq, limit_cache)  # type: ignore
     assert len(route_bag._bag) == 0
 
 
-def test_route_bag_add_if_necessary() -> None:
+def test_route_bag_add_necessary() -> None:
     dq = None
-    route_bag = RouteBag(dq)  # type: ignore
+    limit_cache = {}
+    route_bag = RouteBag(dq, limit_cache)  # type: ignore
     label = TraceLabel(10, "stop_1")
     route_bag.add_if_necessary(label, "trip_1")
     assert len(route_bag._bag) == 1
