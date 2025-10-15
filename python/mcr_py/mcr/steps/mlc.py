@@ -110,7 +110,9 @@ class MLCStep(Step):
 
         with self.timer.info(f"Running {self.NAME} step"):
             self.logger.debug(
-                "Prepared bags format %s:\n%s", type(prepared_input_bags), prepared_input_bags
+                "Prepared bags format %s:\n%s",
+                type(prepared_input_bags),
+                next(iter(prepared_input_bags.values())),
             )
             raw_result_bags = mcr_py.run_mlc_with_bags(
                 self.graph_cache,
