@@ -27,7 +27,7 @@ def str_time_to_seconds(str_time: str, accuracy_multiplier: int) -> int:
     return total_seconds * accuracy_multiplier
 
 
-def seconds_to_str_time(seconds: int) -> str:
+def seconds_to_str_time(seconds: int, accuracy_multiplier: int) -> str:
     """
     Converts seconds since midnight to a string formatted as HH:MM:SS.
     Can handle times that go past midnight.
@@ -37,6 +37,7 @@ def seconds_to_str_time(seconds: int) -> str:
     """
     if seconds == sys.maxsize:
         return "--:--:--"
+    seconds = seconds // accuracy_multiplier
     hours = seconds // 3600
     minutes = (seconds - hours * 3600) // 60
     seconds = seconds - hours * 3600 - minutes * 60
