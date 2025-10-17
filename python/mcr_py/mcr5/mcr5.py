@@ -27,11 +27,13 @@ class MCR5:
         repeating_steps: StepBuilderMatrix,
         min_free_memory: float = 3.0,
         max_processes: int = key.DEFAULT_N_PROCESSES,
+        disable_paths: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
         self.initial_steps = initial_steps
         self.repeating_steps = repeating_steps
         self.min_free_memory = min_free_memory
         self.max_processes = max_processes
+        self.disable_paths = disable_paths
 
     def run(
         self,
@@ -79,6 +81,7 @@ class MCR5:
                     "start_time": start_time,
                     "max_transfers": max_transfers,
                     "output_dir": output_dir,
+                    "disable_paths": self.disable_paths,
                 },
             )
 
@@ -125,18 +128,26 @@ class MCR5:
         start_time: str,
         max_transfers: int,
         output_dir: pathlib.Path,
+        disable_paths: bool = True,  # noqa: FBT001, FBT002
     ) -> None:
-        output = output_dir / f"{h3_cell}.feather"
-
+        output = (
+            output_dir / f"{h3_cell}.feather"
+            if disable_paths
+            else output_dir / f"{h3_cell}.pkl"
+        )
         logger_copy, log_stream = make_string_stream_logger(f"mcr5-{h3_cell}", logging.DEBUG)
         copy_settings_to_root_logger(logger_copy)
-        mcr_config = MCRConfig(logger=logger_copy, disable_paths=True, enable_limit=True)
+        mcr_config = MCRConfig(
+            logger=logger_copy, disable_paths=disable_paths, enable_limit=True
+        )
         try:
             mcr_runner = MCR(
                 initial_steps,
                 repeating_steps,
                 mcr_config,
-                output_format=OutputFormat.DF_FEATHER,
+                output_format=OutputFormat.DF_FEATHER
+                if disable_paths
+                else OutputFormat.CLASS_PICKLE,
             )
 
             mcr_runner.run(
