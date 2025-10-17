@@ -105,34 +105,38 @@ class PathManager:
 
         return path_id
 
-    def reconstruct_and_translate_path_for_label(
-        self, label: IntermediateLabel, translator_map: dict[PathType, dict[Any, Any]]
-    ) -> list[Any]:
-        translated_path: list[Any] = []
-        for path_id in label.path:
-            assert isinstance(path_id, int)
-            path = self.paths[path_id]
-            if path.path_type in MLC_PATH_TYPES:
-                translated_path.append(
-                    Path(
-                        path_type=path.path_type,
-                        path=[translator_map[path.path_type][p] for p in path.path],
-                        meta=path.meta,
-                    )
+
+def reconstruct_and_translate_path_for_label(
+    paths: list[Path], label: IntermediateLabel, translator_map: dict[PathType, dict[Any, Any]]
+) -> list[Any]:
+    translated_path: list[Any] = []
+    for path_id in label.path:
+        assert isinstance(path_id, int)
+        path = paths[path_id]
+        if path.path_type in MLC_PATH_TYPES:
+            translated_path.append(
+                Path(
+                    path_type=path.path_type,
+                    path=[
+                        translator_map[path.path_type][p] if i > 0 else p
+                        for i, p in enumerate(path.path)
+                    ],
+                    meta=path.meta,
                 )
-            elif path.path_type == PathType.PUBLIC_TRANSPORT:
-                if len(path.path) != 3:
-                    msg = f"Expected path to have length 3, got {len(path.path)} instead. Path: {path.path}"
-                    raise ValueError(msg)
-                translated_path.append(
-                    GTFSPath(
-                        start_stop_id=int(path.path[0]),
-                        trip_id=str(path.path[1]),
-                        end_stop_id=int(path.path[2]),
-                        meta=path.meta,
-                    )
-                )
-            else:
-                msg = f"Unknown path type {path.path_type}"
+            )
+        elif path.path_type == PathType.PUBLIC_TRANSPORT:
+            if len(path.path) != 3:
+                msg = f"Expected path to have length 3, got {len(path.path)} instead. Path: {path.path}"
                 raise ValueError(msg)
-        return translated_path
+            translated_path.append(
+                GTFSPath(
+                    start_stop_id=int(path.path[0]),
+                    trip_id=str(path.path[1]),
+                    end_stop_id=int(path.path[2]),
+                    meta=path.meta,
+                )
+            )
+        else:
+            msg = f"Unknown path type {path.path_type}"
+            raise ValueError(msg)
+    return translated_path
