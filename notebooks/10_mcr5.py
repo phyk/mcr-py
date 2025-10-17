@@ -8,7 +8,8 @@ from datetime import datetime
 
 import mcr_py.command.step_config
 import mcr_py.helper_functions
-from mcr_py.mcr.data import OSMData
+import polars as pl
+from mcr_py.mcr.data import NetworkType, OSMData
 from mcr_py.mcr5.mcr5 import MCR5
 from mcr_py.utils.geometa import GeoMeta
 from mcr_py.utils.logger import rlog, setup
@@ -37,7 +38,7 @@ def get_bicycle_public_transport_config_ready(
             "initial_steps": initial_steps,
             "repeating_steps": repeating_steps,
         },
-        "location_mappings": geo_data.location_mapping,
+        "location_mappings": geo_data.location_mapping[NetworkType.WALKING],
         "max_transfers": 5,
         "start_time": start_time,
     }
@@ -52,7 +53,7 @@ def get_car_only_config_ready(geo_data: OSMData) -> dict[str, typing.Any]:
             "initial_steps": initial_steps,
             "repeating_steps": repeating_steps,
         },
-        "location_mappings": geo_data.location_mapping,
+        "location_mappings": geo_data.location_mapping[NetworkType.DRIVING],
         "max_transfers": 1,
     }
 
@@ -73,7 +74,7 @@ def get_bicycle_only_config_ready(
             "initial_steps": initial_steps,
             "repeating_steps": repeating_steps,
         },
-        "location_mappings": geo_data.location_mapping,
+        "location_mappings": geo_data.location_mapping[NetworkType.WALKING],
         "max_transfers": 5,
     }
 
@@ -97,8 +98,8 @@ def get_public_transport_only_config_ready(
             "initial_steps": initial_steps,
             "repeating_steps": repeating_steps,
         },
-        "location_mappings": geo_data.location_mapping,
-        "max_transfers": 5,
+        "location_mappings": geo_data.location_mapping[NetworkType.WALKING],
+        "max_transfers": 1,
         "start_time": start_time,
     }
 
@@ -113,7 +114,7 @@ def get_walking_only_config_ready(geo_data: OSMData, **_: str) -> dict[str, typi
             "initial_steps": initial_steps,
             "repeating_steps": repeating_steps,
         },
-        "location_mappings": geo_data.location_mapping,
+        "location_mappings": geo_data.location_mapping[NetworkType.WALKING],
         "max_transfers": 0,
     }
 
@@ -123,7 +124,6 @@ if __name__ == "__main__":
         settings = tomllib.load(f)
 
     setup(settings["run_type"]["run_type"])
-    # setup("DEBUG")
     city_name = "cologne"
     data_directory = pathlib.Path(__file__).parent.parent.resolve() / "data"
     base_directory = data_directory / settings["timestamp"]["timestamp"]
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
     gbfs_path = base_directory / f"gbfs_raw/{city_name}_{settings['timestamp']['now']}.parquet"
     osm_path = base_directory / "osm_raw"
-    geometa_path = base_directory / f"cache/{city_name}_geometa.pkl"
+    geometa_path = base_directory / f"cache/{city_name}_geometa.json"
 
     mcr5_output_path = base_directory / f"mcr5_results/{city_name}"
     bicycle_base_path = f"../data/sharing_locations_clustered/{city_name.lower()}_bikes/"
@@ -186,14 +186,14 @@ if __name__ == "__main__":
         config = config(
             geo_data=geo_data,
         )
-        mcr5 = MCR5(**config["init_kwargs"], max_processes=32)
+        mcr5 = MCR5(**config["init_kwargs"])
 
         loaded_at = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
         load_time = loaded_at - start
 
         output_path = mcr5_output_path / key
 
-        location_mappings = config["location_mappings"]
+        location_mappings: pl.DataFrame = config["location_mappings"]
 
         rlog.info("Calculating for {} hexes".format(len(location_mappings)))
 
