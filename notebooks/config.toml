@@ -21,13 +21,7 @@ timestamp="20250718"
 start_times=["08:00:00"]
 
 [mcr5_types]
-mcr5_types=[
-    # "walking",
-    # "car",
-    "public_transport",
-    # "bicycle",
-    # "bicycle_public_transport",
-]
+mcr5_types=["bicycle", "bicycle_public_transport", "car", "public_transport", "walking"]
 
 [city.cologne]
 german="K\u00F6ln"
