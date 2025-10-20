@@ -107,7 +107,9 @@ class PathManager:
 
 
 def reconstruct_and_translate_path_for_label(
-    paths: list[Path], label: IntermediateLabel, translator_map: dict[PathType, dict[Any, Any]]
+    paths: list[Path],
+    label: IntermediateLabel,
+    translator_map: dict[PathType, dict[Any, Any]],
 ) -> list[Any]:
     translated_path: list[Any] = []
     for path_id in label.path:
@@ -118,7 +120,9 @@ def reconstruct_and_translate_path_for_label(
                 Path(
                     path_type=path.path_type,
                     path=[
-                        translator_map[path.path_type][p] if i > 0 else p
+                        translator_map[path.path_type][p]
+                        if i > 0 or p in translator_map[path.path_type]
+                        else p
                         for i, p in enumerate(path.path)
                     ],
                     meta=path.meta,
