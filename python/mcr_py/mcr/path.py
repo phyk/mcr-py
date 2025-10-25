@@ -119,12 +119,7 @@ def reconstruct_and_translate_path_for_label(
             translated_path.append(
                 Path(
                     path_type=path.path_type,
-                    path=[
-                        translator_map[path.path_type][p]
-                        if i > 0 or p in translator_map[path.path_type]
-                        else p
-                        for i, p in enumerate(path.path)
-                    ],
+                    path=[translator_map[path.path_type][p] for p in path.path],
                     meta=path.meta,
                 )
             )
