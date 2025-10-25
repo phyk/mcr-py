@@ -18,14 +18,14 @@ def test_str_time_to_seconds_handles_past_midnight() -> None:
 
 
 def test_seconds_to_str_time() -> None:
-    assert seconds_to_str_time(0) == "00:00:00"
-    assert seconds_to_str_time(5445) == "01:30:45"
-    assert seconds_to_str_time(43200) == "12:00:00"
-    assert seconds_to_str_time(86399) == "23:59:59"
+    assert seconds_to_str_time(0, accuracy_multiplier=1) == "00:00:00"
+    assert seconds_to_str_time(5445, accuracy_multiplier=1) == "01:30:45"
+    assert seconds_to_str_time(43200, accuracy_multiplier=1) == "12:00:00"
+    assert seconds_to_str_time(86399, accuracy_multiplier=1) == "23:59:59"
 
 
 def test_seconds_to_str_time_handles_maxsize() -> None:
-    assert seconds_to_str_time(sys.maxsize) == "--:--:--"
+    assert seconds_to_str_time(sys.maxsize, accuracy_multiplier=1) == "--:--:--"
 
 
 def test_conversions_are_inverse() -> None:
@@ -40,7 +40,9 @@ def test_conversions_are_inverse() -> None:
     ]
     for time_str in test_cases:
         seconds = str_time_to_seconds(time_str, accuracy_multiplier=1)
-        assert seconds_to_str_time(seconds) == time_str
+        assert seconds_to_str_time(seconds, accuracy_multiplier=1) == time_str
+        seconds = str_time_to_seconds(time_str, accuracy_multiplier=10)
+        assert seconds_to_str_time(seconds, accuracy_multiplier=10) == time_str
 
 
 def test_invalid_time_format() -> None:

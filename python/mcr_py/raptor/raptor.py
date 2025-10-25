@@ -88,7 +88,7 @@ class Raptor:
                 break
 
         rlog.info(f"RAPTOR finished after {k} iterations")
-        return seconds_dict_to_times_dict(tau_best), tracers_map
+        return seconds_dict_to_times_dict(tau_best, self.accuracy_multiplier), tracers_map
 
     def collect_Q(self, marked_stops: set[str]) -> dict[str, tuple[str, int]]:
         """
@@ -345,7 +345,9 @@ class Raptor:
         return tau_i, tau_best, marked_stops, tracer
 
 
-def seconds_dict_to_times_dict(seconds_dict: dict[str, int]) -> dict[str, str]:
+def seconds_dict_to_times_dict(
+    seconds_dict: dict[str, int], accuracy_multiplier: int
+) -> dict[str, str]:
     """
     Converts a dictionary of arrival times in seconds to a human-readable format.
 
@@ -353,6 +355,6 @@ def seconds_dict_to_times_dict(seconds_dict: dict[str, int]) -> dict[str, str]:
     :returns: dict[str, str] - A dictionary mapping stop IDs to their arrival times in human-readable format.
     """
     return {
-        stop_id: strtime.seconds_to_str_time(seconds)
+        stop_id: strtime.seconds_to_str_time(seconds, accuracy_multiplier)
         for stop_id, seconds in seconds_dict.items()
     }

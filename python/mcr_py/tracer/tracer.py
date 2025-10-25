@@ -1,5 +1,6 @@
 from typing import Optional
 
+from mcr_py.mcr.data import ACCURACY_MULTIPLIER
 from mcr_py.utils import strtime
 
 
@@ -130,9 +131,7 @@ class TraceStart(Trace):
 
         :returns: str - A formatted string indicating the start stop and time.
         """
-        return (
-            f"Start at {self.start_stop_id} at {strtime.seconds_to_str_time(self.start_time)}"
-        )
+        return f"Start at {self.start_stop_id} at {strtime.seconds_to_str_time(self.start_time, ACCURACY_MULTIPLIER)}"
 
 
 class EnrichedTraceStart(TraceStart):
@@ -153,7 +152,7 @@ class EnrichedTraceStart(TraceStart):
 
         :returns: str - A formatted string indicating the enriched start stop and time.
         """
-        return f"Start at {self.start_stop_name} ({self.start_stop_id}) at {strtime.seconds_to_str_time(self.start_time)}"
+        return f"Start at {self.start_stop_name} ({self.start_stop_id}) at {strtime.seconds_to_str_time(self.start_time, ACCURACY_MULTIPLIER)}"
 
 
 class TraceTrip(MovingTrace):
@@ -187,9 +186,9 @@ class TraceTrip(MovingTrace):
         :returns: str - A formatted string indicating the trip details.
         """
         return (
-            f"Trip {self.trip_id} from {self.start_stop_id}@"
-            + f"{strtime.seconds_to_str_time(self.departure_time)} to "
-            + f"{self.end_stop_id}@{strtime.seconds_to_str_time(self.arrival_time)}"
+            f"Trip {self.trip_id} from {self.start_stop_id, ACCURACY_MULTIPLIER}@"
+            + f"{strtime.seconds_to_str_time(self.departure_time, ACCURACY_MULTIPLIER)} to "
+            + f"{self.end_stop_id}@{strtime.seconds_to_str_time(self.arrival_time, ACCURACY_MULTIPLIER)}"
         )
 
 
@@ -228,8 +227,8 @@ class EnrichedTraceTrip(TraceTrip):
         :returns: str - A formatted string indicating the enriched trip details.
         """
         return (
-            f"Trip {self.trip_name} from {self.start_stop_name}@{strtime.seconds_to_str_time(self.departure_time)} to "
-            + f"{self.end_stop_name}@{strtime.seconds_to_str_time(self.arrival_time)}"
+            f"Trip {self.trip_name} from {self.start_stop_name}@{strtime.seconds_to_str_time(self.departure_time, ACCURACY_MULTIPLIER)} to "
+            + f"{self.end_stop_name}@{strtime.seconds_to_str_time(self.arrival_time, ACCURACY_MULTIPLIER)}"
         )
 
 
@@ -252,7 +251,7 @@ class TraceFootpath(MovingTrace):
 
         :returns: str - A formatted string indicating the walking details.
         """
-        return f"Walk from {self.start_stop_id} to {self.end_stop_id} in {strtime.seconds_to_str_time(self.walking_time)}"
+        return f"Walk from {self.start_stop_id} to {self.end_stop_id} in {strtime.seconds_to_str_time(self.walking_time, ACCURACY_MULTIPLIER)}"
 
 
 class EnrichedTraceFootpath(TraceFootpath):
@@ -279,4 +278,4 @@ class EnrichedTraceFootpath(TraceFootpath):
         self.end_stop_name = end_stop_name
 
     def __str__(self) -> str:
-        return f"Walk from {self.start_stop_name} ({self.start_stop_id}) to {self.end_stop_name} ({self.end_stop_id}) in {strtime.seconds_to_str_time(self.walking_time)}"
+        return f"Walk from {self.start_stop_name} ({self.start_stop_id}) to {self.end_stop_name} ({self.end_stop_id}) in {strtime.seconds_to_str_time(self.walking_time, ACCURACY_MULTIPLIER)}"

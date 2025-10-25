@@ -1,5 +1,6 @@
 from typing import Optional
 
+from mcr_py.mcr.data import ACCURACY_MULTIPLIER
 from mcr_py.raptor import bag
 from mcr_py.utils import strtime
 
@@ -63,7 +64,9 @@ class ArrivalTimeLabel(bag.TraceLabel):
         :returns: dict - A dictionary representation of the label including arrival time, stops, trips, and traces.
         """
         return {
-            "arrival_time": strtime.seconds_to_str_time(self.arrival_time),
+            "arrival_time": strtime.seconds_to_str_time(
+                self.arrival_time, ACCURACY_MULTIPLIER
+            ),
             "stops": self.stops,
             "trips": self.trips,
             "traces": self.traces,
@@ -154,10 +157,16 @@ class ActivityDurationLabel(bag.TraceLabel):
         :returns: dict - A dictionary representation of the label including arrival time, travel time, walking time, waiting time, stops, trips, and traces.
         """
         return {
-            "arrival_time": strtime.seconds_to_str_time(self.arrival_time),
-            "travel_time": strtime.seconds_to_str_time(self.travel_time),
-            "walking_time": strtime.seconds_to_str_time(self.walking_time),
-            "waiting_time": strtime.seconds_to_str_time(self.waiting_time),
+            "arrival_time": strtime.seconds_to_str_time(
+                self.arrival_time, ACCURACY_MULTIPLIER
+            ),
+            "travel_time": strtime.seconds_to_str_time(self.travel_time, ACCURACY_MULTIPLIER),
+            "walking_time": strtime.seconds_to_str_time(
+                self.walking_time, ACCURACY_MULTIPLIER
+            ),
+            "waiting_time": strtime.seconds_to_str_time(
+                self.waiting_time, ACCURACY_MULTIPLIER
+            ),
             "stops": self.stops,
             "trips": self.trips,
             "traces": self.traces,
