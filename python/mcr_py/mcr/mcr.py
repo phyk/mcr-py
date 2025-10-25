@@ -114,7 +114,7 @@ class MCR:
                 IntermediateLabel(
                     values=[start_time, 0],
                     hidden_values=[0, 0],
-                    path=[] if self.disable_paths else [start_node_id],
+                    path=[],
                     osm_node_id=start_node_id,
                 )
             ]
