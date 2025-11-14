@@ -10,26 +10,42 @@ from rich.console import Console
 from rich.logging import RichHandler
 
 
-def setup(log_level: str) -> None:
+def setup(log_level: str, setup_case: str = "console") -> None:
     """
     Sets up logging configuration using RichHandler with a specified log level.
 
     :param log_level: str - The log level to set for the logger (e.g., 'DEBUG', 'INFO').
     """
     FORMAT = "%(message)s"
-    logging.basicConfig(
-        level=log_level,
-        format=FORMAT,
-        datefmt="[%X]",
-        handlers=[
-            RichHandler(
-                rich_tracebacks=True,
-                console=Console(force_jupyter=False),
-                tracebacks_suppress=[click],
-            )
-        ],
-        force=True,
-    )
+    if setup_case == "vscode-jupyter":
+        logging.basicConfig(
+            level=log_level,
+            format=FORMAT,
+            datefmt="[%X]",
+            handlers=[
+                RichHandler(
+                    rich_tracebacks=True,
+                    enable_link_path=False,
+                    console=Console(force_jupyter=False, width=130),
+                    tracebacks_suppress=[click],
+                )
+            ],
+            force=True,
+        )
+    else:
+        logging.basicConfig(
+            level=log_level,
+            format=FORMAT,
+            datefmt="[%X]",
+            handlers=[
+                RichHandler(
+                    rich_tracebacks=True,
+                    console=Console(force_jupyter=False),
+                    tracebacks_suppress=[click],
+                )
+            ],
+            force=True,
+        )
 
 
 rlog = logging.getLogger("rich")
