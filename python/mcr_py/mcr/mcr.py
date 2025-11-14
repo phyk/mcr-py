@@ -74,32 +74,39 @@ class MCR:
         start_bags = self.create_start_bags(start_node_id, start_time_in_seconds)
 
         self.logger.debug("Running initial step")
+        offset = 0
         for steps in self.initial_steps:
             result_bags = []
             for step in steps:
-                result_bags.append(step.run(start_bags))
+                result_bags.append(step.run(start_bags, offset))
+                offset += 1
             start_bags = self.merge_bags(*result_bags)
 
         bags_i[0] = start_bags
 
         stop_early = False
-        offset = 1
         for i in range(1, max_transfers + 1):
             msg = f"Running iteration {i}"
             self.logger.debug(msg)
 
-            repeated_bags = bags_i[i - 1]
+            repeated_bags = self.merge_bags(*bags_i.values())
             for steps in self.repeating_steps:
                 result_bags = []
                 for step in steps:
                     result_bags.append(step.run(repeated_bags, offset))
                     offset += 1
-                repeated_bags = self.merge_bags(*result_bags)
+                repeated_bags = self.merge_bags(*result_bags, repeated_bags)
                 if len(repeated_bags) == 0:
                     msg = f"No bags found in iteration {i} - stopping"
                     self.logger.warning(msg)
                     stop_early = True
                     break
+
+            if repeated_bags == bags_i[i - 1]:
+                msg = f"No new bags found in iteration {i} - stopping"
+                repeated_bags = {}
+                self.logger.info(msg)
+                stop_early = True
 
             bags_i[i] = repeated_bags
             if stop_early:
@@ -110,14 +117,14 @@ class MCR:
 
     def create_start_bags(self, start_node_id: int, start_time: int) -> IntermediateBags:
         return {
-            start_node_id: [
+            start_node_id: {
                 IntermediateLabel(
                     values=[start_time, 0],
                     hidden_values=[0, 0],
                     path=[],
                     osm_node_id=start_node_id,
                 )
-            ]
+            }
         }
 
     def save_bags(
@@ -180,7 +187,7 @@ class MCR:
         with self.timer.info(f"Merging bags from {len(bag_collection)} steps"):
             for bags in bag_collection[1:]:
                 for node_id, bag in bags.items():
-                    a_bag = combined_bags.get(node_id, [])
+                    a_bag = combined_bags.get(node_id, set())
                     merged_bag = merge_intermediate_bags(a_bag, bag)
                     combined_bags[node_id] = merged_bag
 

@@ -29,6 +29,19 @@ class IntermediateLabel:
     def __repr__(self) -> str:
         return str(self)
 
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, IntermediateLabel):
+            return False
+        else:
+            return (
+                (self.values == value.values)
+                and (self.hidden_values == value.hidden_values)
+                and (self.node_id == value.node_id)
+            )
+
+    def __hash__(self) -> int:
+        return hash((tuple(self.values), tuple(self.hidden_values), self.node_id))
+
     def strictly_dominates(self, other: IntermediateLabel) -> bool:
         assert len(self.values) == len(other.values)
         return all(self.values[i] <= other.values[i] for i in range(len(self.values)))
@@ -68,16 +81,23 @@ class IntermediateLabel:
 
 
 def merge_intermediate_bags(
-    bag: list[IntermediateLabel],
-    other_bag: list[IntermediateLabel],
-) -> list[IntermediateLabel]:
-    merged_bag = []
+    bag: set[IntermediateLabel],
+    other_bag: set[IntermediateLabel],
+) -> set[IntermediateLabel]:
+    merged_bag = set()
     for label in bag:
-        if not any(other_label.strictly_dominates(label) for other_label in other_bag):
-            merged_bag.append(label)
+        mark_insert = True
+        for other_label in other_bag:
+            if other_label.strictly_dominates(label):
+                mark_insert = False
+                if other_label not in merged_bag:
+                    merged_bag.add(other_label)
+        if mark_insert:
+            merged_bag.add(label)
     for label in other_bag:
-        if not any(other_label.strictly_dominates(label) for other_label in bag):
-            merged_bag.append(label)
+        if not any(other_label.strictly_dominates(label) for other_label in merged_bag):
+            merged_bag.add(label)
+
     return merged_bag
 
 

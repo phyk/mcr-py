@@ -9,7 +9,7 @@ from mcr_py.mcr.label import (
 from mcr_py.raptor.bag import Bag
 
 # key is osm_node_id, value is list of labels
-IntermediateBags = dict[int, list[IntermediateLabel]]
+IntermediateBags = dict[int, set[IntermediateLabel]]
 
 
 def convert_mlc_bags_to_intermediate_bags(
@@ -17,7 +17,7 @@ def convert_mlc_bags_to_intermediate_bags(
     translate_node_id: Callable[[int], int],
 ) -> IntermediateBags:
     intermediate_bags = {
-        translate_node_id(node_id): [
+        translate_node_id(node_id): {
             IntermediateLabel(
                 label.values,
                 label.hidden_values,
@@ -25,7 +25,7 @@ def convert_mlc_bags_to_intermediate_bags(
                 translate_node_id(node_id),
             )
             for label in bag
-        ]
+        }
         for node_id, bag in bags.items()
     }
     return intermediate_bags
@@ -35,9 +35,9 @@ def convert_mc_raptor_bags_to_intermediate_bags(
     bags: dict[int, Bag],
     min_path_length: int,
 ) -> IntermediateBags:
-    intermediate_bags: dict[int, list[IntermediateLabel]] = {}
+    intermediate_bags: dict[int, set[IntermediateLabel]] = {}
     for node_id, bag in bags.items():
-        intermediate_bags[int(node_id)] = []
+        intermediate_bags[int(node_id)] = set()
         for label in bag:  # type: ignore
             if not isinstance(label, McRAPTORLabel):
                 msg = f"Expected McRAPTORLabel, got {str(type(label))} instead"
@@ -47,7 +47,7 @@ def convert_mc_raptor_bags_to_intermediate_bags(
             if isinstance(label, McRAPTORLabelWithPath) and len(label.path) < min_path_length:
                 continue
 
-            intermediate_bags[int(node_id)].append(label.to_intermediate_label(int(node_id)))
+            intermediate_bags[int(node_id)].add(label.to_intermediate_label(int(node_id)))
 
     # remove empty bags
     intermediate_bags = {
