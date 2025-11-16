@@ -12,6 +12,7 @@ from mcr_py.mcr.bag import (
     convert_mlc_bags_to_intermediate_bags,
 )
 from mcr_py.mcr.data import ACCURACY_MULTIPLIER
+from mcr_py.mcr.label import IntermediateLabel
 from mcr_py.mcr.path import PathManager, PathType
 from mcr_py.mcr.steps.interface import Step
 from mcr_py.utils.logger import Timer
@@ -132,7 +133,7 @@ class MLCStep(Step):
 
         return converted_result_bags
 
-    def prepare_input(self, bags: IntermediateBags) -> IntermediateBags:
+    def prepare_input(self, bags: IntermediateBags) -> dict[int, list[IntermediateLabel]]:
         if self.valid_starting_nodes is not None:
             bags = {
                 node_id: bag
@@ -141,7 +142,7 @@ class MLCStep(Step):
             }
 
         try:
-            bags = {
+            _bags = {
                 self.to_internal[node_id]: [
                     label.to_mlc_label(
                         self.to_internal[node_id],
@@ -156,7 +157,7 @@ class MLCStep(Step):
                 f"Node {e.args[0]} not found in graph cache - aborting {self.NAME} step. Current number of Bags is {len(bags)}",
             ) from e
 
-        return bags
+        return _bags
 
     def convert_bags(
         self,

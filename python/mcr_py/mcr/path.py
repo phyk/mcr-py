@@ -80,7 +80,7 @@ class PathManager:
 
     def extract_all_paths_from_bags(
         self,
-        bags: dict[int, list[IntermediateLabel]],
+        bags: dict[int, set[IntermediateLabel]],
         path_type: PathType,
         path_index_offset: int = 0,
     ) -> None:
