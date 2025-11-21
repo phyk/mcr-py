@@ -18,10 +18,16 @@ now="20250926-095849"
 timestamp="20250718"
 
 [public_transport]
-start_times=["08:00:00"]
+start_times=["08:02:28"]
 
 [mcr5_types]
-mcr5_types=["bicycle", "bicycle_public_transport", "car", "public_transport", "walking"]
+mcr5_types=[
+    # "bicycle",
+    # "car",
+    "public_transport",
+    # "bicycle_public_transport", "public_transport",
+    # "walking",
+]
 
 [city.cologne]
 german="K\u00F6ln"
