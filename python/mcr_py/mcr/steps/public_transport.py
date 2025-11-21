@@ -9,6 +9,7 @@ from mcr_py._mcr_py import add_nearest_node_to_df
 from mcr_py.mcr.bag import (
     IntermediateBags,
     convert_mc_raptor_bags_to_intermediate_bags,
+    filter_bags_by_limits,
 )
 from mcr_py.mcr.label import (
     IntermediateLabel,
@@ -59,7 +60,7 @@ class PublicTransportStep(Step):
         with self.timer.info("Running MCRAPTOR step"):
             mc_raptor = McRaptorSingle(
                 self.structs_dict,
-                default_transfer_time=60,
+                default_transfer_time=0,
                 label_class=(McRAPTORLabel if self.disable_paths else McRAPTORLabelWithPath),
                 limits=limits,
             )
@@ -67,7 +68,7 @@ class PublicTransportStep(Step):
 
         with self.timer.info("Extracting MCRAPTOR step bags"):
             raw_public_transport_result_bags = self.convert_public_transport_bags(
-                raw_public_transport_result_bags, path_index_offset=offset
+                raw_public_transport_result_bags, path_index_offset=offset, limit_cache=limits
             )
             self.logger.debug(
                 "Extracted %s bags from MCRAPTOR step", len(raw_public_transport_result_bags)
@@ -116,7 +117,7 @@ class PublicTransportStep(Step):
         return mc_raptor_bags_string
 
     def convert_public_transport_bags(
-        self, bags: dict[str, Bag], path_index_offset: int
+        self, bags: dict[str, Bag], path_index_offset: int, limit_cache: dict[int, int]
     ) -> IntermediateBags:
         """
         Converts the bags from the McRAPTOR step to the intermediate bags
@@ -134,6 +135,7 @@ class PublicTransportStep(Step):
             mc_raptor_result_bags,
             min_path_length=path_index_offset + 1,
         )
+        mc_raptor_result_bags = filter_bags_by_limits(mc_raptor_result_bags, limit_cache)
         if self.path_manager:
             self.path_manager.extract_all_paths_from_bags(
                 mc_raptor_result_bags,
