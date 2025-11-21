@@ -96,6 +96,10 @@ class PathManager:
         label_path = label.path[path_index_offset:]
         label.path = label.path[:path_index_offset]
 
+        if any(path_id > self.path_id_counter for path_id in label.path):  # type: ignore
+            msg = f"Label contains path ids that are not in the PathManager. Label path: {label.path}, extracted path: {label_path}, PathManager path ids: {list(self.paths.keys())}"
+            raise ValueError(msg)
+
         meta = {
             "values": label.values,
             "hidden_values": label.hidden_values,
