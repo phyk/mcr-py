@@ -1,3 +1,4 @@
+import logging
 from typing import Callable
 
 from mcr_py import PyLabel
@@ -55,3 +56,37 @@ def convert_mc_raptor_bags_to_intermediate_bags(
     }
 
     return intermediate_bags
+
+
+def get_closest_cost(cost: int, limit_cache: dict[int, int]) -> int | None:
+    """
+    Returns the closest cost in the limit cache that is less than or equal to the given cost.
+    If no such cost exists, returns None.
+    """
+    valid_costs = [c for c in limit_cache if c <= cost]
+    if not valid_costs:
+        return None
+    return max(valid_costs)
+
+
+def filter_bags_by_limits(
+    bags: IntermediateBags,
+    limit_cache: dict[int, int],
+) -> IntermediateBags:
+    filtered_bags: IntermediateBags = {}
+    removed_labels = []
+    for node_id, bag in bags.items():
+        filtered_bag: set[IntermediateLabel] = set()
+        for label in bag:
+            time, cost = label.values
+            closest_cost = get_closest_cost(cost, limit_cache)
+            if time <= limit_cache[closest_cost]:  # type: ignore
+                filtered_bag.add(label)
+            else:
+                if time < 292000:
+                    removed_labels.append(label)
+
+        if len(filtered_bag) > 0:
+            filtered_bags[node_id] = filtered_bag
+    logging.info(removed_labels)
+    return filtered_bags

@@ -66,6 +66,8 @@ class McRaptorSingle(Generic[L, S, T]):
         :param bags: dict[str, Bag] - A dictionary mapping stop IDs to their corresponding bags.
         :returns: Tuple[dict[str, Bag], set[str]] - A tuple containing the output bags and a set of marked stops.
         """
+        marked_stops = set(bags.keys())
+
         n_missing_stops = 0
         for stop_id in self.dq.stop_id_set:
             if stop_id not in bags:
@@ -77,8 +79,6 @@ class McRaptorSingle(Generic[L, S, T]):
             )
 
         output_bags = deepcopy(bags)
-
-        marked_stops = set(bags.keys())
 
         return output_bags, marked_stops
 
@@ -122,7 +122,7 @@ class McRaptorSingle(Generic[L, S, T]):
         """
         marked_stops = set()
         for route_id, (stop_id, idx) in Q.items():
-            route_bag = RouteBag[L, S, T](self.dq, self.limit_cache)
+            route_bag = RouteBag[L, S, T](self.dq)
 
             for stop_id in self.dq.iterate_stops_in_route_from_idx(route_id, idx):
                 output_bags, marked_stops, route_bag = self.process_route(
@@ -133,6 +133,7 @@ class McRaptorSingle(Generic[L, S, T]):
                     route_bag,
                     marked_stops,
                 )
+
         return output_bags, marked_stops
 
     def process_route(
