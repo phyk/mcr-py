@@ -99,7 +99,7 @@ def get_public_transport_only_config_ready(
             "repeating_steps": repeating_steps,
         },
         "location_mappings": geo_data.location_mapping[NetworkType.WALKING],
-        "max_transfers": 1,
+        "max_transfers": 5,
         "start_time": start_time,
     }
 

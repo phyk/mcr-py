@@ -39,8 +39,8 @@ def get_car_only_config_with_data(geo_data: OSMData) -> StepBuilderMatrix:
         geo_data.pois,
     )
 
-    initial_steps = []
-    repeating_steps = [[car_step]]
+    initial_steps = [[car_step]]
+    repeating_steps = []
     return initial_steps, repeating_steps
 
 
