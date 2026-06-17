@@ -109,6 +109,7 @@ impl PublicTransportConfig {
         short_trip_fare_cents=220,
         short_trip_max_stops=4,
         long_trip_fare_cents=320,
+        switch_time_secs=0,
     ))]
     fn new(
         data_dir: String,
@@ -118,6 +119,7 @@ impl PublicTransportConfig {
         short_trip_fare_cents: u64,
         short_trip_max_stops: usize,
         long_trip_fare_cents: u64,
+        switch_time_secs: u32,
     ) -> Self {
         PublicTransportConfig {
             inner: RustPublicTransportConfig {
@@ -128,6 +130,7 @@ impl PublicTransportConfig {
                 short_trip_fare_cents,
                 short_trip_max_stops,
                 long_trip_fare_cents,
+                switch_time_secs,
             },
         }
     }

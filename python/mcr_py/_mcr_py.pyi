@@ -40,6 +40,7 @@ class PublicTransportConfig:
         short_trip_fare_cents: int = 220,
         short_trip_max_stops: int = 4,
         long_trip_fare_cents: int = 320,
+        switch_time_secs: int = 0,
     ) -> None: ...
 
 class MCRConfig:
