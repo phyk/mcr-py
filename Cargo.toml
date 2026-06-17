@@ -9,11 +9,10 @@ name="_mcr_py"
 crate-type=["cdylib"]
 
 [dependencies]
-mlc={ version="0.1.0", path="mlc" }
+mcr-rust={ version="0.1.0", path="mcr-rust" }
 osmtools={ version="0.1.0", path="osmtools" }
 log="0.4.28"
 pyo3="0.25"
 pyo3-log="0.12.4"
 pyo3-polars="0.24"                                           # on version 0.24, can remove python dependency version lock
 polars={ version="0.51", features=["dtype-struct", "lazy"] }
-petgraph="0.8.2"
