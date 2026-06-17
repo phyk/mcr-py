@@ -1,41 +1,79 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 import polars as pl
 
-PyBags = dict[int, list[PyLabel]]
+class WalkingConfig:
+    def __init__(self, speed_kmh: int, time_only_dominance: bool = False) -> None: ...
 
-class GraphCache:
+class PrivateModeConfig:
+    def __init__(
+        self,
+        speed_kmh: int,
+        switch_time_s: int,
+        price_function_base: int,
+    ) -> None: ...
+
+class PriceFunction:
+    def __init__(
+        self,
+        unlock_fee: int,
+        interval_minutes: int,
+        price_per_interval: int,
+        first_interval_free: bool,
+    ) -> None: ...
+
+class SharedMicromobileConfig:
+    def __init__(
+        self,
+        speed_kmh: int,
+        switch_time_s: int,
+        price_function: PriceFunction,
+    ) -> None: ...
+
+class PublicTransportConfig:
+    def __init__(
+        self,
+        data_dir: str,
+        max_snap_distance_m: float = 20.0,
+        anchor_time_secs: int = 28800,
+        flex_window_secs: int = 600,
+        short_trip_fare_cents: int = 220,
+        short_trip_max_stops: int = 4,
+        long_trip_fare_cents: int = 320,
+    ) -> None: ...
+
+class MCRConfig:
+    def __init__(
+        self,
+        out_dir: str,
+        walking: Optional[WalkingConfig] = None,
+        cycling: Optional[PrivateModeConfig] = None,
+        car: Optional[PrivateModeConfig] = None,
+        shared_micromobile: Optional[List[SharedMicromobileConfig]] = None,
+        public_transport: Optional[PublicTransportConfig] = None,
+        enable_limit: bool = False,
+    ) -> None: ...
+
+class MCRGraph:
+    def node_count(self) -> int: ...
+
+class MCRGraphBuilder:
     def __init__(self) -> None: ...
-    def set_graph(self, raw_edges: List[Dict[str, Any]]) -> None: ...
-    def set_node_weights(self, node_weights: Dict[int, List[int]]) -> None: ...
-    def summary(self) -> None: ...
-    def validate_node_id(self, node_id: int) -> None: ...
-    def get_edge_weights(self, start_node_id: int, end_node_id: int) -> List[int]: ...
+    def add_walking_nodes(self, path: str) -> "MCRGraphBuilder": ...
+    def add_walking_edges(self, path: str) -> "MCRGraphBuilder": ...
+    def add_cycling_nodes(self, path: str) -> "MCRGraphBuilder": ...
+    def add_cycling_edges(self, path: str) -> "MCRGraphBuilder": ...
+    def add_car_nodes(self, path: str) -> "MCRGraphBuilder": ...
+    def add_car_edges(self, path: str) -> "MCRGraphBuilder": ...
+    def add_poi_nodes(self, path: str) -> "MCRGraphBuilder": ...
+    def add_shared_bike_stations(self, path: str) -> "MCRGraphBuilder": ...
+    def add_shared_bike_dropoff_zones(self, path: str) -> "MCRGraphBuilder": ...
+    def add_shared_scooter_stations(self, path: str) -> "MCRGraphBuilder": ...
+    def add_shared_scooter_dropoff_zones(self, path: str) -> "MCRGraphBuilder": ...
+    def build(self) -> MCRGraph: ...
 
-class PyLabel:
-    values: List[int]
-    hidden_values: List[int]
-    path: List[int]
-    node_id: int
-
-def run_mlc(graph_cache: GraphCache, start_node_id: int) -> PyBags: ...
+def run_mcr5(start_nodes: str, config: MCRConfig, graph: MCRGraph) -> None: ...
 def log_something() -> None: ...
-def run_mlc_with_node_and_time(
-    graph_cache: GraphCache,
-    start_node_id: int,
-    time: int,
-    disable_paths: Optional[bool] = None,
-    update_label_func: Optional[str] = None,
-    enable_limit: Optional[bool] = None,
-) -> PyBags: ...
-def run_mlc_with_bags(
-    graph_cache: GraphCache,
-    bags: Dict[int, List[Union[PyLabel, Any]]],
-    update_label_func: Optional[str] = None,
-    disable_paths: Optional[bool] = None,
-    enable_limit: Optional[bool] = None,
-    accuracy: Optional[int] = None,
-) -> PyBags: ...
 def load_osm_cycling(
     city_name: str,
     geometry_vec: List[Tuple[float, float]],
