@@ -1,1 +1,0 @@
---log-level=DEBUG mcraptor --footpaths ../data/footpaths.pkl --structs ../data/structs.pkl --start-stop-id 818 --start-time 15:00:00 --output-dir ../data/raptor_results/

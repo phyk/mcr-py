@@ -49,7 +49,6 @@ dependencies=[
     "seaborn>=0.13.2",
     "shapely>=2.0.6",
     "tqdm>=4.67.1",
-    "typer>=0.15.1",
     "vl-convert-python>=1.8.0",
 ]
 
