@@ -57,8 +57,14 @@ def read_dfs(gtfs_zip_path: pathlib.Path) -> dict[str, pl.DataFrame]:
 
         for file in EXPECTED_FILES:
             df = read_file(zip_ref, file)
-            if "stop_id" in df.columns:
-                df = df.with_columns(pl.col("stop_id").cast(pl.String))
+            # GTFS ids are strings by spec, but CSV inference reads purely
+            # numeric ids (e.g. Cologne route ids) as integers, which then
+            # break string concatenation/joins downstream. Coerce them here.
+            id_columns = [
+                c for c in ("stop_id", "route_id", "trip_id", "service_id") if c in df.columns
+            ]
+            if id_columns:
+                df = df.with_columns(pl.col(id_columns).cast(pl.String))
             name = file.split(".")[0]
             dfs[name] = df
 
