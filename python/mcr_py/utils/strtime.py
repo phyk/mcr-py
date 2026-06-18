@@ -5,7 +5,7 @@ class InvalidTimeFormat(ValueError):
     pass
 
 
-def str_time_to_seconds(str_time: str, accuracy_multiplier: int) -> int:
+def str_time_to_seconds(str_time: str) -> int:
     """
     Converts a string representing time in the format HH:MM:SS to seconds since midnight.
     Can handle times that go past midnight.
@@ -23,11 +23,10 @@ def str_time_to_seconds(str_time: str, accuracy_multiplier: int) -> int:
         msg = "Invalid time format"
         raise InvalidTimeFormat(msg)
 
-    total_seconds = hours * 3600 + minutes * 60 + seconds
-    return total_seconds * accuracy_multiplier
+    return hours * 3600 + minutes * 60 + seconds
 
 
-def seconds_to_str_time(seconds: int, accuracy_multiplier: int) -> str:
+def seconds_to_str_time(seconds: int) -> str:
     """
     Converts seconds since midnight to a string formatted as HH:MM:SS.
     Can handle times that go past midnight.
@@ -37,7 +36,6 @@ def seconds_to_str_time(seconds: int, accuracy_multiplier: int) -> str:
     """
     if seconds == sys.maxsize:
         return "--:--:--"
-    seconds = seconds // accuracy_multiplier
     hours = seconds // 3600
     minutes = (seconds - hours * 3600) // 60
     seconds = seconds - hours * 3600 - minutes * 60

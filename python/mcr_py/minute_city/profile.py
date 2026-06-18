@@ -3,11 +3,8 @@ import typing
 import polars as pl
 
 import mcr_py.utils.strtime
-from mcr_py.mcr.data import ACCURACY_MULTIPLIER
 
-PROFILE_MAX_TIME = mcr_py.utils.strtime.str_time_to_seconds(
-    "48:00:00", accuracy_multiplier=ACCURACY_MULTIPLIER
-)
+PROFILE_MAX_TIME = mcr_py.utils.strtime.str_time_to_seconds("48:00:00")
 
 
 def profile_calculation_worker(

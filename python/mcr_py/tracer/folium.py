@@ -1,7 +1,6 @@
 import folium
 import polars as pl
 
-from mcr_py.mcr.data import ACCURACY_MULTIPLIER
 from mcr_py.tracer.tracer import Trace, TraceFootpath, TraceStart, TraceTrip
 from mcr_py.utils import strtime
 
@@ -53,7 +52,7 @@ def add_tracer_list_to_folium_map(
             ).add_to(folium_map)
             folium.CircleMarker(
                 location=(end_stop_lat, end_stop_lon),
-                popup=f"{end_stop_name} ({tracer.end_stop_id}) duration:{strtime.seconds_to_str_time(tracer.walking_time, ACCURACY_MULTIPLIER)}",
+                popup=f"{end_stop_name} ({tracer.end_stop_id}) duration:{strtime.seconds_to_str_time(tracer.walking_time)}",
                 **circle_marker_kwargs,
             ).add_to(folium_map)
         elif isinstance(tracer, TraceTrip):
@@ -73,7 +72,7 @@ def add_tracer_list_to_folium_map(
             ).add_to(folium_map)
             folium.CircleMarker(
                 location=(end_stop_lat, end_stop_lon),
-                popup=f"{end_stop_name} ({tracer.end_stop_id}) @ {strtime.seconds_to_str_time(tracer.arrival_time, ACCURACY_MULTIPLIER)}",
+                popup=f"{end_stop_name} ({tracer.end_stop_id}) @ {strtime.seconds_to_str_time(tracer.arrival_time)}",
                 **circle_marker_kwargs,
             ).add_to(folium_map)
         else:
