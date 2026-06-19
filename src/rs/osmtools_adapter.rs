@@ -1,4 +1,5 @@
 use log::info;
+use osmtools::boundary::_load_osm_boundary;
 use osmtools::download::download;
 use osmtools::extractor::{
     _load_osm_cycling, _load_osm_driving, _load_osm_pois, _load_osm_walking,
@@ -35,6 +36,21 @@ pub fn download_osm_data(py: Python, city_name: &str, archive_path: &str) -> Str
             .to_str()
             .expect("Path not convertible to string")
             .into();
+    })
+}
+
+#[pyfunction]
+pub fn load_osm_boundary(
+    py: Python,
+    city_name: &str,
+    name_filter: &str,
+    admin_level: &str,
+    archive_path: &str,
+    download: bool,
+) -> Vec<(Vec<(f64, f64)>, Vec<Vec<(f64, f64)>>)> {
+    py.allow_threads(|| {
+        info!("Loading administrative boundary for {} from {}", name_filter, city_name);
+        _load_osm_boundary(city_name, name_filter, admin_level, archive_path, download)
     })
 }
 

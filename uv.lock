@@ -459,6 +459,18 @@ wheels = [
 ]
 
 [[package]]
+name = "click"
+version = "8.4.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9b/98/518d8e5081007684232226f475082b30087d0f585e8457db087298259f49/click-8.4.1.tar.gz", hash = "sha256:918b5633eddf6b41c32d4f454bf0de810065c74e3f7dbf8ee5452f8be88d3e96", size = 353007, upload-time = "2026-05-22T04:08:37.769Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c7/0d/67e5b4109ea4a837e80daa87c2c696711955e40449a97e8926672534def2/click-8.4.1-py3-none-any.whl", hash = "sha256:482be17c6991b8c19c5429a1e995d9b0efdbb63172824c41f99965dc0ade8ec2", size = 116639, upload-time = "2026-05-22T04:08:35.26Z" },
+]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -1562,6 +1574,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "altair" },
+    { name = "click" },
     { name = "folium" },
     { name = "fsspec" },
     { name = "h3" },
@@ -1574,7 +1587,6 @@ dependencies = [
     { name = "maturin" },
     { name = "networkx" },
     { name = "notebook" },
-    { name = "overpass" },
     { name = "pandera", extra = ["polars"] },
     { name = "patchelf" },
     { name = "plotly" },
@@ -1603,6 +1615,7 @@ dependencies = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.11" },
     { name = "altair", specifier = ">=5.5.0" },
+    { name = "click", specifier = ">=8.4.1" },
     { name = "folium", specifier = ">=0.19.4" },
     { name = "fsspec", specifier = ">=2024.12.0" },
     { name = "h3", specifier = ">=4.2.0" },
@@ -1615,7 +1628,6 @@ requires-dist = [
     { name = "maturin", specifier = ">=1.8.1" },
     { name = "networkx", specifier = ">=3.4.2" },
     { name = "notebook", specifier = ">=7.3.2" },
-    { name = "overpass", specifier = ">=0.7.2" },
     { name = "pandera", extras = ["polars"], specifier = ">=0.26.1" },
     { name = "patchelf", specifier = ">=0.17.2.1" },
     { name = "plotly", specifier = ">=6.4.0" },
@@ -1999,32 +2011,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/77/92/25b886252c50ed64be68c937b562b2f2333b45afe72d53d719e46a565a50/orjson-3.11.4-cp314-cp314-win32.whl", hash = "sha256:d63076d625babab9db5e7836118bdfa086e60f37d8a174194ae720161eb12394", size = 136065, upload-time = "2025-10-24T15:50:13.025Z" },
     { url = "https://files.pythonhosted.org/packages/63/b8/718eecf0bb7e9d64e4956afaafd23db9f04c776d445f59fe94f54bdae8f0/orjson-3.11.4-cp314-cp314-win_amd64.whl", hash = "sha256:0a54d6635fa3aaa438ae32e8570b9f0de36f3f6562c308d2a2a452e8b0592db1", size = 131310, upload-time = "2025-10-24T15:50:14.46Z" },
     { url = "https://files.pythonhosted.org/packages/1a/bf/def5e25d4d8bfce296a9a7c8248109bf58622c21618b590678f945a2c59c/orjson-3.11.4-cp314-cp314-win_arm64.whl", hash = "sha256:78b999999039db3cf58f6d230f524f04f75f129ba3d1ca2ed121f8657e575d3d", size = 126151, upload-time = "2025-10-24T15:50:15.878Z" },
-]
-
-[[package]]
-name = "osm2geojson"
-version = "0.2.9"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "requests" },
-    { name = "shapely" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/34/08/f37d924c9aaaf079bf9b043b18f5c30d41c70e04c78a7c9996092390d3b2/osm2geojson-0.2.9.tar.gz", hash = "sha256:b4f67cf0bbe48f33dfb364e9365097363c4087e59698df11add0f4d66cbb34a8", size = 16833, upload-time = "2025-10-06T16:59:14.261Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/2d/4a/a29829d7397720c60116fb3d70e29a1da025ae11073ce7f561d698de73e9/osm2geojson-0.2.9-py3-none-any.whl", hash = "sha256:f16b64600fd478c9cd197dad96aeb21bd7e1283a29c21f9b41495dd2922b0064", size = 14940, upload-time = "2025-10-06T16:59:13.146Z" },
-]
-
-[[package]]
-name = "overpass"
-version = "0.7.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "osm2geojson" },
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a5/64/186d0a2e5f76e5f5c767c9ac09a8b69b68a30b59637697766aa7b179a19d/overpass-0.7.2.tar.gz", hash = "sha256:2658b3a4b4e30b38314daaf3076202d96b102b66f19a616ba8fd045ce6445c2f", size = 11217, upload-time = "2024-08-10T20:38:15.087Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ce/31/33eb3a90e736a9dfebc8d0fdb39b87b5fc094ed9ab9031ac33ed78ce018f/overpass-0.7.2-py3-none-any.whl", hash = "sha256:0b97a31123290425c37c04f2c6cc4b497b730c1977449392448f5f1ce959ad96", size = 13238, upload-time = "2024-08-10T20:38:14.01Z" },
 ]
 
 [[package]]
