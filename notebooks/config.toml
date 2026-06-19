@@ -14,16 +14,62 @@ now="20260619-093700"
 [gtfs]
 timestamp="20260619"
 
-[public_transport]
-start_times=["08:00:00"]
+[modes.walking]
+speed_kmh=5
 
-[mcr5_types]
-mcr5_types=[
-    "bicycle",
-    "car",
-    "public_transport",
-    "bicycle_public_transport", "public_transport",
-    "walking",
+[modes.private_bike]
+speed_kmh=15
+switch_time_s=0
+price_function_base=10
+
+[modes.private_car]
+speed_kmh=50
+switch_time_s=0
+price_function_base=20
+
+[modes.shared_bicycle]
+# The old "next_bike_no_tariff" scenario: nextbike shared bikes with no fare.
+speed_kmh=15
+switch_time_s=30
+unlock_fee=0
+interval_minutes=1
+price_per_interval=0
+first_interval_free=true
+
+[modes.shared_scooter]
+# Placeholder pricing mirrored from the mcr-rust integration-test fixture;
+# no real operator tariff has been sourced for this mode yet.
+speed_kmh=20
+switch_time_s=30
+unlock_fee=100
+interval_minutes=5
+price_per_interval=150
+first_interval_free=false
+
+[modes.public_transport]
+start_times=["08:00:00"]
+# Everything below was previously a hidden Rust-side default (mirroring the
+# De Lijn/Brugge fixture's tariff). Now explicit and overridable per city.
+max_snap_distance_m=20.0
+flex_window_secs=600
+short_trip_fare_cents=220
+short_trip_max_stops=4
+long_trip_fare_cents=320
+switch_time_secs=0
+
+[mcr5]
+# Each entry is the set of modes run together in one MCR pass. "walking" is
+# always included as the access/egress layer even if omitted from a combo;
+# list it alone (["walking"]) for a walking-only run. A combo can list more
+# than one mode (e.g. ["shared_bicycle", "public_transport"]) to run them
+# together.
+scenarios=[
+    ["walking"],
+    ["private_bike"],
+    ["private_car"],
+    ["shared_bicycle"],
+    ["shared_scooter"],
+    ["public_transport"],
 ]
 
 [city.cologne]
