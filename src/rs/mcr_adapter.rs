@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mcr_rust::mcr5::{self, MCRConfig as RustMCRConfig};
+use mcr_rust::mcr5::{self, MCRConfig as RustMCRConfig, MCRModes};
 use mcr_rust::mlc_interface::{
     private_mode::PrivateModeConfig as RustPrivateModeConfig,
     public_transport::PublicTransportConfig as RustPublicTransportConfig,
@@ -10,7 +10,7 @@ use mcr_rust::mlc_interface::{
     walking::WalkingConfig as RustWalkingConfig,
 };
 use mcr_rust::network::{MCRGraph as RustMCRGraph, MCRGraphBuilder as RustMCRGraphBuilder};
-use pyo3::exceptions::PyRuntimeError;
+use pyo3::exceptions::{PyRuntimeError, PyValueError};
 use pyo3::prelude::*;
 
 #[pyclass]
@@ -81,14 +81,30 @@ pub struct SharedMicromobileConfig {
 #[pymethods]
 impl SharedMicromobileConfig {
     #[new]
-    fn new(speed_kmh: u64, switch_time_s: u64, price_function: PriceFunction) -> Self {
-        SharedMicromobileConfig {
+    #[pyo3(signature = (speed_kmh, switch_time_s, price_function, mode="shared_bicycle"))]
+    fn new(
+        speed_kmh: u64,
+        switch_time_s: u64,
+        price_function: PriceFunction,
+        mode: &str,
+    ) -> PyResult<Self> {
+        let mode_tag = match mode {
+            "shared_bicycle" => MCRModes::SharedBicycle,
+            "shared_scooter" => MCRModes::SharedScooter,
+            other => {
+                return Err(PyValueError::new_err(format!(
+                    "SharedMicromobileConfig: unknown mode {other:?}, expected \"shared_bicycle\" or \"shared_scooter\""
+                )));
+            }
+        };
+        Ok(SharedMicromobileConfig {
             inner: RustSharedMicromobileConfig::new(
+                mode_tag,
                 speed_kmh,
                 switch_time_s,
                 price_function.inner.clone(),
             ),
-        }
+        })
     }
 }
 

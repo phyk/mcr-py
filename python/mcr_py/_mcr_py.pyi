@@ -28,6 +28,7 @@ class SharedMicromobileConfig:
         speed_kmh: int,
         switch_time_s: int,
         price_function: PriceFunction,
+        mode: str = "shared_bicycle",
     ) -> None: ...
 
 class PublicTransportConfig:
