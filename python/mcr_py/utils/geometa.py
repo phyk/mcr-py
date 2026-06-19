@@ -59,7 +59,9 @@ class GeoMeta:
     buffer: int = 10000  # roughly 5km
 
     @staticmethod
-    def create(boundary: Polygon, crs: str, crs_target: str, buffer: int = 10000) -> "GeoMeta":
+    def create(
+        boundary: Polygon | MultiPolygon, crs: str, crs_target: str, buffer: int = 10000
+    ) -> "GeoMeta":
         """
         Initialize the GeoMeta object with a boundary, source CRS, and target CRS.
 

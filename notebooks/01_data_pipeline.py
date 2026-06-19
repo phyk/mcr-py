@@ -25,8 +25,9 @@ For each city it produces, under ``data/<timestamp>/``:
     ``stop_times.parquet``     ``trip_idx, stop_idx, stop_sequence, arrival_secs, departure_secs`` (all u32)
 
 All OSM extraction goes through the osmtools crate via the `mcr_py` bindings
-(`load_osm_walking`/`load_osm_cycling`/`load_osm_driving`/`load_osm_pois`); the
-PBF is downloaded once per city with `download_osm_data`.
+(`load_osm_walking`/`load_osm_cycling`/`load_osm_driving`/`load_osm_pois`/
+`load_osm_boundary`); the PBF is downloaded once per city with
+`download_osm_data`.
 """
 
 import datetime
@@ -40,7 +41,6 @@ import zoneinfo
 import mcr_py
 import mcr_py.gtfs.clean
 import mcr_py.gtfs.crop
-import mcr_py.overpass.query
 import mcr_py.utils.cache
 import mcr_py.utils.geometa
 import mcr_py.utils.key
@@ -50,6 +50,7 @@ import polars_h3 as plh3
 import polars_st as st
 from fsspec.implementations.http import HTTPFileSystem
 from mcr_py.utils.geometa import Buffering, GeoMeta
+from shapely.geometry import MultiPolygon
 
 # H3 resolution for the start-node mapping. Matches the old `OSMData` default;
 # `run_mcr5` fans out over exactly one start node per occupied cell.
@@ -73,14 +74,21 @@ def crs_to_srid(crs: str) -> int:
 
 def build_geometa(
     city_name_german: str,
+    city_name_german_alt: str,
     admin_level: int,
     crs_sink_name: str,
     geometa_path: pathlib.Path,
+    osm_path: pathlib.Path,
 ) -> GeoMeta:
-    """Fetch the city boundary from Overpass and persist a `GeoMeta`."""
-    boundary_polygon = mcr_py.overpass.query.fetch_boundary_polygon(
-        city_name_german, admin_level
+    """Extract the city boundary from the local PBF and persist a `GeoMeta`."""
+    rings = mcr_py.load_osm_boundary(
+        city_name_german_alt,
+        city_name_german,
+        str(admin_level),
+        str(osm_path),
+        download=False,
     )
+    boundary_polygon = MultiPolygon(rings)
     geometa = GeoMeta.create(boundary_polygon, CRS_SOURCE, crs_sink_name)
     geometa.save(geometa_path)
     return geometa
@@ -402,9 +410,16 @@ def load_data_for_city(
     cache_path.mkdir(parents=True, exist_ok=True)
     mcr_py.utils.cache.overwrite_tempdir(cache_path)
 
-    geometa = build_geometa(city_name_german, admin_level, crs_sink_name, geometa_path)
-
     ensure_pbf_downloaded(city_name_german_alt, osm_path)
+    geometa = build_geometa(
+        city_name_german,
+        city_name_german_alt,
+        admin_level,
+        crs_sink_name,
+        geometa_path,
+        osm_path,
+    )
+
     node_dfs = extract_networks(geometa, city_name_german_alt, osm_path, cache_path, graph_dir)
     extract_pois(
         geometa, city_name_german_alt, osm_path, cache_path, graph_dir, node_dfs["walking"]
