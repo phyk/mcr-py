@@ -5,6 +5,12 @@ one MCR pass. Modes map 1:1 onto mcr-rust's `MCRConfig` slots, except
 `public_transport` (which expands into one scenario per `start_times` entry)
 and `shared_bicycle`/`shared_scooter` (which both populate the
 `shared_micromobile` list, so a combo can carry both at once).
+
+Any combo containing a private mode (`private_bike`/`private_car`) builds
+walking with `time_only_dominance=True` — otherwise walking's full cost/time
+Pareto front blows up with "hop off the bike/car and walk instead" options
+that don't add useful reachability. `[mcr5] enable_limit` is forwarded
+verbatim to every scenario's `MCRConfig`.
 """
 
 from __future__ import annotations
@@ -29,6 +35,10 @@ MODE_NAMES = (
     "shared_scooter",
     "public_transport",
 )
+
+# Modes that make walking's full cost/time Pareto front blow up with useless
+# "hop off and walk" options (see `WalkingConfig.time_only_dominance`).
+_PRIVATE_MODES = frozenset({"private_bike", "private_car"})
 
 # Graph layers (`build_graph` kwargs) each mode needs beyond the universal
 # walking/POI layer that every scenario loads.
@@ -80,8 +90,10 @@ def build_paths(base_directory: pathlib.Path, city_name: str) -> dict[str, str]:
     }
 
 
-def _walking_config(settings: dict[str, Any]) -> WalkingConfig:
-    return WalkingConfig(speed_kmh=settings["speed_kmh"])
+def _walking_config(settings: dict[str, Any], *, time_only_dominance: bool) -> WalkingConfig:
+    return WalkingConfig(
+        speed_kmh=settings["speed_kmh"], time_only_dominance=time_only_dominance
+    )
 
 
 def _private_mode_config(settings: dict[str, Any]) -> PrivateModeConfig:
@@ -134,6 +146,8 @@ def build_scenarios(
     combo: list[str],
     mode_settings: dict[str, dict[str, Any]],
     paths: dict[str, str],
+    *,
+    enable_limit: bool = False,
 ) -> list[Scenario]:
     """Expand one `[mcr5] scenarios` entry into one or more `Scenario`s.
 
@@ -157,7 +171,13 @@ def build_scenarios(
         for layer in _GRAPH_REQUIREMENTS.get(mode, ()):
             graph_kwargs[layer] = paths[layer]
 
-    config_kwargs: dict[str, Any] = {"walking": _walking_config(mode_settings["walking"])}
+    time_only_dominance = any(mode in _PRIVATE_MODES for mode in modes)
+    config_kwargs: dict[str, Any] = {
+        "walking": _walking_config(
+            mode_settings["walking"], time_only_dominance=time_only_dominance
+        ),
+        "enable_limit": enable_limit,
+    }
     shared_micromobile: list[SharedMicromobileConfig] = []
     for mode in modes:
         if mode == "private_bike":
