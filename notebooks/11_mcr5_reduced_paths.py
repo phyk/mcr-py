@@ -24,20 +24,34 @@ from mcr_py.mcr5.mcr5 import build_config, build_graph, run_mcr5
 from mcr_py.mcr5.scenarios import build_paths, build_scenarios
 from mcr_py.utils.logger import rlog, setup
 
-# H3 cells to run for. 10 cells sampled at random (seed=42) from cologne's
-# walking start-node parquet (`start_nodes/cologne/walking.parquet`).
-TARGET_H3_CELLS = [
-    "891fa18aba7ffff",
-    "891fa19a9dbffff",
-    "891fa1894d7ffff",
-    "891fa19a1a7ffff",
-    "891fa18b22fffff",
-    "891fa188213ffff",
-    "891fa188283ffff",
-    "891fa565b5bffff",
-    "891fa19809bffff",
-    "891fa188113ffff",
-]
+# H3 cells to run for, per city. 10 cells sampled at random (seed=42) from
+# each city's walking start-node parquet (`start_nodes/<city>/walking.parquet`).
+TARGET_H3_CELLS = {
+    "cologne": [
+        "891fa18aba7ffff",
+        "891fa19a9dbffff",
+        "891fa1894d7ffff",
+        "891fa19a1a7ffff",
+        "891fa18b22fffff",
+        "891fa188213ffff",
+        "891fa188283ffff",
+        "891fa565b5bffff",
+        "891fa19809bffff",
+        "891fa188113ffff",
+    ],
+    "berlin": [
+        "891f18b0ccfffff",
+        "891f1d48247ffff",
+        "891f18b6613ffff",
+        "891f1d4810fffff",
+        "891f18b1cafffff",
+        "891f18846c7ffff",
+        "891f1d4dccfffff",
+        "891f18a2517ffff",
+        "891f1d4818fffff",
+        "891f1886033ffff",
+    ],
+}
 
 
 def write_filtered_start_nodes(
@@ -52,52 +66,56 @@ def write_filtered_start_nodes(
 
 
 if __name__ == "__main__":
-    city_name = "cologne"
-
     with open(pathlib.Path(__file__).parent.resolve() / "config.toml", "rb") as f:
         settings = tomllib.load(f)
 
     setup("DEBUG")
     data_directory = pathlib.Path(__file__).parent.parent.resolve() / "data"
     base_directory = data_directory / settings["timestamp"]["timestamp"]
-    mcr5_output_path = base_directory / f"mcr5_results/{city_name}_reduced_paths"
-    mcr5_output_path.mkdir(parents=True, exist_ok=True)
-
-    paths = build_paths(base_directory, city_name)
     mode_settings = settings["modes"]
     combos = settings["mcr5"]["scenarios"]
+    enable_limit = settings["mcr5"]["enable_limit"]
 
-    runtimes = {}
-    for combo in combos:
-        for scenario in build_scenarios(combo, mode_settings, paths):
-            start = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
-            rlog.info(f"Building graph and config for {scenario.key}")
+    for city_name in ["cologne"]:
+        mcr5_output_path = base_directory / f"mcr5_results/{city_name}_reduced_paths"
+        mcr5_output_path.mkdir(parents=True, exist_ok=True)
+        paths = build_paths(base_directory, city_name)
 
-            graph = build_graph(**scenario.graph_kwargs)
-            rlog.info("Graph has {} nodes".format(graph.node_count()))
+        runtimes = {}
+        for combo in combos:
+            for scenario in build_scenarios(
+                combo, mode_settings, paths, enable_limit=enable_limit
+            ):
+                start = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
+                rlog.info(f"[{city_name}] Building graph and config for {scenario.key}")
 
-            loaded_at = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
-            load_time = loaded_at - start
+                graph = build_graph(**scenario.graph_kwargs)
+                rlog.info("Graph has {} nodes".format(graph.node_count()))
 
-            output_path = mcr5_output_path / scenario.key
-            config = build_config(out_dir=str(output_path), **scenario.config_kwargs)
+                loaded_at = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
+                load_time = loaded_at - start
 
-            start_nodes = write_filtered_start_nodes(
-                scenario.start_nodes,
-                TARGET_H3_CELLS,
-                output_path / "_start_nodes.parquet",
-            )
+                output_path = mcr5_output_path / scenario.key
+                config = build_config(out_dir=str(output_path), **scenario.config_kwargs)
 
-            rlog.info(f"Running MCR5 for {scenario.key} (parallel over start nodes)")
-            run_mcr5(str(start_nodes), config, graph)
+                start_nodes = write_filtered_start_nodes(
+                    scenario.start_nodes,
+                    TARGET_H3_CELLS[city_name],
+                    output_path / "_start_nodes.parquet",
+                )
 
-            run_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - loaded_at
-            total_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - start
-            runtimes[scenario.key] = {
-                "load_time": str(load_time),
-                "run_time": str(run_time),
-                "total_time": str(total_time),
-            }
+                rlog.info(
+                    f"[{city_name}] Running MCR5 for {scenario.key} (parallel over start nodes)"
+                )
+                run_mcr5(str(start_nodes), config, graph)
 
-    with open(mcr5_output_path / "runtimes.json", "w") as f:
-        json.dump(runtimes, f)
+                run_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - loaded_at
+                total_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - start
+                runtimes[scenario.key] = {
+                    "load_time": str(load_time),
+                    "run_time": str(run_time),
+                    "total_time": str(total_time),
+                }
+
+        with open(mcr5_output_path / "runtimes.json", "w") as f:
+            json.dump(runtimes, f)

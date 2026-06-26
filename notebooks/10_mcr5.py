@@ -43,41 +43,46 @@ if __name__ == "__main__":
         settings = tomllib.load(f)
 
     setup(settings["run_type"]["run_type"])
-    city_name = "cologne"
     data_directory = pathlib.Path(__file__).parent.parent.resolve() / "data"
     base_directory = data_directory / settings["timestamp"]["timestamp"]
-    mcr5_output_path = base_directory / f"mcr5_results/{city_name}"
-    mcr5_output_path.mkdir(parents=True, exist_ok=True)
-
-    paths = build_paths(base_directory, city_name)
     mode_settings = settings["modes"]
     combos = settings["mcr5"]["scenarios"]
+    enable_limit = settings["mcr5"]["enable_limit"]
 
-    runtimes = {}
-    for combo in combos:
-        for scenario in build_scenarios(combo, mode_settings, paths):
-            start = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
-            rlog.info(f"Building graph and config for {scenario.key}")
+    for city_name in settings["city"]:
+        mcr5_output_path = base_directory / f"mcr5_results/{city_name}"
+        mcr5_output_path.mkdir(parents=True, exist_ok=True)
+        paths = build_paths(base_directory, city_name)
 
-            graph = build_graph(**scenario.graph_kwargs)
-            rlog.info("Graph has {} nodes".format(graph.node_count()))
+        runtimes = {}
+        for combo in combos:
+            for scenario in build_scenarios(
+                combo, mode_settings, paths, enable_limit=enable_limit
+            ):
+                start = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
+                rlog.info(f"[{city_name}] Building graph and config for {scenario.key}")
 
-            loaded_at = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
-            load_time = loaded_at - start
+                graph = build_graph(**scenario.graph_kwargs)
+                rlog.info("Graph has {} nodes".format(graph.node_count()))
 
-            output_path = mcr5_output_path / scenario.key
-            config = build_config(out_dir=str(output_path), **scenario.config_kwargs)
+                loaded_at = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin"))
+                load_time = loaded_at - start
 
-            rlog.info(f"Running MCR5 for {scenario.key} (parallel over start nodes)")
-            run_mcr5(scenario.start_nodes, config, graph)
+                output_path = mcr5_output_path / scenario.key
+                config = build_config(out_dir=str(output_path), **scenario.config_kwargs)
 
-            run_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - loaded_at
-            total_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - start
-            runtimes[scenario.key] = {
-                "load_time": str(load_time),
-                "run_time": str(run_time),
-                "total_time": str(total_time),
-            }
+                rlog.info(
+                    f"[{city_name}] Running MCR5 for {scenario.key} (parallel over start nodes)"
+                )
+                run_mcr5(scenario.start_nodes, config, graph)
 
-    with open(mcr5_output_path / "runtimes.json", "w") as f:
-        json.dump(runtimes, f)
+                run_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - loaded_at
+                total_time = datetime.now(tz=zoneinfo.ZoneInfo("Europe/Berlin")) - start
+                runtimes[scenario.key] = {
+                    "load_time": str(load_time),
+                    "run_time": str(run_time),
+                    "total_time": str(total_time),
+                }
+
+        with open(mcr5_output_path / "runtimes.json", "w") as f:
+            json.dump(runtimes, f)
