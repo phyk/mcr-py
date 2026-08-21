@@ -8,6 +8,17 @@ from mcr_py.utils import key
 from mcr_py.utils.logger import Timed
 
 
+def _gtfs_time_to_secs_expr(column: str) -> pl.Expr:
+    # GTFS times may exceed 23:00 (past-midnight services), so stay string-based.
+    # str.head(2) on the seconds field tolerates a fractional tail.
+    parts = pl.col(column).cast(pl.String).str.strip_chars().str.split(":")
+    return (
+        parts.list.get(0).cast(pl.Int64) * 3600
+        + parts.list.get(1).cast(pl.Int64) * 60
+        + parts.list.get(2).str.head(2).cast(pl.Int64)
+    ).cast(pl.UInt32)
+
+
 def clean(gtfs_zip_path: pathlib.Path) -> dict[str, pl.DataFrame]:
     """
     Cleans the GTFS data and writes the cleaned data to the output path.
@@ -35,6 +46,24 @@ def clean(gtfs_zip_path: pathlib.Path) -> dict[str, pl.DataFrame]:
         trips_df = add_first_stop_info(trips_df, stop_times_df)
         stops_df = remove_unused_stops(stop_times_df, stops_df)
         stops_df = add_geometry(stops_df)
+
+    with Timed.debug("Normalising GTFS data"):
+        stops_df = stops_df.unique(subset="stop_id")
+        trips_df = trips_df.unique(subset="trip_id")
+        stop_times_df = (
+            stop_times_df.with_columns(
+                pl.coalesce(
+                    _gtfs_time_to_secs_expr("arrival_time"),
+                    _gtfs_time_to_secs_expr("departure_time"),
+                ).alias("arrival_secs"),
+                pl.coalesce(
+                    _gtfs_time_to_secs_expr("departure_time"),
+                    _gtfs_time_to_secs_expr("arrival_time"),
+                ).alias("departure_secs"),
+                pl.col("stop_sequence").cast(pl.UInt32),
+            )
+            .drop_nulls(subset=["arrival_secs", "departure_secs"])
+        )
 
     return {
         key.TRIPS_KEY: trips_df,
