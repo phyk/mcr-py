@@ -7,7 +7,7 @@ use rs::mcr_adapter::{
 };
 use rs::osmtools_adapter::{
     add_nearest_node_to_df, download_osm_data, load_osm_boundary, load_osm_cycling,
-    load_osm_driving, load_osm_pois, load_osm_walking,
+    load_osm_driving, load_osm_pois, load_osm_walking, DownloadMode,
 };
 
 mod rs;
@@ -41,6 +41,7 @@ fn _mcr_py(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(load_osm_driving, m)?)?;
     m.add_function(wrap_pyfunction!(load_osm_walking, m)?)?;
     m.add_function(wrap_pyfunction!(download_osm_data, m)?)?;
+    m.add_class::<DownloadMode>()?;
     m.add_function(wrap_pyfunction!(load_osm_pois, m)?)?;
     m.add_function(wrap_pyfunction!(load_osm_boundary, m)?)?;
     m.add_function(wrap_pyfunction!(add_nearest_node_to_df, m)?)?;

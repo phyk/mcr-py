@@ -1,6 +1,6 @@
 use log::info;
 use osmtools::boundary::_load_osm_boundary;
-use osmtools::download::download;
+use osmtools::download::{download, ExistingFileMode};
 use osmtools::extractor::{
     _load_osm_cycling, _load_osm_driving, _load_osm_pois, _load_osm_walking,
 };
@@ -8,6 +8,24 @@ use osmtools::nearest_node::add_nearest_node_to_geo_df;
 use polars::prelude::DataFrame;
 use pyo3::prelude::*;
 use pyo3_polars::PyDataFrame;
+
+#[pyclass]
+#[derive(Clone)]
+pub enum DownloadMode {
+    Overwrite,
+    Reuse,
+    Error,
+}
+
+impl From<DownloadMode> for ExistingFileMode {
+    fn from(mode: DownloadMode) -> Self {
+        match mode {
+            DownloadMode::Overwrite => ExistingFileMode::Overwrite,
+            DownloadMode::Reuse => ExistingFileMode::Reuse,
+            DownloadMode::Error => ExistingFileMode::Error,
+        }
+    }
+}
 
 #[pyfunction]
 pub fn add_nearest_node_to_df(
@@ -28,14 +46,11 @@ pub fn add_nearest_node_to_df(
 }
 
 #[pyfunction]
-pub fn download_osm_data(py: Python, city_name: &str, archive_path: &str) -> String {
+pub fn download_osm_data(py: Python, city_name: &str, archive_path: &str, mode: DownloadMode) -> String {
     py.allow_threads(|| {
-        let result =
-            download(&city_name.into(), &archive_path.into()).expect("Download process errored");
-        return result
-            .to_str()
-            .expect("Path not convertible to string")
-            .into();
+        let result = download(&city_name.into(), &archive_path.into(), mode.into())
+            .expect("Download process errored");
+        result.to_str().expect("Path not convertible to string").into()
     })
 }
 
