@@ -44,6 +44,7 @@ import mcr_py.utils.logger
 from mcr_py.gtfs.pipeline import prepare_gtfs
 from mcr_py.osm.extraction import extract_networks, extract_pois
 from mcr_py.osm.start_nodes import build_start_nodes
+from mcr_py.visualize import visualize_pipeline_data
 import polars as pl
 from fsspec.implementations.http import HTTPFileSystem
 from mcr_py.utils.geometa import GeoMeta, build_geometa
@@ -104,7 +105,7 @@ def load_data_for_city(
 
     osm_path.mkdir(parents=True, exist_ok=True)
     with mcr_py.utils.logger.Timed.info(f"Downloading PBF for {city_name_german_alt}"):
-        mcr_py.download_osm_data(city_name_german_alt, str(osm_path), mcr_py.DownloadMode.Reuse)
+        mcr_py.download_osm_data(city_name_german_alt, str(osm_path))
     geometa = build_geometa(
         city_name_german,
         city_name_german_alt,
@@ -140,6 +141,16 @@ def load_data_for_city(
 
     if gbfs_url is not None:
         fetch_gbfs_to_parquet(gbfs_url, gbfs_path)
+
+    with mcr_py.utils.logger.Timed.info(f"Visualizing pipeline data for {city_name_german_alt}"):
+        visualize_pipeline_data(
+            geometa=geometa,
+            graph_dir=graph_dir,
+            start_nodes_dir=start_nodes_dir,
+            gtfs_dir=gtfs_out_dir,
+            city_id=city_name_german_alt.lower(),
+            output_path=base / f"visualize/{city_name}.html",
+        )
 
     mcr_py.utils.logger.rlog.info(f"Finished preparing data for {city_name_german}")
 
