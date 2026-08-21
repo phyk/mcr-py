@@ -13,8 +13,10 @@ from serde import serde
 from serde.json import from_json, to_json
 from shapely.geometry import MultiPolygon, Polygon
 
+from mcr_py._mcr_py import load_osm_boundary
 from mcr_py.utils import cache
 
+_OSM_CRS = "EPSG:4326"
 
 class Buffering(Enum):
     """
@@ -48,6 +50,36 @@ def convert_to_crs(
 def crs_to_srid(crs: str) -> int:
     """Turn an ``EPSG:1234`` string into the integer SRID 1234."""
     return int(crs.split(":")[-1])
+
+
+def build_geometa(
+    city_name_german: str,
+    city_name_german_alt: str,
+    admin_level: int,
+    crs_sink_name: str,
+    geometa_path: pathlib.Path,
+    osm_path: pathlib.Path,
+) -> "GeoMeta":
+    """Extract the city boundary from a local PBF file and persist a ``GeoMeta``.
+
+    city_name_german: Admin boundary name used to filter the OSM relation.
+    city_name_german_alt: BBBike city identifier used to locate the PBF.
+    admin_level: OSM admin_level tag value (e.g. 6 for a German Kreis).
+    crs_sink_name: Target projected CRS string (e.g. ``"EPSG:31370"``).
+    geometa_path: Where to write the serialised ``GeoMeta`` JSON.
+    osm_path: Directory containing the downloaded PBF file.
+    """
+    rings = load_osm_boundary(
+        city_name_german_alt,
+        city_name_german,
+        str(admin_level),
+        str(osm_path),
+        download=False,
+    )
+    boundary_polygon = MultiPolygon(rings)
+    geometa = GeoMeta.create(boundary_polygon, _OSM_CRS, crs_sink_name)
+    geometa.save(geometa_path)
+    return geometa
 
 
 @serde
