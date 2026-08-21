@@ -43,8 +43,19 @@ def extract_networks(
         walking_nodes, walking_edges, walking_graph = crop_graph_to_largest_component(
             _graph, _nodes_rx, _edges_rx
         )
-        walking_nodes = walking_nodes.select(["osm_id", "rx_node_id", "lat", "long"])
+        walking_nodes = walking_nodes.select(["osm_id", "lat", "long"])
         walking_edges = walking_edges.select(["source_osm", "dest_osm", "length"])
+        # subgraph() remaps node indices to 0-based; rebuild rx_node_id from the
+        # cropped graph's payloads so start-node Dijkstra uses valid indices.
+        osm_to_new_rx: dict[int, int] = {
+            int(osm_id): new_idx
+            for new_idx, osm_id in zip(walking_graph.node_indices(), walking_graph.nodes())
+        }
+        walking_nodes = walking_nodes.with_columns(
+            pl.col("osm_id")
+            .map_elements(lambda oid: osm_to_new_rx[oid], return_dtype=pl.UInt64)
+            .alias("rx_node_id")
+        )
         walking_nodes.select(["osm_id", "lat", "long"]).write_parquet(
             graph_dir / "walking_nodes.parquet"
         )
