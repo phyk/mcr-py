@@ -45,6 +45,11 @@ def convert_to_crs(
     return shapely.ops.transform(transform_source_sink, geometry)
 
 
+def crs_to_srid(crs: str) -> int:
+    """Turn an ``EPSG:1234`` string into the integer SRID 1234."""
+    return int(crs.split(":")[-1])
+
+
 @serde
 @dataclass
 class GeoMeta:
