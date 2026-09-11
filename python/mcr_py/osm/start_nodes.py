@@ -1,11 +1,10 @@
-import math
+import heapq
 import pathlib
 
 import polars as pl
 import polars_h3 as plh3
 import polars_st as st
 import rustworkx as rx
-from pyproj import Transformer
 
 from mcr_py.utils import logger
 from mcr_py.utils.geometa import Buffering, GeoMeta, crs_to_srid
@@ -70,73 +69,68 @@ def snap_start_nodes_to_network(
     walking_graph: rx.PyDiGraph,
     walking_nodes: pl.DataFrame,
     mode_nodes: pl.DataFrame,
-    geometa: GeoMeta,
 ) -> pl.DataFrame:
     """Map each walking start node to the nearest node in a mode network.
 
-    If the walking start node's OSM ID exists in the mode network it is used
-    directly (dist = 0).  Otherwise Dijkstra is run on the walking graph from
-    that node and the closest reachable node that exists in the mode network is
-    chosen.  Cells with no reachable mode node are dropped.
+    Runs a single multi-source Dijkstra on the reversed walking graph, seeded
+    from every mode node that is also present in the walking graph.  Each
+    walking node is settled exactly once, recording which mode node it is
+    nearest to and the graph-distance (metres) to it.
 
-    ``dist`` is the geometric distance in the projected sink CRS (metres)
-    between the walking start node and the snapped mode node.
+    ``dist`` is the walking graph distance in metres from the walking start
+    node to the snapped mode node (0 when the node is shared directly).
     """
     mode_osm_ids: set[int] = set(mode_nodes["osm_id"].to_list())
     osm_to_rx: dict[int, int] = dict(
         zip(walking_nodes["osm_id"].to_list(), walking_nodes["rx_node_id"].to_list())
     )
-    # walking rx_node_id -> mode osm_id, for nodes shared between the two networks
-    rx_to_mode_osm: dict[int, int] = {
-        osm_to_rx[osm_id]: osm_id
-        for osm_id in mode_osm_ids
-        if osm_id in osm_to_rx
-    }
     mode_coord: dict[int, tuple[float, float]] = {
         row["osm_id"]: (row["lat"], row["long"])
         for row in mode_nodes.iter_rows(named=True)
     }
 
-    transformer = Transformer.from_crs("EPSG:4326", geometa.crs_target, always_xy=True)
+    # Seed: every mode node that is also a walking node
+    sources: list[tuple[float, int, int]] = [
+        (0.0, osm_to_rx[osm_id], osm_id)
+        for osm_id in mode_osm_ids
+        if osm_id in osm_to_rx
+    ]
+
+    # Multi-source Dijkstra on the reversed walking graph.
+    # Traversing predecessors of each node is equivalent to following edges
+    # backwards, so the result gives shortest walking distance TO any mode node.
+    dist: dict[int, float] = {}
+    origin: dict[int, int] = {}  # rx_node_id -> nearest mode osm_id
+    heap = list(sources)
+    heapq.heapify(heap)
+
+    while heap:
+        d, node, mode_osm = heapq.heappop(heap)
+        if node in dist:
+            continue
+        dist[node] = d
+        origin[node] = mode_osm
+        for pred in walking_graph.predecessor_indices(node):
+            if pred not in dist:
+                w = walking_graph.get_edge_data(pred, node)
+                heapq.heappush(heap, (d + w, pred, mode_osm))
 
     rows = []
     for row in walking_start_nodes.iter_rows(named=True):
-        walking_osm: int = row["osm_node_id"]
-        h3_cell: str = row["h3_cell_id"]
-        center_lat, center_lon = row["center_lat"], row["center_lon"]
-        walking_lat, walking_lon = row["lat"], row["lon"]
-
-        if walking_osm in mode_osm_ids:
-            mode_osm = walking_osm
-            dist = 0.0
-        else:
-            rx_id = osm_to_rx.get(walking_osm)
-            if rx_id is None:
-                continue
-            lengths: dict[int, float] = rx.dijkstra_shortest_path_lengths(
-                walking_graph, rx_id, edge_cost_fn=lambda x: x
-            )
-            candidates = {node: d for node, d in lengths.items() if node in rx_to_mode_osm}
-            if not candidates:
-                continue
-            best_rx = min(candidates, key=lambda node: candidates[node])
-            mode_osm = rx_to_mode_osm[best_rx]
-
-            mode_lat, mode_lon = mode_coord[mode_osm]
-            wx, wy = transformer.transform(walking_lon, walking_lat)
-            mx, my = transformer.transform(mode_lon, mode_lat)
-            dist = math.sqrt((wx - mx) ** 2 + (wy - my) ** 2)
-
+        rx_id = osm_to_rx.get(row["osm_node_id"])
+        if rx_id is None or rx_id not in dist:
+            continue
+        mode_osm = origin[rx_id]
         lat, lon = mode_coord[mode_osm]
         rows.append(
             {
                 "osm_node_id": mode_osm,
-                "h3_cell_id": h3_cell,
-                "dist": dist,
+                "h3_cell_id": row["h3_cell_id"],
+                "dist": dist[rx_id],
                 "lat": lat,
                 "lon": lon,
-                "center_lat": center_lat,
-                "center_lon": center_lon,
+                "center_lat": row["center_lat"],
+                "center_lon": row["center_lon"],
             }
         )
 
@@ -183,7 +177,7 @@ def build_start_nodes(
             continue
         with logger.Timed.info(f"Mapping start nodes ({layer})"):
             mapping = snap_start_nodes_to_network(
-                walking_mapping, walking_graph, node_dfs["walking"], nodes, geometa
+                walking_mapping, walking_graph, node_dfs["walking"], nodes
             )
         mapping.write_parquet(start_nodes_dir / f"{city_id}_{layer}_h3mapping.parquet")
         logger.rlog.info(f"{layer}: {len(mapping)} start nodes across H3 cells")
