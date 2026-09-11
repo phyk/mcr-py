@@ -13,7 +13,7 @@ from serde import serde
 from serde.json import from_json, to_json
 from shapely.geometry import MultiPolygon, Polygon
 
-from mcr_py._mcr_py import load_osm_boundary
+from mcr_py._mcr_py import DownloadMode, load_osm_boundary
 from mcr_py.utils import cache
 
 _OSM_CRS = "EPSG:4326"
@@ -74,7 +74,7 @@ def build_geometa(
         city_name_german,
         str(admin_level),
         str(osm_path),
-        download=False,
+        mode=DownloadMode.LocalOnly,
     )
     boundary_polygon = MultiPolygon(rings)
     geometa = GeoMeta.create(boundary_polygon, _OSM_CRS, crs_sink_name)

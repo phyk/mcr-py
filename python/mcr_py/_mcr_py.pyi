@@ -74,6 +74,12 @@ class MCRGraphBuilder:
     def add_shared_scooter_dropoff_zones(self, path: str) -> "MCRGraphBuilder": ...
     def build(self) -> MCRGraph: ...
 
+class DownloadMode:
+    LocalOnly: "DownloadMode"
+    Overwrite: "DownloadMode"
+    Reuse: "DownloadMode"
+    Error: "DownloadMode"
+
 def run_mcr5(start_nodes: str, config: MCRConfig, graph: MCRGraph) -> None: ...
 def log_something() -> None: ...
 def load_osm_cycling(
@@ -82,31 +88,38 @@ def load_osm_cycling(
     reverse_edges: bool,
     archive_path: str,
     outpath: str,
-    download: bool,
+    mode: DownloadMode,
 ) -> Tuple[pl.DataFrame, pl.DataFrame]: ...
 def load_osm_walking(
     city_name: str,
     geometry_vec: List[Tuple[float, float]],
     archive_path: str,
     outpath: str,
-    download: bool,
+    mode: DownloadMode,
 ) -> Tuple[pl.DataFrame, pl.DataFrame]: ...
 def load_osm_driving(
     city_name: str,
     geometry_vec: List[Tuple[float, float]],
     archive_path: str,
     outpath: str,
-    download: bool,
+    mode: DownloadMode,
 ) -> Tuple[pl.DataFrame, pl.DataFrame]: ...
-def download_osm_data(city_name: str, archive_path: str) -> None: ...
+def download_osm_data(city_name: str, archive_path: str, mode: DownloadMode) -> str: ...
+def load_osm_boundary(
+    city_name: str,
+    name_filter: str,
+    admin_level: str,
+    archive_path: str,
+    mode: DownloadMode,
+) -> List[Tuple[List[Tuple[float, float]], List[List[Tuple[float, float]]]]]: ...
 def load_osm_pois(
     city_name: str,
     geometry_vec: List[Tuple[float, float]],
     archive_path: str,
     outpath: str,
-    download: bool,
-    nodes_to_match_df: Optional[pl.DataFrame],
-    nodes_to_match_path: Optional[str],
+    mode: DownloadMode,
+    nodes_to_match_df: Optional[pl.DataFrame] = None,
+    nodes_to_match_path: Optional[str] = None,
 ) -> pl.DataFrame: ...
 def add_nearest_node_to_df(
     geo_df: pl.DataFrame,

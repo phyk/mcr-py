@@ -12,6 +12,7 @@ use pyo3_polars::PyDataFrame;
 #[pyclass]
 #[derive(Clone)]
 pub enum DownloadMode {
+    LocalOnly,
     Overwrite,
     Reuse,
     Error,
@@ -20,6 +21,7 @@ pub enum DownloadMode {
 impl From<DownloadMode> for ExistingFileMode {
     fn from(mode: DownloadMode) -> Self {
         match mode {
+            DownloadMode::LocalOnly => ExistingFileMode::LocalOnly,
             DownloadMode::Overwrite => ExistingFileMode::Overwrite,
             DownloadMode::Reuse => ExistingFileMode::Reuse,
             DownloadMode::Error => ExistingFileMode::Error,
@@ -61,11 +63,11 @@ pub fn load_osm_boundary(
     name_filter: &str,
     admin_level: &str,
     archive_path: &str,
-    download: bool,
+    mode: DownloadMode,
 ) -> Vec<(Vec<(f64, f64)>, Vec<Vec<(f64, f64)>>)> {
     py.allow_threads(|| {
         info!("Loading administrative boundary for {} from {}", name_filter, city_name);
-        _load_osm_boundary(city_name, name_filter, admin_level, archive_path, download)
+        _load_osm_boundary(city_name, name_filter, admin_level, archive_path, mode.into())
     })
 }
 
@@ -77,7 +79,7 @@ pub fn load_osm_cycling(
     reverse_edges: bool,
     archive_path: &str,
     outpath: &str,
-    download: bool,
+    mode: DownloadMode,
 ) -> (PyDataFrame, PyDataFrame) {
     let result = py.allow_threads(|| {
         info!("Loading cycling network from {}", city_name);
@@ -87,7 +89,7 @@ pub fn load_osm_cycling(
             &reverse_edges,
             archive_path,
             outpath,
-            download,
+            mode.into(),
         )
     });
     (PyDataFrame(result.0), PyDataFrame(result.1))
@@ -100,11 +102,11 @@ pub fn load_osm_driving(
     geometry_vec: Vec<(f64, f64)>,
     archive_path: &str,
     outpath: &str,
-    download: bool,
+    mode: DownloadMode,
 ) -> (PyDataFrame, PyDataFrame) {
     let result = py.allow_threads(|| {
         info!("Loading driving network from {}", city_name);
-        _load_osm_driving(city_name, geometry_vec, archive_path, outpath, download)
+        _load_osm_driving(city_name, geometry_vec, archive_path, outpath, mode.into())
     });
     (PyDataFrame(result.0), PyDataFrame(result.1))
 }
@@ -116,24 +118,24 @@ pub fn load_osm_walking(
     geometry_vec: Vec<(f64, f64)>,
     archive_path: &str,
     outpath: &str,
-    download: bool,
+    mode: DownloadMode,
 ) -> (PyDataFrame, PyDataFrame) {
     let result = py.allow_threads(|| {
         info!("Loading walking network from {}", city_name);
-        _load_osm_walking(city_name, geometry_vec, archive_path, outpath, download)
+        _load_osm_walking(city_name, geometry_vec, archive_path, outpath, mode.into())
     });
     (PyDataFrame(result.0), PyDataFrame(result.1))
 }
 
 #[pyfunction]
-#[pyo3(signature = (city_name, geometry_vec, archive_path, outpath, download, nodes_to_match_df=None, nodes_to_match_path=None))]
+#[pyo3(signature = (city_name, geometry_vec, archive_path, outpath, mode, nodes_to_match_df=None, nodes_to_match_path=None))]
 pub fn load_osm_pois(
     py: Python,
     city_name: &str,
     geometry_vec: Vec<(f64, f64)>,
     archive_path: &str,
     outpath: &str,
-    download: bool,
+    mode: DownloadMode,
     nodes_to_match_df: Option<PyDataFrame>,
     nodes_to_match_path: Option<&str>,
 ) -> PyDataFrame {
@@ -154,7 +156,7 @@ pub fn load_osm_pois(
             nodes_to_match_path,
             df,
             outpath,
-            download,
+            mode.into(),
         )
     });
     PyDataFrame(result)

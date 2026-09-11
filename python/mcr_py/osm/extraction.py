@@ -4,6 +4,7 @@ import polars as pl
 import rustworkx as rx
 
 from mcr_py._mcr_py import (
+    DownloadMode,
     load_osm_cycling,
     load_osm_driving,
     load_osm_pois,
@@ -37,7 +38,7 @@ def extract_networks(
 
     with logger.Timed.info("Extracting walking network"):
         walking_nodes, walking_edges = load_osm_walking(
-            city_id, hull, archive, out, download=False
+            city_id, hull, archive, out, mode=DownloadMode.LocalOnly
         )
         _nodes_rx, _edges_rx, _graph = create_rx_graph(walking_nodes, walking_edges)
         walking_nodes, walking_edges, walking_graph = crop_graph_to_largest_component(
@@ -68,7 +69,7 @@ def extract_networks(
             reverse_edges=True,
             archive_path=archive,
             outpath=out,
-            download=False,
+            mode=DownloadMode.LocalOnly,
         )
         _nodes_rx, _edges_rx, _graph = create_rx_graph(cycling_nodes, cycling_edges)
         cycling_nodes, cycling_edges, _ = crop_graph_to_largest_component(
@@ -81,7 +82,7 @@ def extract_networks(
 
     with logger.Timed.info("Extracting driving network"):
         driving_nodes, driving_edges = load_osm_driving(
-            city_id, hull, archive, out, download=False
+            city_id, hull, archive, out, mode=DownloadMode.LocalOnly
         )
         _nodes_rx, _edges_rx, _graph = create_rx_graph(driving_nodes, driving_edges)
         driving_nodes, driving_edges, _ = crop_graph_to_largest_component(
@@ -121,7 +122,7 @@ def extract_pois(
             geometa.get_bounding_box_as_coord_list(),
             str(osm_path),
             str(cache_path),
-            download=False,
+            mode=DownloadMode.LocalOnly,
             nodes_to_match_df=walking_nodes,
             nodes_to_match_path=None,
         )
