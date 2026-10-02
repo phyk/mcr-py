@@ -72,13 +72,14 @@ def snap_start_nodes_to_network(
 ) -> pl.DataFrame:
     """Map each walking start node to the nearest node in a mode network.
 
+    Every walking hex gets a row. When no mode node is reachable from a hex,
+    ``pickup_osm_node_id`` is null (and ``pickup_dist``/``pickup_lat``/
+    ``pickup_lon`` are null too). The Rust runtime skips null pickups.
+
     Runs a single multi-source Dijkstra on the reversed walking graph, seeded
     from every mode node that is also present in the walking graph.  Each
     walking node is settled exactly once, recording which mode node it is
-    nearest to and the graph-distance (metres) to it.
-
-    ``dist`` is the walking graph distance in metres from the walking start
-    node to the snapped mode node (0 when the node is shared directly).
+    nearest to and the walking graph-distance (metres) to it.
     """
     mode_osm_ids: set[int] = set(mode_nodes["osm_id"].to_list())
     osm_to_rx: dict[int, int] = dict(
@@ -97,8 +98,7 @@ def snap_start_nodes_to_network(
     ]
 
     # Multi-source Dijkstra on the reversed walking graph.
-    # Traversing predecessors of each node is equivalent to following edges
-    # backwards, so the result gives shortest walking distance TO any mode node.
+    # Traversing predecessors gives shortest walking distance TO any mode node.
     dist: dict[int, float] = {}
     origin: dict[int, int] = {}  # rx_node_id -> nearest mode osm_id
     heap = list(sources)
@@ -119,16 +119,29 @@ def snap_start_nodes_to_network(
     for row in walking_start_nodes.iter_rows(named=True):
         rx_id = osm_to_rx.get(row["osm_node_id"])
         if rx_id is None or rx_id not in dist:
+            rows.append(
+                {
+                    "osm_node_id": row["osm_node_id"],
+                    "h3_cell_id": row["h3_cell_id"],
+                    "pickup_osm_node_id": None,
+                    "pickup_dist": None,
+                    "pickup_lat": None,
+                    "pickup_lon": None,
+                    "center_lat": row["center_lat"],
+                    "center_lon": row["center_lon"],
+                }
+            )
             continue
         mode_osm = origin[rx_id]
-        lat, lon = mode_coord[mode_osm]
+        pickup_lat, pickup_lon = mode_coord[mode_osm]
         rows.append(
             {
-                "osm_node_id": mode_osm,
+                "osm_node_id": row["osm_node_id"],
                 "h3_cell_id": row["h3_cell_id"],
-                "dist": dist[rx_id],
-                "lat": lat,
-                "lon": lon,
+                "pickup_osm_node_id": mode_osm,
+                "pickup_dist": dist[rx_id],
+                "pickup_lat": pickup_lat,
+                "pickup_lon": pickup_lon,
                 "center_lat": row["center_lat"],
                 "center_lon": row["center_lon"],
             }
@@ -139,9 +152,10 @@ def snap_start_nodes_to_network(
         schema={
             "osm_node_id": pl.UInt64,
             "h3_cell_id": pl.String,
-            "dist": pl.Float64,
-            "lat": pl.Float64,
-            "lon": pl.Float64,
+            "pickup_osm_node_id": pl.UInt64,
+            "pickup_dist": pl.Float64,
+            "pickup_lat": pl.Float64,
+            "pickup_lon": pl.Float64,
             "center_lat": pl.Float64,
             "center_lon": pl.Float64,
         },
@@ -158,18 +172,30 @@ def build_start_nodes(
 ) -> None:
     """Write the walking and per-mode start-node parquets.
 
-    Files are named ``{city_id}_{layer}_h3mapping.parquet``.
+    Two files are written per layer:
+    - ``{city_id}_{layer}_h3mapping.parquet``: full diagnostics, used by the
+      visualise pipeline.
+    - ``{layer}.parquet``: runtime file consumed by ``read_start_nodes``
+      (columns: ``osm_node_id``, ``h3_cell_id``, ``pickup_osm_node_id``).
 
-    Walking is computed first and defines the canonical cell set.  Every other
-    mode snaps to the walking start node when that node is present in the mode
-    network, or walks the pedestrian graph outward to find the nearest reachable
-    mode node.  This guarantees spatial alignment of origins across modes.
+    Walking defines the canonical H3 cell set. Every other mode produces one
+    row per walking hex; ``pickup_osm_node_id`` is null when the nearest mode
+    node is unreachable or lies outside the origin hex, signalling the Rust
+    runtime to skip private-mode routing for that origin.
     """
     start_nodes_dir.mkdir(parents=True, exist_ok=True)
 
     with logger.Timed.info("Mapping start nodes (walking)"):
         walking_mapping = calculate_start_nodes(node_dfs["walking"], geometa, resolution)
+
+    # Walking has no pickup node; add null column for schema consistency.
+    walking_mapping = walking_mapping.with_columns(
+        pl.lit(None, dtype=pl.UInt64).alias("pickup_osm_node_id")
+    )
     walking_mapping.write_parquet(start_nodes_dir / f"{city_id}_walking_h3mapping.parquet")
+    walking_mapping.select(["osm_node_id", "h3_cell_id", "pickup_osm_node_id"]).write_parquet(
+        start_nodes_dir / "walking.parquet"
+    )
     logger.rlog.info(f"walking: {len(walking_mapping)} start nodes across H3 cells")
 
     for layer, nodes in node_dfs.items():
@@ -179,5 +205,35 @@ def build_start_nodes(
             mapping = snap_start_nodes_to_network(
                 walking_mapping, walking_graph, node_dfs["walking"], nodes
             )
+
+        # Null out all pickup fields when the mode node falls outside the origin
+        # H3 hex. All four columns are cleared together so the h3mapping file
+        # stays consistent (no orphaned coordinates for a null pickup id).
+        outside_hex = (
+            pl.col("pickup_osm_node_id").is_not_null()
+            & (
+                plh3.latlng_to_cell(
+                    pl.col("pickup_lat"),
+                    pl.col("pickup_lon"),
+                    resolution,
+                    return_dtype=pl.String,
+                )
+                != pl.col("h3_cell_id")
+            )
+        )
+        mapping = mapping.with_columns(
+            pl.when(outside_hex).then(pl.lit(None, dtype=pl.UInt64)).otherwise(pl.col("pickup_osm_node_id")).alias("pickup_osm_node_id"),
+            pl.when(outside_hex).then(pl.lit(None, dtype=pl.Float64)).otherwise(pl.col("pickup_dist")).alias("pickup_dist"),
+            pl.when(outside_hex).then(pl.lit(None, dtype=pl.Float64)).otherwise(pl.col("pickup_lat")).alias("pickup_lat"),
+            pl.when(outside_hex).then(pl.lit(None, dtype=pl.Float64)).otherwise(pl.col("pickup_lon")).alias("pickup_lon"),
+        )
+
+        layer_file = {"cycling": "cycling", "car": "car"}.get(layer, layer)
         mapping.write_parquet(start_nodes_dir / f"{city_id}_{layer}_h3mapping.parquet")
-        logger.rlog.info(f"{layer}: {len(mapping)} start nodes across H3 cells")
+        mapping.select(["osm_node_id", "h3_cell_id", "pickup_osm_node_id"]).write_parquet(
+            start_nodes_dir / f"{layer_file}.parquet"
+        )
+        n_valid = mapping["pickup_osm_node_id"].drop_nulls().len()
+        logger.rlog.info(
+            f"{layer}: {n_valid}/{len(mapping)} start nodes have a pickup within their H3 cell"
+        )
