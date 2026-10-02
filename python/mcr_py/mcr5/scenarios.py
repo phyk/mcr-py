@@ -86,6 +86,7 @@ def build_paths(base_directory: pathlib.Path, city_name: str) -> dict[str, str]:
         ),
         "gtfs_data_dir": str(base_directory / "gtfs_clean" / city_name),
         "walking_start_nodes": str(start_nodes_dir / "walking.parquet"),
+        "cycling_start_nodes": str(start_nodes_dir / "cycling.parquet"),
         "car_start_nodes": str(start_nodes_dir / "car.parquet"),
     }
 
@@ -195,9 +196,12 @@ def build_scenarios(
     if shared_micromobile:
         config_kwargs["shared_micromobile"] = shared_micromobile
 
-    start_nodes = (
-        paths["car_start_nodes"] if "private_car" in modes else paths["walking_start_nodes"]
-    )
+    if "private_car" in modes:
+        start_nodes = paths["car_start_nodes"]
+    elif "private_bike" in modes:
+        start_nodes = paths["cycling_start_nodes"]
+    else:
+        start_nodes = paths["walking_start_nodes"]
     key = "+".join(combo)
 
     if "public_transport" not in modes:
