@@ -36,7 +36,6 @@ TARGET_H3_CELLS = {
         "891fa188213ffff",
         "891fa188283ffff",
         "891fa565b5bffff",
-        "891fa19809bffff",
         "891fa188113ffff",
     ],
     "berlin": [
@@ -76,7 +75,7 @@ if __name__ == "__main__":
     combos = settings["mcr5"]["scenarios"]
     enable_limit = settings["mcr5"]["enable_limit"]
 
-    for city_name in ["cologne"]:
+    for city_name in settings["city"]:
         mcr5_output_path = base_directory / f"mcr5_results/{city_name}_reduced_paths"
         mcr5_output_path.mkdir(parents=True, exist_ok=True)
         paths = build_paths(base_directory, city_name)

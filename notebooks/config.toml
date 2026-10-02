@@ -27,6 +27,9 @@ speed_kmh=50
 switch_time_s=0
 price_function_base=20
 
+# shared_bicycle/shared_scooter settings stay defined for when the pipeline
+# gains a step to produce graph/<city>/shared_{bike,scooter}_stations.parquet
+# + dropoff_zones.geojson; excluded from `[mcr5] scenarios` for now.
 [modes.shared_bicycle]
 # The old "next_bike_no_tariff" scenario: nextbike shared bikes with no fare.
 speed_kmh=15
@@ -58,18 +61,19 @@ long_trip_fare_cents=320
 switch_time_secs=0
 
 [mcr5]
+# Enables the POI-category limits pruning (see mcr-rust's `build_initial_limits`)
+# for every scenario below.
+enable_limit=true
 # Each entry is the set of modes run together in one MCR pass. "walking" is
 # always included as the access/egress layer even if omitted from a combo;
 # list it alone (["walking"]) for a walking-only run. A combo can list more
-# than one mode (e.g. ["shared_bicycle", "public_transport"]) to run them
-# together.
+# than one mode (e.g. ["private_bike", "public_transport"]) to run them
+# together. Shared modes are excluded until the pipeline produces their
+# station/dropoff-zone layers (see comment above [modes.shared_bicycle]).
 scenarios=[
     ["walking"],
     ["private_bike"],
     ["private_car"],
-    ["shared_bicycle"],
-    ["shared_scooter"],
-    ["public_transport"],
 ]
 
 [city.cologne]
@@ -78,7 +82,7 @@ german_alt="Koeln"
 gbfs_url="https://gbfs.nextbike.net/maps/gbfs/v1/nextbike_kg/de/free_bike_status.json"
 admin_level=6
 
-[city.berlin]
-german="Berlin"
-german_alt="Berlin"
-admin_level=4
+# [city.berlin]
+# german="Berlin"
+# german_alt="Berlin"
+# admin_level=4
