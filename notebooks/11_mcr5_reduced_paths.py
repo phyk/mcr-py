@@ -68,7 +68,7 @@ if __name__ == "__main__":
     with open(pathlib.Path(__file__).parent.resolve() / "config.toml", "rb") as f:
         settings = tomllib.load(f)
 
-    setup("DEBUG")
+    setup(settings["run_type"]["run_type"])
     data_directory = pathlib.Path(__file__).parent.parent.resolve() / "data"
     base_directory = data_directory / settings["timestamp"]["timestamp"]
     mode_settings = settings["modes"]
