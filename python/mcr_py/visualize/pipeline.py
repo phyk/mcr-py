@@ -81,8 +81,28 @@ def visualize_pipeline_data(
             _add(lyr, "H3 grid (start cells)", [14, 165, 233, 160])
 
     for layer_name, sn_df in start_node_dfs.items():
+        # Walking uses lat/lon; mode layers use pickup_lat/pickup_lon.
+        # Filter to rows with a valid pickup (osm_node_id null ↔ outside hex or unreachable).
+        if "pickup_lat" in sn_df.columns:
+            sn_df = sn_df.filter(pl.col("pickup_osm_node_id").is_not_null())
+            lons = sn_df["pickup_lon"].to_list()
+            lats = sn_df["pickup_lat"].to_list()
+            props = {
+                "h3_cell_id": sn_df["h3_cell_id"].to_list(),
+                "osm_node_id": sn_df["osm_node_id"].to_list(),
+                "pickup_osm_node_id": sn_df["pickup_osm_node_id"].to_list(),
+                "pickup_dist_m": sn_df["pickup_dist"].to_list(),
+            }
+        else:
+            lons = sn_df["lon"].to_list()
+            lats = sn_df["lat"].to_list()
+            props = {
+                "h3_cell_id": sn_df["h3_cell_id"].to_list(),
+                "osm_node_id": sn_df["osm_node_id"].to_list(),
+            }
         gdf = gpd.GeoDataFrame(
-            geometry=gpd.points_from_xy(sn_df["lon"].to_list(), sn_df["lat"].to_list()),
+            props,
+            geometry=gpd.points_from_xy(lons, lats),
             crs="EPSG:4326",
         )
         color = _SN_COLOR.get(layer_name, [0, 0, 0, 230])
