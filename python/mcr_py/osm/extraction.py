@@ -53,8 +53,7 @@ def extract_networks(
             for new_idx, osm_id in zip(walking_graph.node_indices(), walking_graph.nodes())
         }
         walking_nodes = walking_nodes.with_columns(
-            pl.col("osm_id")
-            .map_elements(lambda oid: osm_to_new_rx[oid], return_dtype=pl.UInt64)
+            pl.col("osm_id").replace_strict(osm_to_new_rx)
             .alias("rx_node_id")
         )
         walking_nodes.select(["osm_id", "lat", "long"]).write_parquet(

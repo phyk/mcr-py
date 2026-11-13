@@ -35,7 +35,6 @@ class PublicTransportConfig:
     def __init__(
         self,
         data_dir: str,
-        max_snap_distance_m: float = 20.0,
         anchor_time_secs: int = 28800,
         flex_window_secs: int = 600,
         short_trip_fare_cents: int = 220,
@@ -125,4 +124,9 @@ def add_nearest_node_to_df(
     geo_df: pl.DataFrame,
     nodes_to_match: pl.DataFrame,
     target_crs: int,
+) -> pl.DataFrame: ...
+def match_gtfs_stops_to_nodes(
+    stops: pl.DataFrame,
+    walking_nodes: pl.DataFrame,
+    max_snap_distance_m: float,
 ) -> pl.DataFrame: ...

@@ -22,6 +22,9 @@ For each city it produces, under ``data/<timestamp>/``:
     ``stops.parquet``          ``stop_idx:u32, stop_lat:f64, stop_lon:f64``
     ``trips.parquet``          ``trip_idx:u32, route_idx:u32``
     ``stop_times.parquet``     ``trip_idx, stop_idx, stop_sequence, arrival_secs, departure_secs`` (all u32)
+    ``stop_nodes.parquet``     ``stop_idx:u32, osm_id:u64, snap_dist_m:f64`` -- stop -> nearest walking
+                               node within ``[gtfs] max_snap_distance_m`` (matched in Rust,
+                               ``src/rs/gtfs_matcher.rs``); unmatched stops are absent
 
 All OSM extraction goes through the osmtools crate via the `mcr_py` bindings
 (`load_osm_walking`/`load_osm_cycling`/`load_osm_driving`/`load_osm_pois`/
@@ -42,6 +45,7 @@ import mcr_py.utils.cache
 import mcr_py.utils.geometa
 import mcr_py.utils.logger
 from mcr_py.gtfs.pipeline import prepare_gtfs
+from mcr_py.gtfs.snap import write_stop_nodes
 from mcr_py.osm.extraction import extract_networks, extract_pois
 from mcr_py.osm.start_nodes import build_start_nodes
 from mcr_py.visualize import visualize_pipeline_data
@@ -79,6 +83,7 @@ def load_data_for_city(
     crs_sink_name: str,
     gtfs_timestamp: str,
     timestamp: str,
+    max_snap_distance_m: float,
     gbfs_url: typing.Union[str, None] = None,
     now: typing.Union[str, None] = None,
 ) -> None:
@@ -105,7 +110,9 @@ def load_data_for_city(
 
     osm_path.mkdir(parents=True, exist_ok=True)
     with mcr_py.utils.logger.Timed.info(f"Downloading PBF for {city_name_german_alt}"):
-        mcr_py.download_osm_data(city_name_german_alt, str(osm_path))
+        mcr_py.download_osm_data(
+            city_name_german_alt, str(osm_path), mcr_py.DownloadMode.Reuse
+        )
     geometa = build_geometa(
         city_name_german,
         city_name_german_alt,
@@ -138,6 +145,7 @@ def load_data_for_city(
         time_start=datetime.datetime.strptime(GTFS_TIME_START, "%d.%m.%Y-%H:%M:%S %z"),
         time_end=datetime.datetime.strptime(GTFS_TIME_END, "%d.%m.%Y-%H:%M:%S %z"),
     )
+    write_stop_nodes(gtfs_out_dir, node_dfs["walking"], max_snap_distance_m)
 
     if gbfs_url is not None:
         fetch_gbfs_to_parquet(gbfs_url, gbfs_path)
@@ -170,5 +178,6 @@ if __name__ == "__main__":
             admin_level=settings["city"][city]["admin_level"],
             crs_sink_name=settings["geography"]["crs_sink_name"],
             gtfs_timestamp=settings["gtfs"]["timestamp"],
+            max_snap_distance_m=settings["gtfs"]["max_snap_distance_m"],
             gbfs_url=settings["city"][city].get("gbfs_url", None),
         )
