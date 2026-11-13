@@ -119,7 +119,6 @@ impl PublicTransportConfig {
     #[new]
     #[pyo3(signature = (
         data_dir,
-        max_snap_distance_m=20.0,
         anchor_time_secs=8 * 3600,
         flex_window_secs=600,
         short_trip_fare_cents=220,
@@ -129,7 +128,6 @@ impl PublicTransportConfig {
     ))]
     fn new(
         data_dir: String,
-        max_snap_distance_m: f64,
         anchor_time_secs: u32,
         flex_window_secs: i32,
         short_trip_fare_cents: u64,
@@ -140,7 +138,6 @@ impl PublicTransportConfig {
         PublicTransportConfig {
             inner: RustPublicTransportConfig {
                 data_dir,
-                max_snap_distance_m,
                 anchor_time_secs,
                 flex_window_secs,
                 short_trip_fare_cents,

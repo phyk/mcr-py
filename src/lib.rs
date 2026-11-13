@@ -1,6 +1,7 @@
 use log::info;
 use pyo3::prelude::*;
 use pyo3_log::{Caching, Logger};
+use rs::gtfs_matcher::match_gtfs_stops_to_nodes;
 use rs::mcr_adapter::{
     MCRConfig, MCRGraph, MCRGraphBuilder, PriceFunction, PrivateModeConfig, PublicTransportConfig,
     SharedMicromobileConfig, WalkingConfig, run_mcr5,
@@ -27,6 +28,7 @@ fn _mcr_py(_py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // mcr-rust orchestration
     m.add_function(wrap_pyfunction!(run_mcr5, m)?)?;
+    m.add_function(wrap_pyfunction!(match_gtfs_stops_to_nodes, m)?)?;
     m.add_class::<MCRGraph>()?;
     m.add_class::<MCRGraphBuilder>()?;
     m.add_class::<MCRConfig>()?;
