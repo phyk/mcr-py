@@ -126,7 +126,6 @@ def _public_transport_config(
     return PublicTransportConfig(
         data_dir=gtfs_data_dir,
         anchor_time_secs=time_str_to_secs(start_time),
-        max_snap_distance_m=settings["max_snap_distance_m"],
         flex_window_secs=settings["flex_window_secs"],
         short_trip_fare_cents=settings["short_trip_fare_cents"],
         short_trip_max_stops=settings["short_trip_max_stops"],
