@@ -13,6 +13,9 @@ now="20260619-093700"
 
 [gtfs]
 timestamp="20260619"
+# Max distance (m) between a GTFS stop and the walking node it snaps to; stops
+# further away get no node and are unreachable for public transport.
+max_snap_distance_m=80.0
 
 [modes.walking]
 speed_kmh=5
@@ -53,7 +56,6 @@ first_interval_free=false
 start_times=["08:00:00"]
 # Everything below was previously a hidden Rust-side default (mirroring the
 # De Lijn/Brugge fixture's tariff). Now explicit and overridable per city.
-max_snap_distance_m=20.0
 flex_window_secs=600
 short_trip_fare_cents=220
 short_trip_max_stops=4
@@ -74,6 +76,7 @@ scenarios=[
     ["walking"],
     ["private_bike"],
     ["private_car"],
+    ["public_transport"],
 ]
 
 [city.cologne]

@@ -68,6 +68,25 @@ def visualize_pipeline_data(
             if lyr is not None:
                 _add(lyr, f"Network: {layer_name}", _NET_COLOR.get(layer_name, [0, 0, 0, 160]), visible=False)
 
+    # GTFS stop -> walking node matching (stop_nodes.parquet)
+    walking_nodes_path = graph_dir / "walking_nodes.parquet"
+    if walking_nodes_path.exists():
+        walking_nodes = pl.read_parquet(walking_nodes_path)
+        _add(
+            _walking_nodes_layer(walking_nodes),
+            "Walking nodes",
+            _NET_COLOR["walking"],
+            visible=False,
+        )
+        stops_path = gtfs_dir / "stops.parquet"
+        stop_nodes_path = gtfs_dir / "stop_nodes.parquet"
+        if stops_path.exists() and stop_nodes_path.exists():
+            lyr = _stop_node_links_layer(
+                pl.read_parquet(stops_path), pl.read_parquet(stop_nodes_path), walking_nodes
+            )
+            if lyr is not None:
+                _add(lyr, "GTFS stop ↔ walking node links", [220, 38, 38, 230])
+
     # H3 grid and start nodes
     start_node_dfs: dict[str, pl.DataFrame] = {}
     for layer_name in ("walking", "cycling", "car"):
@@ -191,6 +210,52 @@ def _network_layer(
         get_color=_NET_COLOR.get(layer, [0, 0, 0, 160]),
         width_min_pixels=1,
         visible=False,
+    )
+
+
+def _walking_nodes_layer(nodes: pl.DataFrame) -> lonboard.ScatterplotLayer:
+    gdf = gpd.GeoDataFrame(
+        {"osm_id": nodes["osm_id"].to_list()},
+        geometry=gpd.points_from_xy(nodes["long"].to_list(), nodes["lat"].to_list()),
+        crs="EPSG:4326",
+    )
+    return lonboard.ScatterplotLayer.from_geopandas(
+        gdf,
+        get_fill_color=_NET_COLOR["walking"],
+        radius_min_pixels=1,
+        visible=False,
+    )
+
+
+def _stop_node_links_layer(
+    stops: pl.DataFrame,
+    stop_nodes: pl.DataFrame,
+    walking_nodes: pl.DataFrame,
+) -> lonboard.PathLayer | None:
+    """One short line per matched GTFS stop, from the stop to its walking node."""
+    links = (
+        stop_nodes.join(stops.select("stop_idx", "stop_lat", "stop_lon"), on="stop_idx")
+        .join(
+            walking_nodes.select(pl.col("osm_id").cast(pl.UInt64), "lat", "long"),
+            on="osm_id",
+        )
+    )
+    if links.is_empty():
+        return None
+    geometries = [
+        LineString([(r["stop_lon"], r["stop_lat"]), (r["long"], r["lat"])])
+        for r in links.iter_rows(named=True)
+    ]
+    gdf = gpd.GeoDataFrame(
+        {"stop_idx": links["stop_idx"].to_list(), "snap_dist_m": links["snap_dist_m"].to_list()},
+        geometry=geometries,
+        crs="EPSG:4326",
+    )
+    return lonboard.PathLayer.from_geopandas(
+        gdf,
+        get_color=[220, 38, 38, 230],
+        width_min_pixels=2,
+        pickable=True,
     )
 
 
