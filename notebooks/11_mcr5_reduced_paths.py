@@ -23,15 +23,16 @@ import polars as pl
 from mcr_py.mcr5.mcr5 import build_config, build_graph, run_mcr5
 from mcr_py.mcr5.scenarios import build_paths, build_scenarios
 from mcr_py.utils.logger import rlog, setup
+from mcr_py.visualize.routes import visualize_origin_routes
 
 # H3 cells to run for, per city. 10 cells sampled at random (seed=42) from
 # each city's walking start-node parquet (`start_nodes/<city>/walking.parquet`).
 TARGET_H3_CELLS = {
     "cologne": [
-        "891fa18aba7ffff",
+       "891fa18aba7ffff",
         "891fa19a9dbffff",
         "891fa1894d7ffff",
-        "891fa19a1a7ffff",
+       "891fa19a1a7ffff",
         "891fa18b22fffff",
         "891fa188213ffff",
         "891fa188283ffff",
@@ -118,3 +119,18 @@ if __name__ == "__main__":
 
         with open(mcr5_output_path / "runtimes.json", "w") as f:
             json.dump(runtimes, f)
+
+        # Render per-origin route maps for the cells just routed.
+        graph_dir = base_directory / "graph" / city_name
+        viz_dir = base_directory / "visualize"
+        for cell_id in TARGET_H3_CELLS[city_name]:
+            rlog.info(f"[{city_name}] Rendering route map for {cell_id}")
+            visualize_origin_routes(
+                results_dir=mcr5_output_path,
+                graph_dir=graph_dir,
+                poi_path=graph_dir / "poi_nodes.parquet",
+                cell_id=cell_id,
+                output_path=viz_dir / f"{city_name}_routes_{cell_id}.html",
+                zoom=13,
+                gtfs_dir=base_directory / "gtfs_clean" / city_name,
+            )
