@@ -44,14 +44,14 @@ import mcr_py
 import mcr_py.utils.cache
 import mcr_py.utils.geometa
 import mcr_py.utils.logger
+import polars as pl
+from fsspec.implementations.http import HTTPFileSystem
 from mcr_py.gtfs.pipeline import prepare_gtfs
 from mcr_py.gtfs.snap import write_stop_nodes
 from mcr_py.osm.extraction import extract_networks, extract_pois
 from mcr_py.osm.start_nodes import build_start_nodes
+from mcr_py.utils.geometa import build_geometa
 from mcr_py.visualize import visualize_pipeline_data
-import polars as pl
-from fsspec.implementations.http import HTTPFileSystem
-from mcr_py.utils.geometa import GeoMeta, build_geometa
 
 # H3 resolution for the start-node mapping. Matches the old `OSMData` default;
 # `run_mcr5` fans out over exactly one start node per occupied cell.
