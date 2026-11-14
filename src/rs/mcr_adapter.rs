@@ -207,6 +207,7 @@ impl MCRConfig {
                 .map(|v| v.iter().map(|s| s.inner.clone()).collect()),
             public_transport: self.public_transport.as_ref().map(|p| p.inner.clone()),
             out_dir: self.out_dir.clone(),
+            ..Default::default()
         }
     }
 }
